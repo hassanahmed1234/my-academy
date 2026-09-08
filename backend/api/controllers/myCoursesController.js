@@ -3,24 +3,22 @@ import Enrollment from "../models/Enrollment.js";
 // GET /api/my-courses (Fetch student's enrolled courses with search & filter)
 export const getMyCourses = async (req, res) => {
   try {
-    const studentId = req.user._id; // Auth middleware se authenticated user ID
+    const studentId = req.user._id;
     const { search, category } = req.query;
 
-    let query = { student: studentId };
-
-    const enrollments = await Enrollment.find(query).populate({
+    const enrollments = await Enrollment.find({ student: studentId }).populate({
       path: "course",
-      select: "title arabicTitle thumbnail category instructor",
+      select: "title arabicTitle image category instructor modules",
     });
 
-    // In-memory filter for search term & course category
+    // Valid populated courses filter out karein
     let filtered = enrollments.filter((e) => e.course !== null);
 
     if (search) {
       const term = search.toLowerCase();
       filtered = filtered.filter(
         (e) =>
-          e.course.title.toLowerCase().includes(term) ||
+          e.course.title?.toLowerCase().includes(term) ||
           (e.course.arabicTitle && e.course.arabicTitle.includes(term))
       );
     }
@@ -29,9 +27,24 @@ export const getMyCourses = async (req, res) => {
       filtered = filtered.filter((e) => e.course.category === category);
     }
 
-    // Split into Continue Learning vs Completed
-    const inProgress = filtered.filter((e) => e.status === "in-progress");
-    const completed = filtered.filter((e) => e.status === "completed");
+    // Status mapping aur safe object extraction
+    const inProgress = filtered
+      .filter((e) => e.status !== "completed")
+      .map((e) => ({
+        ...e.course._doc,
+        enrollmentId: e._id,
+        progress: e.progress || 0,
+        status: e.status,
+      }));
+
+    const completed = filtered
+      .filter((e) => e.status === "completed")
+      .map((e) => ({
+        ...e.course._doc,
+        enrollmentId: e._id,
+        progress: 100,
+        status: e.status,
+      }));
 
     res.status(200).json({
       success: true,

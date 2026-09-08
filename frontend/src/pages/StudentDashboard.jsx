@@ -13,7 +13,10 @@ import { useAuth } from "../context/AuthContext";
 
 const StudentDashboard = () => {
   const { user } = useAuth();
-  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState({
+    inProgress: [],
+    completed: [],
+  });
   const [upcomingLiveClass, setUpcomingLiveClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -26,23 +29,28 @@ const StudentDashboard = () => {
 
         // Fetch courses from backend
         const coursesRes = await API.get("/my-courses");
-        setEnrolledCourses(coursesRes.data || []);
+        const courseData = coursesRes.data?.data || coursesRes.data || {};
+        
+        setEnrolledCourses({
+          inProgress: Array.isArray(courseData.inProgress) ? courseData.inProgress : [],
+          completed: Array.isArray(courseData.completed) ? courseData.completed : [],
+        });
 
         // Fetch live sessions from backend
         try {
           const liveRes = await API.get("/live-sessions");
-          if (liveRes.data && liveRes.data.length > 0) {
-            const activeSession = liveRes.data[0];
+          const sessions = Array.isArray(liveRes.data)
+            ? liveRes.data
+            : liveRes.data?.sessions || [];
+
+          if (sessions.length > 0) {
+            const activeSession = sessions[0];
             setUpcomingLiveClass({
               id: activeSession._id,
               title: activeSession.title,
               courseName: activeSession.course?.title || "Islamic Studies",
               instructor: activeSession.scholarName,
-              date: new Date(activeSession.scheduledAt).toLocaleDateString("en-US", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-              }),
+              date: activeSession.scheduledAt,
               time: new Date(activeSession.scheduledAt).toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -51,20 +59,19 @@ const StudentDashboard = () => {
             });
           }
         } catch {
-          // Fallback static live class state if live sessions API is empty
           setUpcomingLiveClass({
             id: "lc101",
             title: "Seerah Q&A & Open Discussion",
             courseName: "Seerah of Prophet Muhammad ﷺ",
             instructor: "Sheikh Abdul Rahman",
-            date: "Friday, 12 Sept",
+            date: "2026-09-12",
             time: "8:00 PM PKT",
             meetingLink: "https://zoom.us/j/example123456",
           });
         }
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load dashboard data.");
-      } finally {
+      } font-bold {
         setLoading(false);
       }
     };
@@ -72,27 +79,12 @@ const StudentDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Function to check if the session time has passed
   const isClassActive = (classObj) => {
     if (!classObj || !classObj.date) return false;
-
     try {
-      // Expected format: Date string "2026-09-06" or ISO string and Time string "18:00" or "06:00 PM"
-      const classDateTime = new Date(`${classObj.date} ${classObj.time || ''}`);
-
-      // Agar duration add karni ho (e.g. 1 hour class), to current time ko compare karein:
-      const now = new Date();
-
-      // Option A: Agar class ke start time ke baad box hide karna ho
-      return classDateTime > now;
-
-      /* 
-      // Option B: Agar class 1 ghante ki hai aur class khatam hone ke baad hide karna ho:
-      const endTime = new Date(classDateTime.getTime() + 60 * 60 * 1000); // 1 hour duration
-      return now < endTime;
-      */
-    } catch (error) {
-      console.error("Invalid date format", error);
+      const classDateTime = new Date(classObj.date);
+      return classDateTime > new Date();
+    } catch {
       return false;
     }
   };
@@ -105,14 +97,16 @@ const StudentDashboard = () => {
     );
   }
 
+  const inProgressList = enrolledCourses.inProgress || [];
+  const completedList = enrolledCourses.completed || [];
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 bg-islamic-bg min-h-screen">
-
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-islamic-card p-6 rounded-2xl border border-islamic-border shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-islamic-text">
-            Assalamu Alaikum, <span className="text-islamic-gold">{user.name || "Student"}</span> 👋
+            Assalamu Alaikum, <span className="text-islamic-gold">{user?.name || "Student"}</span> 👋
           </h1>
           <p className="text-islamic-muted text-xs mt-1">
             Welcome back to your learning space. Keep building your sacred knowledge.
@@ -121,12 +115,12 @@ const StudentDashboard = () => {
         <div className="flex items-center gap-6 bg-islamic-bg/60 px-5 py-3 rounded-xl border border-islamic-border/50 text-xs">
           <div>
             <span className="block text-islamic-muted">Enrolled Courses</span>
-            <span className="text-lg font-bold text-islamic-text">{enrolledCourses?.inProgress.length}</span>
+            <span className="text-lg font-bold text-islamic-text">{inProgressList.length}</span>
           </div>
           <div className="w-px h-8 bg-islamic-border" />
           <div>
             <span className="block text-islamic-muted">Completed Lessons</span>
-            <span className="text-lg font-bold text-islamic-primary">{enrolledCourses?.completed.length}</span>
+            <span className="text-lg font-bold text-islamic-primary">{completedList.length}</span>
           </div>
         </div>
       </div>
@@ -137,7 +131,7 @@ const StudentDashboard = () => {
         </div>
       )}
 
-      {/* Upcoming Special Live Class Alert Banner */}
+      {/* Live Class Alert Banner */}
       {upcomingLiveClass && isClassActive(upcomingLiveClass) && (
         <div className="bg-gradient-to-r from-[#1A2E26] via-islamic-card to-[#23352B] border border-islamic-gold/40 rounded-2xl p-6 relative overflow-hidden shadow-lg">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
@@ -152,7 +146,7 @@ const StudentDashboard = () => {
               </p>
               <div className="flex items-center gap-4 text-xs text-islamic-gold pt-1">
                 <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4" /> {upcomingLiveClass.date}
+                  <Calendar className="w-4 h-4" /> {new Date(upcomingLiveClass.date).toLocaleDateString()}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4" /> {upcomingLiveClass.time}
@@ -183,7 +177,7 @@ const StudentDashboard = () => {
           </Link>
         </div>
 
-        {enrolledCourses?.inProgress.length === 0 ? (
+        {inProgressList.length === 0 ? (
           <div className="text-center py-12 bg-islamic-card border border-islamic-border rounded-2xl space-y-3">
             <BookOpen className="w-10 h-10 mx-auto text-islamic-muted stroke-1" />
             <p className="text-xs text-islamic-muted">You are not enrolled in any course yet.</p>
@@ -196,7 +190,7 @@ const StudentDashboard = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {enrolledCourses?.inProgress.map((course) => {
+            {inProgressList.map((course) => {
               const totalLessons = course.modules
                 ? course.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)
                 : 0;
@@ -218,28 +212,26 @@ const StudentDashboard = () => {
                       />
                       <div className="space-y-1">
                         <h3 className="text-base font-bold text-islamic-text line-clamp-1">{course.title}</h3>
-                        <p className="text-xs text-islamic-muted">By {course.instructor}</p>
+                        <p className="text-xs text-islamic-muted">By {course.instructor || "Instructor"}</p>
                         <span className="inline-block text-[11px] text-islamic-primary bg-islamic-primary/10 px-2 py-0.5 rounded border border-islamic-primary/20 mt-1">
                           0/{totalLessons} Lessons Done
                         </span>
                       </div>
                     </div>
 
-                    {/* Progress Bar */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs text-islamic-muted font-medium">
                         <span>Progress</span>
-                        <span className="text-islamic-gold">0%</span>
+                        <span className="text-islamic-gold">{course.progress || 0}%</span>
                       </div>
                       <div className="w-full bg-islamic-bg rounded-full h-2 overflow-hidden border border-islamic-border">
                         <div
                           className="bg-gradient-to-r from-islamic-primary to-islamic-gold h-full rounded-full transition-all duration-500"
-                          style={{ width: "0%" }}
+                          style={{ width: `${course.progress || 0}%` }}
                         />
                       </div>
                     </div>
 
-                    {/* Up Next Lesson */}
                     <div className="p-3 bg-islamic-bg/50 rounded-xl border border-islamic-border/60 text-xs">
                       <span className="text-islamic-muted block text-[10px] uppercase tracking-wider">Up Next</span>
                       <span className="text-islamic-text font-medium line-clamp-1">
@@ -248,7 +240,6 @@ const StudentDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Action */}
                   <div className="p-5 pt-0">
                     <Link
                       to={`/course/${course._id}/player`}
@@ -263,7 +254,6 @@ const StudentDashboard = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };
