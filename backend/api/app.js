@@ -4,6 +4,8 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
 // Routes Imports
+import connectDB from "./config/db.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import liveSessionRoutes from "./routes/liveSessionRoutes.js";
@@ -17,6 +19,9 @@ const app = express();
 
 // 1. Helmet: HTTP Headers Security
 app.use(helmet());
+
+connectDB();
+
 
 // 2. Rate Limiting: Brute Force & DDOS Protection
 const limiter = rateLimit({
