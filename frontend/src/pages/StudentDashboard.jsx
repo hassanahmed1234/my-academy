@@ -71,7 +71,7 @@ const StudentDashboard = () => {
         }
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load dashboard data.");
-      } font-bold {
+      } finally {
         setLoading(false);
       }
     };
