@@ -10,7 +10,7 @@ const HERO_SLIDES = [
     description: 'Learn the exact points of articulation (Makharij) and characteristics of Arabic letters with verified scholars.',
     highlight: '80% Practical Exercises',
     ctaText: 'Start Tajweed Course',
-    targetRoute: '/courses/tajweed',
+    targetRoute: '/courses',
   },
   {
     id: 2,
@@ -19,7 +19,7 @@ const HERO_SLIDES = [
     description: 'Explore line-by-line verse explanations, context of revelation, and real-life spiritual applications.',
     highlight: 'Weekly Q&A Webinars',
     ctaText: 'Explore Tafseer Series',
-    targetRoute: '/courses/tafseer',
+    targetRoute: '/courses',
   },
   {
     id: 3,
@@ -28,7 +28,7 @@ const HERO_SLIDES = [
     description: 'A proven step-by-step memorization pathway designed for busy adults and young learners alike.',
     highlight: '1-on-1 Guidance Support',
     ctaText: 'Join Hifz Program',
-    targetRoute: '/courses/hifz',
+    targetRoute: '/courses',
   },
 ];
 
