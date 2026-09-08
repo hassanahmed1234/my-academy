@@ -25,7 +25,7 @@ const StudentDashboard = () => {
         setLoading(true);
 
         // Fetch courses from backend
-        const coursesRes = await API.get("/courses");
+        const coursesRes = await API.get("/my-courses");
         setEnrolledCourses(coursesRes.data || []);
 
         // Fetch live sessions from backend
