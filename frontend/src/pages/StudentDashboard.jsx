@@ -26,7 +26,7 @@ const StudentDashboard = () => {
 
         // Fetch courses from backend
         const coursesRes = await API.get("/my-courses");
-        setEnrolledCourses(coursesRes.data.inProgress || []);
+        setEnrolledCourses(coursesRes.data || []);
 
         // Fetch live sessions from backend
         try {
@@ -121,12 +121,12 @@ const StudentDashboard = () => {
         <div className="flex items-center gap-6 bg-islamic-bg/60 px-5 py-3 rounded-xl border border-islamic-border/50 text-xs">
           <div>
             <span className="block text-islamic-muted">Enrolled Courses</span>
-            <span className="text-lg font-bold text-islamic-text">{enrolledCourses.length}</span>
+            <span className="text-lg font-bold text-islamic-text">{enrolledCourses?.inProgress.length}</span>
           </div>
           <div className="w-px h-8 bg-islamic-border" />
           <div>
             <span className="block text-islamic-muted">Completed Lessons</span>
-            <span className="text-lg font-bold text-islamic-primary">0</span>
+            <span className="text-lg font-bold text-islamic-primary">{enrolledCourses?.completed.length}</span>
           </div>
         </div>
       </div>
@@ -183,7 +183,7 @@ const StudentDashboard = () => {
           </Link>
         </div>
 
-        {enrolledCourses.length === 0 ? (
+        {enrolledCourses?.inProgress.length === 0 ? (
           <div className="text-center py-12 bg-islamic-card border border-islamic-border rounded-2xl space-y-3">
             <BookOpen className="w-10 h-10 mx-auto text-islamic-muted stroke-1" />
             <p className="text-xs text-islamic-muted">You are not enrolled in any course yet.</p>
@@ -196,7 +196,7 @@ const StudentDashboard = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {enrolledCourses.map((course) => {
+            {enrolledCourses?.inProgress.map((course) => {
               const totalLessons = course.modules
                 ? course.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)
                 : 0;
