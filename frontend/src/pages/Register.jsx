@@ -18,12 +18,11 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const { data } = await API.post("/auth/register", formData);
+      const response = await API.post("/auth/register", formData);
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data));
-
-      navigate(data.role === "admin" ? "/admin/dashboard" : "/dashboard");
+      if (response?.data?.status === 201 || response?.status === 201 || response?.status === 200) {
+        navigate('/login');
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
