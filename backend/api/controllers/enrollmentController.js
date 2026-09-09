@@ -5,7 +5,7 @@ import Course from "../models/Course.js";
 export const enrollInCourse = async (req, res) => {
   try {
     const studentId = req.user._id; // Auth Middleware se
-    const { courseId } = req.body;
+    const { courseId } = req.query;
 
     if (!courseId) {
       return res.status(400).json({ success: false, message: "Course ID is required" });

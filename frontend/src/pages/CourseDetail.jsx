@@ -19,7 +19,7 @@ const EnrollBtn = ({ courseId }) => {
 
   const handleEnroll = async () => {
     try {
-      const response = await API.post("/enroll", { courseId });
+      const response = await API.post(`/enroll/${courseId}`);
       if (response.data.success) {
         alert("Successfully Enrolled!");
         // Enrolled hone ke baad My Courses page ya Player par redirect karein
