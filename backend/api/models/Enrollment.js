@@ -41,16 +41,16 @@ const enrollmentSchema = new mongoose.Schema(
 );
 
 // Auto-calculate progress before saving
-enrollmentSchema.pre("save", function (next) {
-  if (this.totalLessons > 0) {
-    this.progressPercentage = Math.round(
-      (this.completedLessons.length / this.totalLessons) * 100
-    );
-    if (this.progressPercentage >= 100) {
-      this.status = "completed";
-    }
-  }
-  next();
-});
+// enrollmentSchema.pre("save", function (next) {
+//   if (this.totalLessons > 0) {
+//     this.progressPercentage = Math.round(
+//       (this.completedLessons.length / this.totalLessons) * 100
+//     );
+//     if (this.progressPercentage >= 100) {
+//       this.status = "completed";
+//     }
+//   }
+//   next();
+// });
 
 export default mongoose.model("Enrollment", enrollmentSchema);
