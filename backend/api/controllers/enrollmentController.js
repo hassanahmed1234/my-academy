@@ -5,7 +5,7 @@ import Course from "../models/Course.js";
 export const enrollInCourse = async (req, res) => {
   try {
     const studentId = req.user._id; // Auth Middleware se
-    const { courseId } = req.params;
+  const { courseId } = req.params;
 
     if (!courseId) {
       return res.status(400).json({ success: false, message: "Course ID is required" });
@@ -40,7 +40,7 @@ export const enrollInCourse = async (req, res) => {
     const newEnrollment = await Enrollment.create({
       student: studentId,
       course: courseId,
-      status: "inProgress",
+      status: "in-progress",
       completedLessons: [],
       totalLessons: totalLessons,
       progressPercentage: 0,

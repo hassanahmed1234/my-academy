@@ -16,6 +16,7 @@ import {
 
 const EnrollBtn = ({ courseId }) => {
   const navigate = useNavigate();
+  console.log(courseId)
 
   const handleEnroll = async () => {
     try {
@@ -199,7 +200,7 @@ const CourseDetail = () => {
               >
                 <PlayCircle className="w-4 h-4" /> Start Learning Now
               </button> */}
-              <EnrollBtn  courseId={course.id} />
+              <EnrollBtn courseId={course._id} />
 
               <div className="space-y-3 text-xs text-slate-400 pt-4 border-t border-slate-800/80">
                 <div className="flex items-center gap-2.5">
