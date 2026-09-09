@@ -41,9 +41,6 @@ app.use("/api", limiter);
 // 3. Body Parser (Limit payload size for security)
 app.use(express.json({ limit: "10kb" }));
 
-
-import cors from "cors";
-
 // Allowed origins list
 const allowedOrigins = [
   "http://localhost:5173", // Vite dev server
