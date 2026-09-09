@@ -2,29 +2,19 @@ import Enrollment from "../models/Enrollment.js";
 import Course from "../models/Course.js";
 
 // POST /api/enroll
-import Enrollment from "../models/Enrollment.js";
-import Course from "../models/Course.js";
-
-// POST /api/enroll/:courseId
 export const enrollInCourse = async (req, res) => {
   try {
     const studentId = req.user._id; // Auth Middleware se
-    const { courseId } = req.params; // Route params se fetch
+    const { courseId } = req.params;
 
     if (!courseId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Course ID parameter is missing" 
-      });
+      return res.status(400).json({ success: false, message: "Course ID is required" });
     }
 
     // 1. Check karein course exist karta hai ya nahi
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Course not found" 
-      });
+      return res.status(404).json({ success: false, message: "Course not found" });
     }
 
     // 2. Check karein student pehle se enrolled to nahi hai
@@ -40,13 +30,11 @@ export const enrollInCourse = async (req, res) => {
       });
     }
 
-    // 3. Course ke total lessons calculate karein
-    const totalLessons = course.modules
-      ? course.modules.reduce(
-          (acc, mod) => acc + (mod.lessons ? mod.lessons.length : 0),
-          0
-        )
-      : 0;
+    // 3. Course ke kul (total) lessons count karein
+    const totalLessons = course.modules.reduce(
+      (acc, mod) => acc + (mod.lessons ? mod.lessons.length : 0),
+      0
+    );
 
     // 4. Naya enrollment record create karein
     const newEnrollment = await Enrollment.create({
