@@ -10,7 +10,7 @@ dns.setServers(["1.1.1.1", "8.8.8.8"]);
 dotenv.config();
 
 // Connect Database
-connectDB();
+// connectDB();
 
 const PORT = process.env.PORT || 5000;
 

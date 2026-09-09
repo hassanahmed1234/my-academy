@@ -14,6 +14,8 @@ import {
   Circle,
 } from "lucide-react";
 
+
+
 const CoursePlayer = () => {
   const { id } = useParams();
   const [course, setCourse] = useState(null);
@@ -198,8 +200,8 @@ const CoursePlayer = () => {
                   disabled={updating}
                   onClick={() => handleToggleComplete(currentLessonId)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md cursor-pointer ${isCurrentCompleted
-                      ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-                      : "bg-amber-500 hover:bg-amber-400 text-slate-950"
+                    ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                    : "bg-amber-500 hover:bg-amber-400 text-slate-950"
                     }`}
                 >
                   {isCurrentCompleted ? (
@@ -278,8 +280,8 @@ const CoursePlayer = () => {
                           key={lIndex}
                           onClick={() => setActiveLesson(lesson)}
                           className={`w-full p-3 rounded-xl text-left text-xs transition flex items-center justify-between gap-2 cursor-pointer ${isActive
-                              ? "bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20"
-                              : "text-slate-400 hover:bg-slate-900 hover:text-white"
+                            ? "bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20"
+                            : "text-slate-400 hover:bg-slate-900 hover:text-white"
                             }`}
                         >
                           <div className="flex items-center gap-2.5 overflow-hidden">

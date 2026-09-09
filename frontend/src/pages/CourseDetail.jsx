@@ -14,6 +14,32 @@ import {
   Check,
 } from "lucide-react";
 
+const EnrollBtn = ({ courseId }) => {
+  const navigate = useNavigate();
+
+  const handleEnroll = async () => {
+    try {
+      const response = await API.post("/enroll", { courseId });
+      if (response.data.success) {
+        alert("Successfully Enrolled!");
+        // Enrolled hone ke baad My Courses page ya Player par redirect karein
+        navigate("/my-courses");
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || "Enrollment failed!");
+    }
+  };
+
+  return (
+    <button
+      onClick={handleEnroll}
+      className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl"
+    >
+      Enroll Now
+    </button>
+  );
+};
+
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -167,12 +193,13 @@ const CourseDetail = () => {
                 </span>
               </div>
 
-              <button
+              {/* <button
                 onClick={handleEnroll}
                 className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 cursor-pointer"
               >
                 <PlayCircle className="w-4 h-4" /> Start Learning Now
-              </button>
+              </button> */}
+              <EnrollBtn  courseId={course.id} />
 
               <div className="space-y-3 text-xs text-slate-400 pt-4 border-t border-slate-800/80">
                 <div className="flex items-center gap-2.5">
