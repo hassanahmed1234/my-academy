@@ -1,62 +1,94 @@
-import Course from "../models/Course.js";
+import Enrollment from "../models/Enrollment.js";
 
-// GET /api/my-courses (Fetch student's enrolled courses with search & filter)
+// GET /api/my-courses
 export const getMyCourses = async (req, res) => {
   try {
     const studentId = req.user._id;
-    const { search, category } = req.query;
 
-    const courses = await Course.find({ student: studentId }).populate({
-      path: "course",
-      select: "title arabicTitle image category instructor modules",
-    });
+    const { search = "", category = "All" } = req.query;
 
-    // Valid populated courses filter out karein
-    let filtered = courses.filter((e) => e.course !== null);
+    const enrollments = await Enrollment.find({
+      student: studentId,
+    })
+      .populate({
+        path: "course",
+        select: "title arabicTitle image category instructor modules",
+      })
+      .lean();
 
-    if (search) {
-      const term = search.toLowerCase();
-      filtered = filtered.filter(
-        (e) =>
-          e.course.title?.toLowerCase().includes(term) ||
-          (e.course.arabicTitle && e.course.arabicTitle.includes(term))
+    console.log("Student ID:", studentId);
+    console.log("Enrollments:", enrollments.length);
+
+    let filteredEnrollments = enrollments.filter(
+      (enrollment) => enrollment.course
+    );
+
+    // Search
+    if (search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+
+      filteredEnrollments = filteredEnrollments.filter(
+        ({ course }) => {
+          const title = course.title?.toLowerCase() || "";
+          const arabicTitle = course.arabicTitle || "";
+
+          return (
+            title.includes(searchTerm) ||
+            arabicTitle.includes(search.trim())
+          );
+        }
       );
     }
 
-    if (category && category !== "All") {
-      filtered = filtered.filter((e) => e.course.category === category);
+    // Category
+    if (category !== "All") {
+      filteredEnrollments = filteredEnrollments.filter(
+        ({ course }) => course.category === category
+      );
     }
 
-    // Status mapping aur safe object extraction
-    const inProgress = filtered
-      .filter((e) => e.status !== "completed")
-      .map((e) => ({
-        ...e.course._doc,
-        courseId: e._id,
-        progress: e.progress || 0,
-        status: e.status,
-      }));
+    // Format courses
+    const courses = filteredEnrollments.map((enrollment) => ({
+      ...enrollment.course,
 
-    const completed = filtered
-      .filter((e) => e.status === "completed")
-      .map((e) => ({
-        ...e.course._doc,
-        courseId: e._id,
-        progress: 100,
-        status: e.status,
-      }));
+      courseId: enrollment.course._id,
+      enrollmentId: enrollment._id,
 
-    res.status(200).json({
+      progressPercentage:
+        enrollment.status === "completed"
+          ? 100
+          : enrollment.progressPercentage || 0,
+
+      status: enrollment.status,
+
+      totalLessons: enrollment.totalLessons,
+      completedLessons: enrollment.completedLessons,
+
+      certificateUrl: enrollment.certificateUrl,
+    }));
+
+    const inProgress = courses.filter(
+      (course) => course.status === "in-progress"
+    );
+
+    const completed = courses.filter(
+      (course) => course.status === "completed"
+    );
+
+    return res.status(200).json({
       success: true,
       data: {
         inProgress,
         completed,
+        total: courses.length,
       },
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get My Courses Error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message || "Failed to fetch enrolled courses",
+      message: "Failed to fetch your courses.",
     });
   }
 };
