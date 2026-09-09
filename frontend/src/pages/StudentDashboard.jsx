@@ -227,7 +227,7 @@ const StudentDashboard = () => {
                       <div className="w-full bg-islamic-bg rounded-full h-2 overflow-hidden border border-islamic-border">
                         <div
                           className="bg-gradient-to-r from-islamic-primary to-islamic-gold h-full rounded-full transition-all duration-500"
-                          style={{ width: `${course.progress || 0}%` }}
+                          style={{ width: `${course.progressPercentage || 0}%` }}
                         />
                       </div>
                     </div>

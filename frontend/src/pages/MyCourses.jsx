@@ -34,6 +34,7 @@ const MyCourses = () => {
       if (selectedCategory !== "All") params.category = selectedCategory;
 
       const { data } = await API.get("/my-courses", { params });
+      console.log(data.data.inProgress)
       setInProgress(data.data.inProgress || []);
       setCompleted(data.data.completed || []);
     } catch (err) {
@@ -129,8 +130,8 @@ const MyCourses = () => {
                       {/* Course Thumbnail */}
                       <div className="aspect-video bg-slate-950 relative overflow-hidden">
                         <img
-                          src={item.course?.thumbnail || "/api/placeholder/400/225"}
-                          alt={item.course?.title}
+                          src={item.image || "/api/placeholder/400/225"}
+                          alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
@@ -140,11 +141,11 @@ const MyCourses = () => {
                       <div className="p-5 space-y-4">
                         <div>
                           <h3 className="text-sm font-bold text-white line-clamp-1">
-                            {item.course?.title}
+                            {item.title}
                           </h3>
-                          {item.course?.arabicTitle && (
+                          {item.arabicTitle && (
                             <p className="text-xs text-amber-400 font-serif font-semibold mt-0.5">
-                              {item.course?.arabicTitle}
+                              {item.arabicTitle}
                             </p>
                           )}
                         </div>
@@ -171,7 +172,7 @@ const MyCourses = () => {
                     {/* Action Button */}
                     <div className="p-5 pt-0">
                       <Link
-                        to={`/course-player/${item.course?._id}`}
+                        to={`/course/${item._id}/player`}
                         className="w-full py-2.5 px-4 bg-amber-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 transition shadow-lg shadow-amber-500/20"
                       >
                         <PlayCircle className="w-4 h-4 shrink-0" /> Continue
