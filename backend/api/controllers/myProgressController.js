@@ -57,15 +57,26 @@ export const toggleLessonComplete = async (req, res) => {
 
 export const getAllUserProgress = async (req, res) => {
   try {
-    const progressList = await UserProgress.find({ userId: req.user._id });
+    // 1. .populate("courseId") use karke Course model ka saara data fetch kiya
+    const progressList = await UserProgress.find({ userId: req.user._id })
+      .populate("courseId")
+      .lean();
 
-    // Streamlined format mapping
-    const completedData = progressList.map((item) => ({
-      fullCourse : item,
-      courseId: item.courseId,
-      completedLessons: item.completedLessons || [],
-      count: item.completedLessons ? item.completedLessons.length : 0,
-    }));
+    // 2. Streamlined format mapping with full course details
+    const completedData = progressList.map((item) => {
+      // courseId object context populated model representation rakhta hai
+      const courseObj = item || {};
+
+      return {
+        _id: item._id,
+        courseId: courseObj._id || item.courseId, // String / ObjectId
+        course: courseObj,                        // Complete populated Course object
+        completedLessons: item.completedLessons || [],
+        count: item.completedLessons ? item.completedLessons.length : 0,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      };
+    });
 
     res.json({
       success: true,
