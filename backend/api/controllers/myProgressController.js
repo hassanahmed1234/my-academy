@@ -61,6 +61,7 @@ export const getAllUserProgress = async (req, res) => {
 
     // Streamlined format mapping
     const completedData = progressList.map((item) => ({
+      fullCourse : item,
       courseId: item.courseId,
       completedLessons: item.completedLessons || [],
       count: item.completedLessons ? item.completedLessons.length : 0,
