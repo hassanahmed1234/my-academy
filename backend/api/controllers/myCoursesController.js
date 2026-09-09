@@ -1,4 +1,4 @@
-import Enrollment from "../models/Enrollment.js";
+import Course from "../models/Course.js";
 
 // GET /api/my-courses (Fetch student's enrolled courses with search & filter)
 export const getMyCourses = async (req, res) => {
@@ -6,13 +6,13 @@ export const getMyCourses = async (req, res) => {
     const studentId = req.user._id;
     const { search, category } = req.query;
 
-    const enrollments = await Enrollment.find({ student: studentId }).populate({
+    const courses = await Course.find({ student: studentId }).populate({
       path: "course",
       select: "title arabicTitle image category instructor modules",
     });
 
     // Valid populated courses filter out karein
-    let filtered = enrollments.filter((e) => e.course !== null);
+    let filtered = courses.filter((e) => e.course !== null);
 
     if (search) {
       const term = search.toLowerCase();
@@ -32,7 +32,7 @@ export const getMyCourses = async (req, res) => {
       .filter((e) => e.status !== "completed")
       .map((e) => ({
         ...e.course._doc,
-        enrollmentId: e._id,
+        courseId: e._id,
         progress: e.progress || 0,
         status: e.status,
       }));
@@ -41,7 +41,7 @@ export const getMyCourses = async (req, res) => {
       .filter((e) => e.status === "completed")
       .map((e) => ({
         ...e.course._doc,
-        enrollmentId: e._id,
+        courseId: e._id,
         progress: 100,
         status: e.status,
       }));
