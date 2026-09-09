@@ -42,8 +42,32 @@ app.use("/api", limiter);
 app.use(express.json({ limit: "10kb" }));
 
 
-// 5. CORS Configuration (Specific origins in production)
-app.use(cors());
+import cors from "cors";
+
+// Allowed origins list
+const allowedOrigins = [
+  "http://localhost:5173", // Vite dev server
+  "http://localhost:3000", // React standard dev server
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000",
+  process.env.CLIENT_URL,   // Production frontend URL (from .env)
+].filter(Boolean); // Filter undefined values if CLIENT_URL is missing
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Postman, cURL, or local apps ke non-browser requests ko allow karne ke liye !origin check
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy violation: Access denied"));
+      }
+    },
+    credentials: true, // Cookies / Authorization headers allow karne ke liye
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // API Routes
 app.use("/api/auth", authRoutes);
@@ -53,7 +77,7 @@ app.use("/api/my-courses", myCoursesRoutes);
 app.use("/api/enroll", enrollmentRoutes);
 app.use("/api/my-progress", myProgressRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/admin",adminRoutes );
+app.use("/api/admin", adminRoutes);
 app.use("/api/contact", contactRoutes);
 
 // Base Health Check Route

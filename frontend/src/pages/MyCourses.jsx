@@ -267,9 +267,10 @@ const MyCourses = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {completed.map((rawItem) => {
                   const course = getCourseDetails(rawItem);
+                  console.log(course)
                   return (
                     <div
-                      key={course._id || rawItem._id}
+                      key={course.courseId || rawItem.courseId}
                       className="bg-slate-900/60 border border-emerald-500/20 rounded-3xl p-5 space-y-4 hover:border-emerald-500/40 transition shadow-xl flex flex-col justify-between"
                     >
                       <div className="space-y-3">
@@ -280,24 +281,34 @@ const MyCourses = () => {
                         </div>
                         <div>
                           <h3 className="text-sm font-bold text-white line-clamp-1">
-                            {course.title}
+                            {course.course.courseId.title}
                           </h3>
-                          {course.arabicTitle && (
+                          {course.course.courseId.arabicTitle && (
                             <p className="text-xs text-amber-400 font-serif font-semibold mt-0.5">
-                              {course.arabicTitle}
+                              {course.course.courseId.arabicTitle}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <a
+                      {/* Action Button */}
+                      <div className="p-5 pt-0">
+                        <Link
+                          to={`/course/${course.course.courseId._id}/player`}
+                          className="w-full py-2.5 px-4 bg-amber-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 transition shadow-lg shadow-amber-500/20"
+                        >
+                          <PlayCircle className="w-4 h-4 shrink-0" /> Continue
+                        </Link>
+                      </div>
+
+                      {/* <a
                         href={rawItem.certificateUrl || course.certificateUrl || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full py-2.5 px-4 bg-slate-950 border border-slate-800 text-amber-400 hover:text-amber-300 hover:border-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition"
                       >
                         <Award className="w-4 h-4 shrink-0" /> Certificate
-                      </a>
+                      </a> */}
                     </div>
                   );
                 })}
