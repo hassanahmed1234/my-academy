@@ -54,3 +54,23 @@ export const toggleLessonComplete = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getAllUserProgress = async (req, res) => {
+  try {
+    const progressList = await UserProgress.find({ userId: req.user._id });
+
+    // Streamlined format mapping
+    const completedData = progressList.map((item) => ({
+      courseId: item.courseId,
+      completedLessons: item.completedLessons || [],
+      count: item.completedLessons ? item.completedLessons.length : 0,
+    }));
+
+    res.json({
+      success: true,
+      data: completedData,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

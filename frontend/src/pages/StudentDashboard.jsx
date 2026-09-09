@@ -7,6 +7,7 @@ import {
   PlayCircle,
   Calendar,
   Loader2,
+  CheckCircle,
 } from "lucide-react";
 import API from "../api/axiosInstance";
 import { useAuth } from "../context/AuthContext";
@@ -17,6 +18,7 @@ const StudentDashboard = () => {
     inProgress: [],
     completed: [],
   });
+  const [progressMap, setProgressMap] = useState({}); // Stores { courseId: [lessonIds] }
   const [upcomingLiveClass, setUpcomingLiveClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,16 +29,37 @@ const StudentDashboard = () => {
       try {
         setLoading(true);
 
-        // Fetch courses from backend
+        // 1. Fetch user's enrolled courses
         const coursesRes = await API.get("/my-courses");
         const courseData = coursesRes.data?.data || coursesRes.data || {};
-        
+
         setEnrolledCourses({
           inProgress: Array.isArray(courseData.inProgress) ? courseData.inProgress : [],
           completed: Array.isArray(courseData.completed) ? courseData.completed : [],
         });
 
-        // Fetch live sessions from backend
+        // 2. Fetch all completed lessons progress (Without Params)
+        try {
+          const progressRes = await API.get("/my-progress/all");
+          const progressList = progressRes.data?.data || progressRes.data || [];
+
+          console.log(progressRes)
+
+          // Map courseId -> Array of completed lesson IDs
+          const pMap = {};
+          if (Array.isArray(progressList)) {
+            progressList.forEach((item) => {
+              if (item.courseId) {
+                pMap[item.courseId] = item.completedLessons || [];
+              }
+            });
+          }
+          setProgressMap(pMap);
+        } catch (pErr) {
+          console.error("Failed to fetch progress map:", pErr);
+        }
+
+        // 3. Fetch live sessions
         try {
           const liveRes = await API.get("/live-sessions");
           const sessions = Array.isArray(liveRes.data)
@@ -89,6 +112,12 @@ const StudentDashboard = () => {
     }
   };
 
+  // Calculate total completed lessons count across all enrolled courses
+  const totalCompletedLessonsCount = Object.values(progressMap).reduce(
+    (acc, lessons) => acc + (lessons?.length || 0),
+    0
+  );
+
   if (loading) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center text-islamic-gold">
@@ -98,7 +127,6 @@ const StudentDashboard = () => {
   }
 
   const inProgressList = enrolledCourses.inProgress || [];
-  const completedList = enrolledCourses.completed || [];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 bg-islamic-bg min-h-screen">
@@ -120,7 +148,7 @@ const StudentDashboard = () => {
           <div className="w-px h-8 bg-islamic-border" />
           <div>
             <span className="block text-islamic-muted">Completed Lessons</span>
-            <span className="text-lg font-bold text-islamic-primary">{completedList.length}</span>
+            <span className="text-lg font-bold text-islamic-primary">{totalCompletedLessonsCount}</span>
           </div>
         </div>
       </div>
@@ -191,9 +219,25 @@ const StudentDashboard = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {inProgressList.map((course) => {
-              const totalLessons = course.modules
-                ? course.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)
+              // Extract all lessons from course modules
+              const allLessons = course.modules
+                ? course.modules.flatMap((m) => m.lessons || [])
+                : [];
+              const totalLessons = allLessons.length;
+
+              // Extract completed lesson IDs from state for this course
+              const completedLessonIds = progressMap[course._id] || [];
+              const completedCount = completedLessonIds.length;
+
+              // Calculate percentage progress
+              const progressPercentage = totalLessons > 0 
+                ? Math.round((completedCount / totalLessons) * 100) 
                 : 0;
+
+              // Find next uncompleted lesson
+              const nextLesson = allLessons.find(
+                (lesson) => !completedLessonIds.includes(lesson._id)
+              ) || allLessons[0];
 
               return (
                 <div
@@ -208,34 +252,38 @@ const StudentDashboard = () => {
                           "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&q=80&w=600"
                         }
                         alt={course.title}
-                        className="w-24 h-20 rounded-xl object-cover border border-islamic-border"
+                        className="w-24 h-20 rounded-xl object-cover border border-islamic-border shrink-0"
                       />
-                      <div className="space-y-1">
+                      <div className="space-y-1 w-full">
                         <h3 className="text-base font-bold text-islamic-text line-clamp-1">{course.title}</h3>
                         <p className="text-xs text-islamic-muted">By {course.instructor || "Instructor"}</p>
-                        <span className="inline-block text-[11px] text-islamic-primary bg-islamic-primary/10 px-2 py-0.5 rounded border border-islamic-primary/20 mt-1">
-                          0/{totalLessons} Lessons Done
-                        </span>
+                        
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-islamic-primary bg-islamic-primary/10 px-2 py-0.5 rounded border border-islamic-primary/20 font-medium">
+                            <CheckCircle className="w-3 h-3" /> {completedCount}/{totalLessons} Lessons Done
+                          </span>
+                          <span className="text-[11px] font-semibold text-islamic-gold">
+                            {progressPercentage}%
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs text-islamic-muted font-medium">
-                        <span>Progress</span>
-                        <span className="text-islamic-gold">{course.progress || 0}%</span>
-                      </div>
-                      <div className="w-full bg-islamic-bg rounded-full h-2 overflow-hidden border border-islamic-border">
-                        <div
-                          className="bg-gradient-to-r from-islamic-primary to-islamic-gold h-full rounded-full transition-all duration-500"
-                          style={{ width: `${course.progressPercentage || 0}%` }}
-                        />
-                      </div>
+                    {/* Dynamic Progress Bar */}
+                    <div className="w-full bg-islamic-bg h-1.5 rounded-full overflow-hidden border border-islamic-border/50">
+                      <div
+                        className="bg-gradient-to-r from-islamic-primary to-islamic-gold h-full transition-all duration-300"
+                        style={{ width: `${progressPercentage}%` }}
+                      />
                     </div>
 
+                    {/* Up Next Section */}
                     <div className="p-3 bg-islamic-bg/50 rounded-xl border border-islamic-border/60 text-xs">
-                      <span className="text-islamic-muted block text-[10px] uppercase tracking-wider">Up Next</span>
+                      <span className="text-islamic-muted block text-[10px] uppercase tracking-wider">
+                        {progressPercentage === 100 ? "Completed" : "Up Next"}
+                      </span>
                       <span className="text-islamic-text font-medium line-clamp-1">
-                        {course.modules?.[0]?.lessons?.[0]?.title || "Module 1: Introduction"}
+                        {nextLesson?.title || "No lessons available"}
                       </span>
                     </div>
                   </div>

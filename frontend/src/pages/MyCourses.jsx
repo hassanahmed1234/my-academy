@@ -150,22 +150,7 @@ const MyCourses = () => {
                           )}
                         </div>
 
-                        {/* Progress Bar & Percentage */}
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-center text-[11px] font-semibold">
-                            <span className="text-slate-400">Progress</span>
-                            <span className="text-amber-400 font-bold">{item.progressPercentage}%</span>
-                          </div>
-                          <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
-                            <div
-                              className="bg-gradient-to-r from-amber-500 to-amber-400 h-full rounded-full transition-all duration-500"
-                              style={{ width: `${item.progressPercentage}%` }}
-                            />
-                          </div>
-                          <p className="text-[10px] text-slate-500 font-medium text-right">
-                            {item.completedLessons?.length || 0} / {item.totalLessons} lessons
-                          </p>
-                        </div>
+                  
                       </div>
                     </div>
 
