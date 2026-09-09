@@ -14,49 +14,50 @@ import {
   Check,
 } from "lucide-react";
 
-const EnrollBtn = ({ courseId }) => {
-  const navigate = useNavigate();
-  console.log(courseId)
-
-  const handleEnroll = async () => {
-    try {
-      const response = await API.post(`/enroll/${courseId}`);
-      if (response.data.success) {
-        alert("Successfully Enrolled!");
-        // Enrolled hone ke baad My Courses page ya Player par redirect karein
-        navigate("/my-courses");
-      }
-    } catch (error) {
-      alert(error.response?.data?.message || "Enrollment failed!");
-    }
-  };
-
-  return (
-    <button
-      onClick={handleEnroll}
-      className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl"
-    >
-      Enroll Now
-    </button>
-  );
-};
-
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [course, setCourse] = useState(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState("");
   const [expandedModules, setExpandedModules] = useState({ 0: true });
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const fetchCourse = async () => {
+
+    const fetchCourseAndStatus = async () => {
       try {
         setLoading(true);
-        const { data } = await API.get(`/courses/${id}`);
-        setCourse(data);
+
+        // 1. Fetch Course Data
+        const { data: courseData } = await API.get(`/courses/${id}`);
+        setCourse(courseData);
+
+        // 2. Check Enrollment Status if User is Logged In
+        const token = localStorage.getItem("token");
+        // Replace this block inside useEffect:
+        if (token) {
+          try {
+            const { data } = await API.get("/my-courses");
+
+            // Debug: Check exact response structure in browser console
+            console.log("My Courses Response:", data);
+
+            const enrolledList = data?.data || data?.enrollments || data || [];
+
+            const enrolled = enrolledList.some((item) => {
+              const enrolledCourseId = item.course?._id || item.course || item._id;
+              return String(enrolledCourseId) === String(id);
+            });
+
+            setIsEnrolled(enrolled);
+          } catch (statusErr) {
+            console.error("Failed to check enrollment status:", statusErr);
+          }
+        }
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch course details.");
       } finally {
@@ -64,7 +65,7 @@ const CourseDetail = () => {
       }
     };
 
-    if (id) fetchCourse();
+    if (id) fetchCourseAndStatus();
   }, [id]);
 
   const toggleModule = (index) => {
@@ -74,14 +75,43 @@ const CourseDetail = () => {
     }));
   };
 
-  const handleEnroll = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-    } else {
-      navigate(`/course/${course._id}/player`);
+ const handleEnrollOrPlay = async () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+
+  // 1. Direct Navigate if state is true
+  if (isEnrolled) {
+    navigate(`/course/${id}/player`);
+    return;
+  }
+
+  try {
+    setEnrolling(true);
+    const response = await API.post(`/enroll/${id}`);
+
+    if (response.data.success) {
+      setIsEnrolled(true);
+      navigate(`/course/${id}/player`);
     }
-  };
+  } catch (err) {
+    const errorMsg = err.response?.data?.message || "";
+
+    // 2. Fallback: Agar backend bole ke already enrolled ho, to chup-chaap Player par bhej do!
+    if (errorMsg.toLowerCase().includes("already enrolled")) {
+      setIsEnrolled(true);
+      navigate(`/course/${id}/player`);
+      return;
+    }
+
+    alert(errorMsg || "Enrollment failed! Please try again.");
+  } finally {
+    setEnrolling(false);
+  }
+};
 
   if (loading) {
     return (
@@ -129,7 +159,6 @@ const CourseDetail = () => {
           </Link>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            
             {/* Left Column: Title & Metadata */}
             <div className="lg:col-span-2 space-y-5">
               <div className="flex items-center gap-3">
@@ -154,17 +183,25 @@ const CourseDetail = () => {
               </h1>
 
               <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-                {course.description || "Authentic structured curriculum covering traditional Islamic sciences with verified academic references."}
+                {course.description ||
+                  "Authentic structured curriculum covering traditional Islamic sciences with verified academic references."}
               </p>
 
               <div className="flex flex-wrap items-center gap-6 text-xs text-slate-400 pt-4 border-t border-slate-800/80">
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-amber-400" />
-                  <span>Instructor: <strong className="text-white font-semibold">{course.instructor || "Scholar"}</strong></span>
+                  <span>
+                    Instructor:{" "}
+                    <strong className="text-white font-semibold">
+                      {course.instructor || "Scholar"}
+                    </strong>
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-amber-400" />
-                  <span>{course.modules?.length || 0} Modules ({totalLessons} Lessons)</span>
+                  <span>
+                    {course.modules?.length || 0} Modules ({totalLessons} Lessons)
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -173,11 +210,14 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            {/* Right Column: ENROLLMENT CARD */}
+            {/* Right Column: ENROLLMENT / ACCESS CARD */}
             <div className="bg-slate-900/90 border border-slate-800/80 rounded-3xl p-6 space-y-6 shadow-2xl backdrop-blur-xl relative">
               <div className="relative rounded-2xl overflow-hidden aspect-video border border-slate-800 bg-slate-950">
                 <img
-                  src={course.image || "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&q=80&w=800"}
+                  src={
+                    course.image ||
+                    "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&q=80&w=800"
+                  }
                   alt={course.title}
                   className="w-full h-full object-cover"
                 />
@@ -194,13 +234,25 @@ const CourseDetail = () => {
                 </span>
               </div>
 
-              {/* <button
-                onClick={handleEnroll}
-                className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 cursor-pointer"
+              {/* DYNAMIC ACTION BUTTON */}
+              <button
+                onClick={handleEnrollOrPlay}
+                disabled={enrolling}
+                className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 cursor-pointer disabled:opacity-50"
               >
-                <PlayCircle className="w-4 h-4" /> Start Learning Now
-              </button> */}
-              <EnrollBtn courseId={course._id} />
+                {enrolling ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <PlayCircle className="w-4 h-4" />
+                )}
+                <span>
+                  {enrolling
+                    ? "Enrolling..."
+                    : isEnrolled
+                      ? "Continue Learning"
+                      : "Enroll Now"}
+                </span>
+              </button>
 
               <div className="space-y-3 text-xs text-slate-400 pt-4 border-t border-slate-800/80">
                 <div className="flex items-center gap-2.5">
@@ -214,7 +266,6 @@ const CourseDetail = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>

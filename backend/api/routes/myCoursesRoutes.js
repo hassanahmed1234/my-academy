@@ -5,6 +5,6 @@ import { getCourseProgress } from "../controllers/myProgressController.js";
 
 const router = express.Router();
 
-router.get("/", protect, getCourseProgress);
+router.get("/", protect, getMyCourses);
 
 export default router;
