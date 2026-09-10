@@ -65,6 +65,7 @@ const AdminQuizBuilder = () => {
         API.get("/quizzes"),
         API.get("/courses"),
       ]);
+      console.log(resCourses.data)
       setQuizzes(resQuizzes.data);
       setCourses(resCourses.data);
     } catch (err) {

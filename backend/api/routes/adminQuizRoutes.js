@@ -13,11 +13,11 @@ const router = express.Router();
 
 router.use(protect, adminOnly);
 
-router.post("/quizzes", createQuiz);
-router.put("/quizzes/:quizId", updateQuiz);
-router.delete("/quizzes/:quizId", deleteQuiz);
+router.post("", createQuiz);
+router.put("/:quizId", updateQuiz);
+router.delete("/:quizId", deleteQuiz);
 
-router.get("/quizzes/:quizId/questions", getQuizQuestions);
+router.get("/:quizId/questions", getQuizQuestions);
 router.post("/questions", addQuestion);
 router.delete("/questions/:questionId", deleteQuestion);
 
