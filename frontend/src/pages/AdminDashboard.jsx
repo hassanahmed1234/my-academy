@@ -62,12 +62,12 @@ const AdminQuizBuilder = () => {
     try {
       setLoading(true);
       const [resQuizzes, resCourses] = await Promise.all([
-        API.get("/quizzes"),
+        API.get("/admin/quizzes"),
         API.get("/courses"),
       ]);
-      console.log(resCourses.data)
       setQuizzes(resQuizzes.data);
       setCourses(resCourses.data);
+      
     } catch (err) {
       console.error(err);
     } finally {

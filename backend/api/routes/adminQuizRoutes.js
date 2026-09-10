@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getAllQuizzes, // <--- Import here
   createQuiz,
   updateQuiz,
   deleteQuiz,
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.use(protect, adminOnly);
 
+router.get("/quizzes", getAllQuizzes); // <--- Add GET route for API.get("/quizzes")
 router.post("/", createQuiz);
 router.put("/:quizId", updateQuiz);
 router.delete("/:quizId", deleteQuiz);
