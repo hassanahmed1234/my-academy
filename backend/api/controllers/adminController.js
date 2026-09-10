@@ -43,11 +43,7 @@ export const getDashboardOverview = async (req, res) => {
     ]);
 
     // 3. Recent Enrollments
-    const recentEnrollments = await Enrollment.find()
-      .populate("userId", "name")
-      .populate("courseId", "title")
-      .sort({ createdAt: -1 })
-      .limit(5);
+ 
 
     // 4. Recent Messages
     // const recentMessages = await Message.find()
@@ -59,11 +55,10 @@ export const getDashboardOverview = async (req, res) => {
       stats: {
         students: studentsCount,
         coursesCount,
-        enrollments: enrollmentsCount,
         revenue: `Rs. ${totalRevenue.toLocaleString()}`
       },
       coursePerformance,
-      recentEnrollments,
+      
       // recentMessages
     });
   } catch (error) {

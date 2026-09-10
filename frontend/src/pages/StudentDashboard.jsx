@@ -89,6 +89,7 @@ const StudentDashboard = () => {
       if (progressRes.status === "fulfilled") {
         progressData = progressRes.value.data?.data || progressRes.value.data || [];
       }
+      setCompletedCourses(progressData)
 
       const progressMap = {};
       if (Array.isArray(progressData)) {
@@ -124,7 +125,7 @@ const StudentDashboard = () => {
       });
 
       setInProgressCourses(inProgress);
-      setCompletedCourses(completed);
+      // setCompletedCourses(completed);
 
       // Handle Announcements (Backend or Fallback)
       if (annRes.status === "fulfilled") {
