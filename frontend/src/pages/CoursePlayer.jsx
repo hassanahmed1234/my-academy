@@ -34,6 +34,7 @@ const CoursePlayer = () => {
       try {
         // 1. Fetch Course Details
         const { data } = await API.get(`/courses/${id}`);
+        console.log(data)
         setCourse(data);
 
         // Set first lesson as default active

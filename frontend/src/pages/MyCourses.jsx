@@ -43,25 +43,29 @@ const MyCourses = () => {
 
       setInProgress(Array.isArray(courseData.inProgress) ? courseData.inProgress : []);
 
-      // 2. Fetch User Lesson Progress using /my-progress/all
+      // 2. Fetch User Lesson Progress
       try {
         const progressRes = await API.get("/my-progress/all");
 
-        // Exact extraction based on controller: res.json({ success: true, data: completedData })
         const progressList =
           progressRes.data?.data?.data ||
           progressRes.data?.data ||
-          progressRes.data ||
-          [];
+          (Array.isArray(progressRes.data) ? progressRes.data : []);
 
-          setCompleted(progressList)
+          console.log('progressRes====>>>',progressRes)
+          console.log('progressList====>>>',progressList)
 
+        setCompleted(Array.isArray(progressList) ? progressList : []);
 
         const pMap = {};
         if (Array.isArray(progressList)) {
           progressList.forEach((item) => {
-            if (item.courseId) {
-              pMap[item.courseId] = item.completedLessons || [];
+            // Safely resolve course ID key (handles populated object or raw string ID)
+            const cId = item.courseId ||  item._id;
+            if (cId) {
+              pMap[String(cId)] = Array.isArray(item.completedLessons)
+                ? item.completedLessons
+                : [];
             }
           });
         }
@@ -76,10 +80,15 @@ const MyCourses = () => {
     }
   };
 
-  // Helper to safely resolve course details (handles raw or populated course object)
+  // Helper to safely extract target course object
   const getCourseDetails = (item) => {
-    console.log(item)
-    return item?.courseId ? item : item;
+    if (item?.courseId && typeof item.courseId === "object") return item.courseId;
+    if (item?.course && typeof item.course === "object") {
+      return item.course.courseId && typeof item.course.courseId === "object"
+        ? item.course.courseId
+        : item.course;
+    }
+    return item;
   };
 
   return (
@@ -97,7 +106,6 @@ const MyCourses = () => {
 
         {/* Search & Category Filter Bar */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full md:w-auto">
-          {/* Search Input */}
           <div className="relative flex-1 sm:w-64">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
@@ -109,7 +117,6 @@ const MyCourses = () => {
             />
           </div>
 
-          {/* Category Dropdown */}
           <div className="relative">
             <select
               value={selectedCategory}
@@ -163,25 +170,32 @@ const MyCourses = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {inProgress.map((rawItem) => {
                   const course = getCourseDetails(rawItem);
+                  const courseId = String(course._id || rawItem._id || rawItem.courseId);
+                  console.log(course)
+                  console.log(courseId)
 
-                  // Extract all lessons from course modules
-                  const allLessons = course.modules
+                  // Extract total lessons
+                  const allLessons = Array.isArray(course.modules)
                     ? course.modules.flatMap((m) => m.lessons || [])
                     : [];
                   const totalLessons = allLessons.length;
 
-                  // Extract user completed lessons using state map
-                  const completedLessons = progressMap[course._id] || [];
+                  // Extract completed lessons from progress map
+                  const completedLessons = progressMap[courseId] || [];
+                  console.log(progressMap)
+                  console.log(totalLessons)
+
                   const completedCount = completedLessons.length;
 
-                  // Calculate percentage dynamically
-                  const progressPercentage = totalLessons > 0
-                    ? Math.round((completedCount / totalLessons) * 100)
-                    : 0;
+                  // Calculate percentage
+                  const progressPercentage =
+                    totalLessons > 0
+                      ? Math.min(100, Math.round((completedCount / totalLessons) * 100))
+                      : 0;
 
                   return (
                     <div
-                      key={course._id || rawItem._id}
+                      key={courseId}
                       className="bg-slate-900/80 border border-slate-800/80 rounded-3xl overflow-hidden hover:border-slate-700 transition group flex flex-col justify-between shadow-xl backdrop-blur-xl"
                     >
                       <div>
@@ -192,7 +206,7 @@ const MyCourses = () => {
                               course.image ||
                               "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&q=80&w=600"
                             }
-                            alt={course.title}
+                            alt={course.title || "Course"}
                             className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
@@ -202,7 +216,7 @@ const MyCourses = () => {
                         <div className="p-5 space-y-4">
                           <div>
                             <h3 className="text-sm font-bold text-white line-clamp-1">
-                              {course.title}
+                              {course.title || "Untitled Course"}
                             </h3>
                             {course.arabicTitle && (
                               <p className="text-xs text-amber-400 font-serif font-semibold mt-0.5">
@@ -211,31 +225,14 @@ const MyCourses = () => {
                             )}
                           </div>
 
-                          {/* Dynamic Progress Indicator */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-slate-400 text-[11px] flex items-center gap-1 font-medium">
-                                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                                {completedCount}/{totalLessons} Lessons
-                              </span>
-                              <span className="text-amber-400 font-bold text-[11px]">
-                                {progressPercentage}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800">
-                              <div
-                                className="bg-gradient-to-r from-emerald-500 to-amber-400 h-full transition-all duration-300"
-                                style={{ width: `${progressPercentage}%` }}
-                              />
-                            </div>
-                          </div>
+                       
                         </div>
                       </div>
 
                       {/* Action Button */}
                       <div className="p-5 pt-0">
                         <Link
-                          to={`/course/${course._id}/player`}
+                          to={`/course/${courseId}/player`}
                           className="w-full py-2.5 px-4 bg-amber-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 transition shadow-lg shadow-amber-500/20"
                         >
                           <PlayCircle className="w-4 h-4 shrink-0" /> Continue
@@ -267,10 +264,13 @@ const MyCourses = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {completed.map((rawItem) => {
                   const course = getCourseDetails(rawItem);
-                  console.log(course)
+                  const courseId = String(course._id || rawItem.courseId || rawItem._id);
+                  const courseTitle = course.title || course.courseId?.title || "Completed Course";
+                  const arabicTitle = course.arabicTitle || course.courseId?.arabicTitle;
+
                   return (
                     <div
-                      key={course.courseId || rawItem.courseId}
+                      key={rawItem._id || courseId}
                       className="bg-slate-900/60 border border-emerald-500/20 rounded-3xl p-5 space-y-4 hover:border-emerald-500/40 transition shadow-xl flex flex-col justify-between"
                     >
                       <div className="space-y-3">
@@ -281,34 +281,25 @@ const MyCourses = () => {
                         </div>
                         <div>
                           <h3 className="text-sm font-bold text-white line-clamp-1">
-                            {course.course.courseId.title}
+                            {courseTitle}
                           </h3>
-                          {course.course.courseId.arabicTitle && (
+                          {arabicTitle && (
                             <p className="text-xs text-amber-400 font-serif font-semibold mt-0.5">
-                              {course.course.courseId.arabicTitle}
+                              {arabicTitle}
                             </p>
                           )}
                         </div>
                       </div>
 
                       {/* Action Button */}
-                      <div className="p-5 pt-0">
+                      <div className="pt-2">
                         <Link
-                          to={`/course/${course.course.courseId._id}/player`}
+                          to={`/course/${courseId}/player`}
                           className="w-full py-2.5 px-4 bg-amber-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 transition shadow-lg shadow-amber-500/20"
                         >
-                          <PlayCircle className="w-4 h-4 shrink-0" /> Continue
+                          <PlayCircle className="w-4 h-4 shrink-0" /> Review Course
                         </Link>
                       </div>
-
-                      {/* <a
-                        href={rawItem.certificateUrl || course.certificateUrl || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-2.5 px-4 bg-slate-950 border border-slate-800 text-amber-400 hover:text-amber-300 hover:border-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition"
-                      >
-                        <Award className="w-4 h-4 shrink-0" /> Certificate
-                      </a> */}
                     </div>
                   );
                 })}

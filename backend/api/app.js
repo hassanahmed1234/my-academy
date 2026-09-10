@@ -15,6 +15,8 @@ import myProgressRoutes from "./routes/myProgressRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
+import announcementRoutes from "./routes/announcementRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
 
 const app = express();
 
@@ -76,6 +78,8 @@ app.use("/api/my-progress", myProgressRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/announcements", announcementRoutes);
+app.use("/api/tasks", taskRoutes);
 
 // Base Health Check Route
 app.get("/", (req, res) => {
