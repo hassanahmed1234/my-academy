@@ -62,7 +62,7 @@ const AdminQuizBuilder = () => {
     try {
       setLoading(true);
       const [resQuizzes, resCourses] = await Promise.all([
-        API.get("/admin/quizzes"),
+        API.get("/quizzes"),
         API.get("/courses"),
       ]);
       setQuizzes(resQuizzes.data);
@@ -84,7 +84,7 @@ const AdminQuizBuilder = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      await API.post("/admin/quizzes", quizForm);
+      await API.post("/quizzes", quizForm);
       setShowQuizModal(false);
       setQuizForm({
         title: "",
@@ -107,7 +107,7 @@ const AdminQuizBuilder = () => {
   // Toggle Publish
   const handleTogglePublish = async (quiz) => {
     try {
-      await API.put(`/admin/quizzes/${quiz._id}`, {
+      await API.put(`/quizzes/${quiz._id}`, {
         isPublished: !quiz.isPublished,
       });
       fetchQuizzesAndCourses();
@@ -132,7 +132,7 @@ const AdminQuizBuilder = () => {
     setSelectedQuizForBank(quiz);
     try {
       setLoading(true);
-      const res = await API.get(`/admin/quizzes/${quiz._id}/questions`);
+      const res = await API.get(`/quizzes/${quiz._id}/questions`);
       setQuestions(res.data);
     } catch (err) {
       console.error(err);
@@ -158,7 +158,7 @@ const AdminQuizBuilder = () => {
 
     try {
       setLoading(true);
-      const res = await API.post("/admin/questions", {
+      const res = await API.post("/quizzes/questions", {
         ...questionForm,
         quizId: selectedQuizForBank._id,
       });
@@ -179,7 +179,7 @@ const AdminQuizBuilder = () => {
   // Delete Question from Bank
   const handleDeleteQuestion = async (questionId) => {
     try {
-      await API.delete(`/admin/questions/${questionId}`);
+      await API.delete(`/questions/${questionId}`);
       setQuestions(questions.filter((q) => q._id !== questionId));
     } catch (err) {
       console.error(err);
@@ -435,7 +435,7 @@ const AdminQuizBuilder = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-islamic-gold text-slate-900 font-bold rounded-xl flex items-center justify-center gap-2"
+                className="w-full cursor-pointer py-2.5 bg-amber-500 text-slate-900 font-bold rounded-xl flex items-center justify-center gap-2"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />} Add Question to Bank
               </button>

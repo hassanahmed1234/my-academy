@@ -16,6 +16,7 @@ import Contact from "./pages/Contact";
 import DashboardLayout from "./components/DashboardLayout";
 import MyCourses from "./pages/MyCourses";
 import Profile from "./pages/Profile";
+import QuizApp from "./pages/QuizApp";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route path="/dashboard" element={<StudentDashboard />} />
               <Route path="/my-courses" element={<MyCourses />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/quizzes" element={<QuizApp />} />
             </Route>
           </Route>
 

@@ -16,11 +16,11 @@ import { useAuth } from "../context/AuthContext";
 
 const Sidebar = () => {
   const navigate = useNavigate();
-      const { logout } = useAuth();
-  
+  const { logout } = useAuth();
 
-  const handleLogout =async () => {
-   await logout()
+
+  const handleLogout = async () => {
+    await logout()
     navigate("/login");
   };
 
@@ -28,8 +28,8 @@ const Sidebar = () => {
     <aside className="w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col h-screen select-none">
       {/* 1. LOGO HEADER */}
       <NavLink
-       to="/"
-      className="p-6 border-b border-slate-800/80 flex items-center gap-3">
+        to="/"
+        className="p-6 border-b border-slate-800/80 flex items-center gap-3">
         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-lg">
           🕌
         </div>
@@ -41,18 +41,17 @@ const Sidebar = () => {
 
       {/* 2. NAVIGATION LINKS SCROLLABLE AREA */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scrollbar-none">
-        
+
         {/* MAIN SECTION */}
         <div className="space-y-1.5">
           <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">Main</p>
-          
+
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                isActive
-                  ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-white"
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:bg-slate-900 hover:text-white"
               }`
             }
           >
@@ -63,10 +62,9 @@ const Sidebar = () => {
           <NavLink
             to="/my-courses"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                isActive
-                  ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-white"
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:bg-slate-900 hover:text-white"
               }`
             }
           >
@@ -77,10 +75,9 @@ const Sidebar = () => {
           <NavLink
             to="/courses"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                isActive
-                  ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-white"
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:bg-slate-900 hover:text-white"
               }`
             }
           >
@@ -94,15 +91,19 @@ const Sidebar = () => {
           <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">Learning</p>
 
           {/* Quizzes */}
-          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-500 opacity-60 cursor-not-allowed">
-            <div className="flex items-center gap-3">
-              <FileText className="w-4 h-4 shrink-0" />
-              <span>Quizzes</span>
-            </div>
-            <span className="bg-slate-800 text-amber-400/80 border border-amber-500/20 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
-              Soon
-            </span>
-          </div>
+          <NavLink
+            to="/quizzes"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:bg-slate-900 hover:text-white"
+              }`
+            }
+          >
+            <FileText className="w-4 h-4 shrink-0" />
+            <span>Quizzes</span>
+          </NavLink>
+
 
           {/* Assignments */}
           <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-500 opacity-60 cursor-not-allowed">
@@ -142,15 +143,14 @@ const Sidebar = () => {
         <div className="space-y-1.5">
           <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">Account</p>
 
-        
+
 
           <NavLink
             to="/profile"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                isActive
-                  ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-white"
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:bg-slate-900 hover:text-white"
               }`
             }
           >
@@ -158,7 +158,7 @@ const Sidebar = () => {
             <span>Profile</span>
           </NavLink>
 
-         
+
         </div>
 
       </div>
