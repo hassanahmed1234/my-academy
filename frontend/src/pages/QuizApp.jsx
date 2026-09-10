@@ -70,7 +70,7 @@ const QuizApp = () => {
     const handleVisibilityChange = async () => {
       if (document.hidden) {
         try {
-          const res = await API.post(`/quizzes/attempt/${attempt._id}/violation`, {
+          const res = await API.post(`/student/quizzes/attempt/${attempt._id}/violation`, {
             type: "tab_switch",
           });
           if (res.data.autoSubmitted) {
@@ -88,7 +88,7 @@ const QuizApp = () => {
     const handleFullscreenChange = async () => {
       if (!document.fullscreenElement) {
         try {
-          await API.post(`/quizzes/attempt/${attempt._id}/violation`, {
+          await API.post(`/student/quizzes/attempt/${attempt._id}/violation`, {
             type: "fullscreen_exit",
           });
           setWarningMsg("⚠️ You exited fullscreen mode. Please return to fullscreen!");
@@ -111,7 +111,7 @@ const QuizApp = () => {
   const handleStartQuiz = async () => {
     try {
       setLoading(true);
-      const res = await API.post(`/quizzes/${selectedQuiz._id}/start`);
+      const res = await API.post(`/student/quizzes/${selectedQuiz._id}/start`);
       setAttempt(res.data.attempt);
 
       // Request Fullscreen
@@ -135,7 +135,7 @@ const QuizApp = () => {
 
     // Auto-save answer to server
     try {
-      await API.post(`/quizzes/attempt/${attempt._id}/answer`, {
+      await API.post(`/student/quizzes/attempt/${attempt._id}/answer`, {
         questionId: currentQ.questionId,
         selectedAnswer: option,
       });
@@ -148,7 +148,7 @@ const QuizApp = () => {
     if (!isAuto && !window.confirm("Are you sure you want to submit your quiz?")) return;
     try {
       setLoading(true);
-      await API.post(`/quizzes/attempt/${attempt._id}/submit`);
+      await API.post(`/student/quizzes/attempt/${attempt._id}/submit`);
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
@@ -163,7 +163,7 @@ const QuizApp = () => {
   const handleFetchResults = async (attemptId) => {
     try {
       setLoading(true);
-      const res = await API.get(`/quizzes/attempt/${attemptId}/result`);
+      const res = await API.get(`/student/quizzes/attempt/${attemptId}/result`);
       setResult(res.data);
       setView("result");
     } catch (err) {

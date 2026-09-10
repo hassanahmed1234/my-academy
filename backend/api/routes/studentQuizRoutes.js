@@ -11,7 +11,7 @@ const router = express.Router();
 // Public / Student Protected Routes
 router.use(protect);
 
-router.get("/:quizId/start", handleStartQuiz);
+router.post("/:quizId/start", handleStartQuiz);
 router.post("/:quizId/submit", handleFinalSubmit);
 router.get("/:quizId/results", handleFetchResults);
 
