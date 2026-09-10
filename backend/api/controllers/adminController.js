@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import Course from "../models/Course.js";
 import Task from "../models/Task.js";
 import LiveSession from "../models/LiveSession.js";
+import Enrollment from "../models/Enrollment.js";
 
 export const getDashboardOverview = async (req, res) => {
   try {
