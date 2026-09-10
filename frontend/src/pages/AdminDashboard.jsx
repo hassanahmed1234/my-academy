@@ -29,7 +29,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({
     students: 0,
     coursesCount: 0,
-    enrollments: 0,
+    // enrollments: 0,
     revenue: "Rs. 0",
   });
 
@@ -277,11 +277,10 @@ const AdminDashboard = () => {
 
       {message.text && (
         <div
-          className={`p-4 text-xs rounded-xl font-semibold border ${
-            message.type === "success"
+          className={`p-4 text-xs rounded-xl font-semibold border ${message.type === "success"
               ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
               : "bg-red-500/10 border-red-500/30 text-red-400"
-          }`}
+            }`}
         >
           {message.text}
         </div>
@@ -289,9 +288,10 @@ const AdminDashboard = () => {
 
       {/* TOP STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Total Students */}
         <div className="bg-islamic-card border border-islamic-border p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-islamic-muted">Students</p>
+            <p className="text-xs font-medium text-islamic-muted">Total Students</p>
             <h2 className="text-2xl font-black text-islamic-text mt-1">
               {stats.students || 0}
             </h2>
@@ -301,9 +301,10 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Active Courses */}
         <div className="bg-islamic-card border border-islamic-border p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-islamic-muted">Courses</p>
+            <p className="text-xs font-medium text-islamic-muted">Active Courses</p>
             <h2 className="text-2xl font-black text-islamic-text mt-1">
               {courses.length}
             </h2>
@@ -313,27 +314,29 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Active Tasks */}
         <div className="bg-islamic-card border border-islamic-border p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-islamic-muted">Enrollments</p>
+            <p className="text-xs font-medium text-islamic-muted">Pending Tasks</p>
             <h2 className="text-2xl font-black text-islamic-text mt-1">
-              {stats.enrollments || 0}
+              {stats.tasks || 0}
             </h2>
           </div>
           <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
-            <CreditCard className="w-6 h-6" />
+            <CheckSquare className="w-6 h-6" />
           </div>
         </div>
 
+        {/* Live Sessions */}
         <div className="bg-islamic-card border border-islamic-border p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-islamic-muted">Revenue</p>
+            <p className="text-xs font-medium text-islamic-muted">Live Broadcasts</p>
             <h2 className="text-2xl font-black text-islamic-text mt-1">
-              {stats.revenue || "Rs. 0"}
+              {stats.liveSessions || 0}
             </h2>
           </div>
-          <div className="p-3 bg-purple-500/10 rounded-xl text-purple-500">
-            <DollarSign className="w-6 h-6" />
+          <div className="p-3 bg-red-500/10 rounded-xl text-red-500">
+            <Video className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -342,31 +345,28 @@ const AdminDashboard = () => {
       <div className="flex items-center gap-4 border-b border-islamic-border">
         <button
           onClick={() => setActiveTab("overview")}
-          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${
-            activeTab === "overview"
+          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "overview"
               ? "border-islamic-primary text-islamic-primary"
               : "border-transparent text-islamic-muted hover:text-islamic-text"
-          }`}
+            }`}
         >
           <TrendingUp className="w-4 h-4" /> Overview & Operations
         </button>
         <button
           onClick={() => setActiveTab("courses")}
-          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${
-            activeTab === "courses"
+          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "courses"
               ? "border-islamic-primary text-islamic-primary"
               : "border-transparent text-islamic-muted hover:text-islamic-text"
-          }`}
+            }`}
         >
           <BookOpen className="w-4 h-4" /> Courses Catalog ({courses.length})
         </button>
         <button
           onClick={() => setActiveTab("live")}
-          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${
-            activeTab === "live"
+          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "live"
               ? "border-red-500 text-red-500"
               : "border-transparent text-islamic-muted hover:text-islamic-text"
-          }`}
+            }`}
         >
           <Video className="w-4 h-4" /> Live Broadcasts ({liveSessions.length})
         </button>
@@ -376,7 +376,7 @@ const AdminDashboard = () => {
       {activeTab === "overview" && (
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
+
             {/* Task Management Section */}
             <div className="bg-islamic-card border border-islamic-border rounded-2xl p-6 space-y-4 shadow-sm">
               <div className="flex items-center justify-between border-b border-islamic-border pb-3">
@@ -448,11 +448,10 @@ const AdminDashboard = () => {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-islamic-text">{ann.title}</h4>
-                          <span className={`px-2 py-0.5 text-[9px] font-bold rounded-md ${
-                            ann.priority === "High" 
-                              ? "bg-red-500/20 text-red-400" 
+                          <span className={`px-2 py-0.5 text-[9px] font-bold rounded-md ${ann.priority === "High"
+                              ? "bg-red-500/20 text-red-400"
                               : "bg-islamic-gold/20 text-islamic-gold"
-                          }`}>
+                            }`}>
                             {ann.priority || "Normal"}
                           </span>
                         </div>

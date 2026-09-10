@@ -8,61 +8,34 @@ import LiveSession from "../models/LiveSession.js";
 // ==========================================
 // 1. DASHBOARD OVERVIEW & STATS
 // ==========================================
+import User from "../models/User.js";
+import Course from "../models/Course.js";
+import Task from "../models/Task.js";
+import LiveSession from "../models/LiveSession.js";
+
 export const getDashboardOverview = async (req, res) => {
   try {
-    // 1. Parallel counts and total revenue aggregate
-    const [studentsCount, coursesCount, enrollmentsCount, revenueAgg] = await Promise.all([
+    // Parallel counts for Students, Courses, Active Tasks, and Live Sessions
+    const [studentsCount, coursesCount, tasksCount, liveSessionsCount] = await Promise.all([
       User.countDocuments({ role: "student" }),
       Course.countDocuments(),
-      Enrollment.countDocuments(),
-      Enrollment.aggregate([
-        { $group: { _id: null, total: { $sum: "$amount" } } }
-      ])
+      Task.countDocuments({ status: { $ne: "completed" } }), // Pending / Active Tasks
+      LiveSession.countDocuments(),
     ]);
-
-    const totalRevenue = revenueAgg[0]?.total || 0;
-
-    // 2. Course Performance (Active Enrollments per Course)
-    const coursePerformance = await Course.aggregate([
-      {
-        $lookup: {
-          from: "enrollments",
-          localField: "_id",
-          foreignField: "courseId",
-          as: "enrollments"
-        }
-      },
-      {
-        $project: {
-          title: 1,
-          studentsCount: { $size: "$enrollments" },
-          completionRate: { $literal: 85 }
-        }
-      },
-      { $limit: 5 }
-    ]);
-
-    // 3. Recent Enrollments
- 
-
-    // 4. Recent Messages
-    // const recentMessages = await Message.find()
-    //   .populate("senderId", "name")
-    //   .sort({ createdAt: -1 })
-    //   .limit(5);
 
     res.status(200).json({
       stats: {
         students: studentsCount,
-        coursesCount,
-        revenue: `Rs. ${totalRevenue.toLocaleString()}`
+        coursesCount: coursesCount,
+        tasks: tasksCount,
+        liveSessions: liveSessionsCount,
       },
-      coursePerformance,
-      
-      // recentMessages
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error fetching stats", error: error.message });
+    res.status(500).json({
+      message: "Server error fetching stats",
+      error: error.message
+    });
   }
 };
 
