@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.use(protect, adminOnly);
 
-router.post("", createQuiz);
+router.post("/", createQuiz);
 router.put("/:quizId", updateQuiz);
 router.delete("/:quizId", deleteQuiz);
 
