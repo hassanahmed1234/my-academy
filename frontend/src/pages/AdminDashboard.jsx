@@ -9,13 +9,466 @@ import {
   DollarSign,
   TrendingUp,
   Calendar,
-  Loader2,
   ExternalLink,
   Trash2,
-  X,
   CheckSquare,
   Megaphone,
+  Edit,
+  CheckCircle2,
+  XCircle,
+  HelpCircle,
+  Layers,
+  Clock,
+  Award,
+  RotateCcw,
+  Eye,
+  Loader2,
+  X,
+  Check,
 } from "lucide-react";
+
+
+const AdminQuizBuilder = () => {
+  const [quizzes, setQuizzes] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Modals
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [selectedQuizForBank, setSelectedQuizForBank] = useState(null);
+  const [questions, setQuestions] = useState([]);
+
+  // Quiz Form State
+  const [quizForm, setQuizForm] = useState({
+    title: "",
+    course: "",
+    module: "Module 1",
+    type: "practice",
+    questionCount: 10,
+    timeLimit: 10,
+    passingScore: 70,
+    attemptsAllowed: 2,
+  });
+
+  // Question Form State
+  const [questionForm, setQuestionForm] = useState({
+    question: "",
+    options: ["", "", "", ""],
+    correctAnswer: "",
+    explanation: "",
+  });
+
+  const fetchQuizzesAndCourses = async () => {
+    try {
+      setLoading(true);
+      const [resQuizzes, resCourses] = await Promise.all([
+        API.get("/quizzes"),
+        API.get("/courses"),
+      ]);
+      setQuizzes(resQuizzes.data);
+      setCourses(resCourses.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQuizzesAndCourses();
+  }, []);
+
+  // Handle Quiz Creation
+  const handleSaveQuiz = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await API.post("/admin/quizzes", quizForm);
+      setShowQuizModal(false);
+      setQuizForm({
+        title: "",
+        course: "",
+        module: "Module 1",
+        type: "practice",
+        questionCount: 10,
+        timeLimit: 10,
+        passingScore: 70,
+        attemptsAllowed: 2,
+      });
+      fetchQuizzesAndCourses();
+    } catch (err) {
+      alert(err.response?.data?.message || "Error creating quiz.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Toggle Publish
+  const handleTogglePublish = async (quiz) => {
+    try {
+      await API.put(`/admin/quizzes/${quiz._id}`, {
+        isPublished: !quiz.isPublished,
+      });
+      fetchQuizzesAndCourses();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Delete Quiz
+  const handleDeleteQuiz = async (quizId) => {
+    if (!window.confirm("Are you sure? This will delete the quiz and all associated questions.")) return;
+    try {
+      await API.delete(`/admin/quizzes/${quizId}`);
+      fetchQuizzesAndCourses();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Load Questions for Question Bank
+  const handleOpenQuestionBank = async (quiz) => {
+    setSelectedQuizForBank(quiz);
+    try {
+      setLoading(true);
+      const res = await API.get(`/admin/quizzes/${quiz._id}/questions`);
+      setQuestions(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Option Change inside Question Form
+  const handleOptionChange = (index, value) => {
+    const updatedOptions = [...questionForm.options];
+    updatedOptions[index] = value;
+    setQuestionForm({ ...questionForm, options: updatedOptions });
+  };
+
+  // Save Question to Bank
+  const handleAddQuestion = async (e) => {
+    e.preventDefault();
+    if (!questionForm.correctAnswer) {
+      alert("Please select the correct option!");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await API.post("/admin/questions", {
+        ...questionForm,
+        quizId: selectedQuizForBank._id,
+      });
+      setQuestions([...questions, res.data]);
+      setQuestionForm({
+        question: "",
+        options: ["", "", "", ""],
+        correctAnswer: "",
+        explanation: "",
+      });
+    } catch (err) {
+      alert("Failed to add question.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete Question from Bank
+  const handleDeleteQuestion = async (questionId) => {
+    try {
+      await API.delete(`/admin/questions/${questionId}`);
+      setQuestions(questions.filter((q) => q._id !== questionId));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="p-6 bg-islamic-bg text-islamic-text min-h-screen space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-islamic-border pb-5">
+        <div>
+          <span className="font-arabic text-xl text-islamic-gold">إدارة الاختبارات</span>
+          <h1 className="text-2xl font-black">Quiz & Question Bank Builder</h1>
+          <p className="text-xs text-islamic-muted">Create assessment exams and manage randomized question banks.</p>
+        </div>
+        <button
+          onClick={() => setShowQuizModal(true)}
+          className="px-4 py-2 bg-islamic-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-emerald-700 transition"
+        >
+          <Plus className="w-4 h-4" /> Create New Quiz
+        </button>
+      </div>
+
+      {/* QUIZ LIST */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {quizzes.map((quiz) => (
+          <div
+            key={quiz._id}
+            className="bg-islamic-card border border-islamic-border p-5 rounded-2xl flex flex-col justify-between space-y-4 shadow-sm"
+          >
+            <div>
+              <div className="flex justify-between items-center text-[10px] uppercase font-bold text-islamic-gold">
+                <span>{quiz.type} Exam</span>
+                <span className={`px-2 py-0.5 rounded ${quiz.isPublished ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
+                  {quiz.isPublished ? "Published" : "Draft"}
+                </span>
+              </div>
+              <h3 className="text-base font-bold mt-1">{quiz.title}</h3>
+
+              <div className="grid grid-cols-2 gap-2 text-xs text-islamic-muted mt-3 bg-islamic-bg p-3 rounded-xl border border-islamic-border">
+                <span className="flex items-center gap-1"><HelpCircle className="w-3.5 h-3.5" /> Pull: {quiz.questionCount} Qs</span>
+                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {quiz.timeLimit} Mins</span>
+                <span className="flex items-center gap-1"><Award className="w-3.5 h-3.5" /> Pass: {quiz.passingScore}%</span>
+                <span className="flex items-center gap-1"><RotateCcw className="w-3.5 h-3.5" /> Limits: {quiz.attemptsAllowed}</span>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-islamic-border flex items-center justify-between gap-2">
+              <button
+                onClick={() => handleOpenQuestionBank(quiz)}
+                className="px-3 py-1.5 bg-islamic-gold/10 border border-islamic-gold/30 text-islamic-gold text-xs font-bold rounded-lg hover:bg-islamic-gold hover:text-slate-900 transition flex items-center gap-1"
+              >
+                <Layers className="w-3.5 h-3.5" /> Question Bank
+              </button>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleTogglePublish(quiz)}
+                  title="Toggle Publish"
+                  className="p-2 text-islamic-muted hover:text-islamic-text"
+                >
+                  {quiz.isPublished ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-amber-400" />}
+                </button>
+                <button
+                  onClick={() => handleDeleteQuiz(quiz._id)}
+                  className="p-2 text-red-400 hover:text-red-300"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* CREATE QUIZ MODAL */}
+      {showQuizModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-islamic-card border border-islamic-border w-full max-w-lg rounded-2xl p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-islamic-border pb-3">
+              <h3 className="font-bold text-lg">Configure New Assessment</h3>
+              <button onClick={() => setShowQuizModal(false)}><X className="w-5 h-5 text-islamic-muted" /></button>
+            </div>
+
+            <form onSubmit={handleSaveQuiz} className="space-y-4 text-xs">
+              <div>
+                <label className="block mb-1 font-medium">Quiz Title</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Tajweed Rules - Module 1 Quiz"
+                  value={quizForm.title}
+                  onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
+                  className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5 text-islamic-text focus:outline-none focus:border-islamic-gold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block mb-1 font-medium">Select Course</label>
+                  <select
+                    required
+                    value={quizForm.course}
+                    onChange={(e) => setQuizForm({ ...quizForm, course: e.target.value })}
+                    className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5 text-islamic-text focus:outline-none focus:border-islamic-gold"
+                  >
+                    <option value="">Choose Course</option>
+                    {courses.map((c) => (
+                      <option key={c._id} value={c._id}>{c.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium">Exam Type</label>
+                  <select
+                    value={quizForm.type}
+                    onChange={(e) => setQuizForm({ ...quizForm, type: e.target.value })}
+                    className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5 text-islamic-text focus:outline-none focus:border-islamic-gold"
+                  >
+                    <option value="practice">Practice Quiz</option>
+                    <option value="final">Final Exam</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block mb-1 font-medium">Questions to Serve</label>
+                  <input
+                    type="number"
+                    value={quizForm.questionCount}
+                    onChange={(e) => setQuizForm({ ...quizForm, questionCount: Number(e.target.value) })}
+                    className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium">Time Limit (Minutes)</label>
+                  <input
+                    type="number"
+                    value={quizForm.timeLimit}
+                    onChange={(e) => setQuizForm({ ...quizForm, timeLimit: Number(e.target.value) })}
+                    className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block mb-1 font-medium">Passing Score (%)</label>
+                  <input
+                    type="number"
+                    value={quizForm.passingScore}
+                    onChange={(e) => setQuizForm({ ...quizForm, passingScore: Number(e.target.value) })}
+                    className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium">Attempts Limit</label>
+                  <input
+                    type="number"
+                    value={quizForm.attemptsAllowed}
+                    onChange={(e) => setQuizForm({ ...quizForm, attemptsAllowed: Number(e.target.value) })}
+                    className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-islamic-border">
+                <button
+                  type="button"
+                  onClick={() => setShowQuizModal(false)}
+                  className="px-4 py-2 font-bold text-islamic-muted"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 bg-islamic-primary text-white font-bold rounded-xl flex items-center gap-2"
+                >
+                  {loading && <Loader2 className="w-4 h-4 animate-spin" />} Save Assessment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* QUESTION BANK DRAWER / MODAL */}
+      {selectedQuizForBank && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-end z-50">
+          <div className="bg-islamic-card border-l border-islamic-border w-full max-w-2xl h-full p-6 space-y-6 overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-islamic-border pb-4">
+              <div>
+                <h2 className="text-lg font-bold">{selectedQuizForBank.title}</h2>
+                <p className="text-xs text-islamic-muted">Manage Question Bank ({questions.length} Total Questions)</p>
+              </div>
+              <button onClick={() => setSelectedQuizForBank(null)}>
+                <X className="w-5 h-5 text-islamic-muted" />
+              </button>
+            </div>
+
+            {/* ADD QUESTION FORM */}
+            <form onSubmit={handleAddQuestion} className="bg-islamic-bg p-4 border border-islamic-border rounded-2xl space-y-4 text-xs">
+              <h3 className="font-bold text-sm text-islamic-gold">Add Question to Bank</h3>
+
+              <div>
+                <label className="block mb-1">Question Text</label>
+                <textarea
+                  required
+                  rows={2}
+                  placeholder="Enter the question..."
+                  value={questionForm.question}
+                  onChange={(e) => setQuestionForm({ ...questionForm, question: e.target.value })}
+                  className="w-full bg-islamic-card border border-islamic-border rounded-xl p-2.5 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block font-medium">Options (Select radio for correct option)</label>
+                {questionForm.options.map((opt, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="correctOption"
+                      checked={questionForm.correctAnswer === opt && opt !== ""}
+                      onChange={() => setQuestionForm({ ...questionForm, correctAnswer: opt })}
+                      className="accent-emerald-500"
+                    />
+                    <input
+                      required
+                      type="text"
+                      placeholder={`Option ${idx + 1}`}
+                      value={opt}
+                      onChange={(e) => handleOptionChange(idx, e.target.value)}
+                      className="w-full bg-islamic-card border border-islamic-border rounded-xl p-2 focus:outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <label className="block mb-1">Explanation (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="Explanation shown during review..."
+                  value={questionForm.explanation}
+                  onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })}
+                  className="w-full bg-islamic-card border border-islamic-border rounded-xl p-2.5 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2.5 bg-islamic-gold text-slate-900 font-bold rounded-xl flex items-center justify-center gap-2"
+              >
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />} Add Question to Bank
+              </button>
+            </form>
+
+            {/* EXISTING QUESTIONS LIST */}
+            <div className="space-y-3">
+              <h3 className="font-bold text-sm">Configured Questions ({questions.length})</h3>
+              {questions.map((q, idx) => (
+                <div key={q._id} className="p-4 bg-islamic-bg border border-islamic-border rounded-xl space-y-2 text-xs">
+                  <div className="flex justify-between items-start gap-2">
+                    <p className="font-bold">Q{idx + 1}: {q.question}</p>
+                    <button onClick={() => handleDeleteQuestion(q._id)} className="text-red-400 hover:text-red-300">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1 text-islamic-muted">
+                    {q.options.map((opt, oIdx) => (
+                      <span key={oIdx} className={`p-1.5 rounded ${opt === q.correctAnswer ? "bg-emerald-500/20 text-emerald-300 font-bold" : ""}`}>
+                        {opt} {opt === q.correctAnswer && "✓"}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 const AdminDashboard = () => {
   const [courses, setCourses] = useState([]);
@@ -377,313 +830,197 @@ const AdminDashboard = () => {
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {/* Task Management Section */}
-            <div className="bg-islamic-card border border-islamic-border rounded-2xl p-6 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-islamic-border pb-3">
-                <h3 className="text-sm font-bold text-islamic-text flex items-center gap-2">
-                  <CheckSquare className="w-4 h-4 text-islamic-gold" /> Admin Tasks
-                </h3>
+ {/* Task Management Section */}
+            <div className="bg-islamic-card border border-islamic-border rounded-2xl p-5 space-y-4 shadow-sm">
+              <div className="flex justify-between items-center border-b border-islamic-border pb-3">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-blue-400" />
+                  <h3 className="font-bold text-sm">Administrative Tasks</h3>
+                </div>
                 <button
                   onClick={() => setShowTaskModal(true)}
-                  className="text-xs text-islamic-gold hover:underline font-bold flex items-center gap-1"
+                  className="text-xs text-islamic-gold font-bold hover:underline flex items-center gap-1"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Create Task
+                  <Plus className="w-3.5 h-3.5" /> Add Task
                 </button>
               </div>
 
-              {tasks.length === 0 ? (
-                <p className="text-xs text-islamic-muted py-6 text-center">
-                  No active tasks found.
-                </p>
-              ) : (
-                <div className="divide-y divide-islamic-border space-y-1">
-                  {tasks.map((task) => (
-                    <div key={task._id} className="pt-3 pb-2 flex items-start justify-between gap-3 text-xs">
+              <div className="space-y-3 max-h-350px overflow-y-auto pr-1">
+                {tasks.length === 0 ? (
+                  <p className="text-xs text-islamic-muted py-4 text-center">No pending tasks found.</p>
+                ) : (
+                  tasks.map((task) => (
+                    <div
+                      key={task._id}
+                      className="p-3 bg-islamic-bg border border-islamic-border rounded-xl flex justify-between items-start text-xs space-y-1"
+                    >
                       <div className="space-y-1">
-                        <h4 className="font-bold text-islamic-text">{task.title}</h4>
-                        <p className="text-islamic-muted text-[11px] line-clamp-2">{task.description}</p>
-                        <div className="flex items-center gap-3 text-[10px] text-islamic-gold pt-1">
-                          {task.dueDate && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" /> Due: {new Date(task.dueDate).toLocaleDateString()}
-                            </span>
-                          )}
-                          {task.assignedTo && <span>Assigned: {task.assignedTo}</span>}
+                        <p className="font-bold text-islamic-text">{task.title}</p>
+                        <p className="text-islamic-muted text-[11px]">{task.description}</p>
+                        <div className="flex items-center gap-3 text-[10px] text-islamic-muted pt-1">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-400" /> Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "N/A"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3 text-emerald-400" /> Assigned: {task.assignedTo || "Unassigned"}
+                          </span>
                         </div>
                       </div>
                       <button
                         onClick={() => handleDeleteTask(task._id)}
-                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition"
+                        className="text-red-400 hover:text-red-300 p-1"
+                        title="Delete Task"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </div>
 
             {/* Announcements Section */}
-            <div className="bg-islamic-card border border-islamic-border rounded-2xl p-6 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-islamic-border pb-3">
-                <h3 className="text-sm font-bold text-islamic-text flex items-center gap-2">
-                  <Megaphone className="w-4 h-4 text-islamic-gold" /> Global Announcements
-                </h3>
+            <div className="bg-islamic-card border border-islamic-border rounded-2xl p-5 space-y-4 shadow-sm">
+              <div className="flex justify-between items-center border-b border-islamic-border pb-3">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="w-5 h-5 text-amber-400" />
+                  <h3 className="font-bold text-sm">Portal Announcements</h3>
+                </div>
                 <button
                   onClick={() => setShowAnnouncementModal(true)}
-                  className="text-xs text-islamic-gold hover:underline font-bold flex items-center gap-1"
+                  className="text-xs text-islamic-gold font-bold hover:underline flex items-center gap-1"
                 >
                   <Plus className="w-3.5 h-3.5" /> Post Announcement
                 </button>
               </div>
 
-              {announcements.length === 0 ? (
-                <p className="text-xs text-islamic-muted py-6 text-center">
-                  No announcements published.
-                </p>
-              ) : (
-                <div className="divide-y divide-islamic-border space-y-1">
-                  {announcements.map((ann) => (
-                    <div key={ann._id} className="pt-3 pb-2 flex items-start justify-between gap-3 text-xs">
+              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                {announcements.length === 0 ? (
+                  <p className="text-xs text-islamic-muted py-4 text-center">No announcements posted.</p>
+                ) : (
+                  announcements.map((ann) => (
+                    <div
+                      key={ann._id}
+                      className="p-3 bg-islamic-bg border border-islamic-border rounded-xl flex justify-between items-start text-xs"
+                    >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-islamic-text">{ann.title}</h4>
-                          <span className={`px-2 py-0.5 text-[9px] font-bold rounded-md ${ann.priority === "High"
-                              ? "bg-red-500/20 text-red-400"
-                              : "bg-islamic-gold/20 text-islamic-gold"
-                            }`}>
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${ann.priority === "High" ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"}`}>
                             {ann.priority || "Normal"}
                           </span>
+                          <p className="font-bold text-islamic-text">{ann.title}</p>
                         </div>
-                        <p className="text-islamic-muted text-[11px] line-clamp-2">{ann.content}</p>
-                        <p className="text-[10px] text-islamic-muted pt-1">
-                          {new Date(ann.createdAt || Date.now()).toLocaleDateString()}
-                        </p>
+                        <p className="text-islamic-muted text-[11px]">{ann.content}</p>
                       </div>
                       <button
                         onClick={() => handleDeleteAnnouncement(ann._id)}
-                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition"
+                        className="text-red-400 hover:text-red-300 p-1"
+                        title="Delete Announcement"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Live Classes Quick Overview */}
-          <div className="bg-islamic-card border border-islamic-border rounded-2xl p-6 space-y-4 shadow-sm">
-            <h3 className="text-sm font-bold text-islamic-text border-b border-islamic-border pb-3 flex items-center gap-2">
-              <Video className="w-4 h-4 text-red-500" /> Scheduled Live Classes
-            </h3>
-            {liveSessions.length === 0 ? (
-              <p className="text-xs text-islamic-muted py-4">No live sessions scheduled.</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {liveSessions.slice(0, 3).map((ls) => (
-                  <div
-                    key={ls._id}
-                    className="p-4 bg-islamic-bg rounded-xl border border-islamic-border flex flex-col justify-between text-xs space-y-3"
-                  >
-                    <div>
-                      <p className="font-bold text-islamic-text">{ls.title}</p>
-                      <p className="text-[11px] text-islamic-gold mt-0.5">Scholar: {ls.scholarName}</p>
-                      <p className="text-[10px] text-islamic-muted flex items-center gap-1 mt-1">
-                        <Calendar className="w-3 h-3" /> {new Date(ls.scheduledAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <a
-                      href={ls.meetingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-[10px] font-bold hover:bg-red-700 text-center transition"
-                    >
-                      Join Class
-                    </a>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Integrated Quiz Builder Sub-Section */}
+          <div className="border-t border-islamic-border pt-6">
+            <AdminQuizBuilder />
           </div>
         </div>
       )}
 
-      {/* COURSES TAB */}
+      {/* COURSES CATALOG TAB */}
       {activeTab === "courses" && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-bold text-islamic-text">All Courses Catalog</h3>
-            <button
-              onClick={() => setShowCourseModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-islamic-primary text-white text-xs font-bold flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> Add Course
-            </button>
-          </div>
-
-          {courses.length === 0 ? (
-            <div className="p-8 text-center bg-islamic-card border border-islamic-border rounded-2xl text-islamic-muted text-xs">
-              No courses found in database.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((c) => (
-                <div
-                  key={c._id}
-                  className="bg-islamic-card border border-islamic-border rounded-2xl overflow-hidden shadow-sm space-y-3 flex flex-col justify-between"
-                >
-                  <img
-                    src={c.image || "https://images.unsplash.com/photo-1542816417-0983cbe82752?auto=format&fit=crop&q=80"}
-                    alt={c.title}
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-islamic-gold uppercase tracking-wider">
-                          {c.category || "Seerah"}
-                        </span>
-                        <span className="text-xs font-bold text-islamic-primary">
-                          Rs. {c.price || 0}
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-sm text-islamic-text mt-1">{c.title}</h4>
-                      <p className="text-xs text-islamic-muted font-arabic">{c.arabicTitle}</p>
-                      <p className="text-xs text-islamic-muted line-clamp-2 mt-2">{c.description}</p>
-                    </div>
-
-                    <div className="pt-3 border-t border-islamic-border flex items-center justify-between text-xs">
-                      <span className="text-islamic-muted text-[11px]">By {c.instructor}</span>
-                      <button
-                        onClick={() => handleDeleteCourse(c._id)}
-                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {courses.map((course) => (
+            <div key={course._id} className="bg-islamic-card border border-islamic-border rounded-2xl p-5 space-y-3 flex flex-col justify-between shadow-sm">
+              <div className="space-y-2">
+                {course.image && (
+                  <img src={course.image} alt={course.title} className="w-full h-32 object-cover rounded-xl border border-islamic-border" />
+                )}
+                <div className="flex justify-between items-center text-[10px] font-bold text-islamic-gold uppercase">
+                  <span>{course.category}</span>
+                  <span className="font-arabic text-xs">{course.arabicTitle}</span>
                 </div>
-              ))}
+                <h3 className="font-bold text-base">{course.title}</h3>
+                <p className="text-xs text-islamic-muted line-clamp-2">{course.description}</p>
+              </div>
+
+              <div className="pt-3 border-t border-islamic-border flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-400">
+                  {course.price ? `Rs. ${course.price}` : "Free"}
+                </span>
+                <button
+                  onClick={() => handleDeleteCourse(course._id)}
+                  className="p-1.5 text-red-400 hover:text-red-300 transition"
+                  title="Delete Course"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       )}
 
       {/* LIVE BROADCASTS TAB */}
       {activeTab === "live" && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-bold text-islamic-text">Live Classes Schedule</h3>
-            <button
-              onClick={() => setShowLiveModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold flex items-center gap-2"
-            >
-              <Video className="w-4 h-4" /> Schedule Session
-            </button>
-          </div>
-
-          {liveSessions.length === 0 ? (
-            <div className="p-8 text-center bg-islamic-card border border-islamic-border rounded-2xl text-islamic-muted text-xs">
-              No live classes scheduled.
-            </div>
-          ) : (
-            <div className="divide-y divide-islamic-border bg-islamic-card border border-islamic-border rounded-2xl overflow-hidden">
-              {liveSessions.map((session) => (
-                <div
-                  key={session._id}
-                  className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-sm text-islamic-text">{session.title}</h4>
-                    <p className="text-xs text-islamic-gold">Scholar: {session.scholarName}</p>
-                    <p className="text-[11px] text-islamic-muted flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {new Date(session.scheduledAt).toLocaleString()}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <a
-                      href={session.meetingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition"
-                    >
-                      Join Meeting <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                    <button
-                      onClick={() => handleDeleteLiveSession(session._id)}
-                      className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {liveSessions.map((session) => (
+            <div key={session._id} className="bg-islamic-card border border-islamic-border rounded-2xl p-5 space-y-3 flex flex-col justify-between shadow-sm">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-red-500">
+                  <Video className="w-4 h-4 animate-pulse" /> Live Stream
                 </div>
-              ))}
+                <h3 className="font-bold text-base">{session.title}</h3>
+                <p className="text-xs text-islamic-muted">Scholar: {session.scholarName}</p>
+                <p className="text-[11px] text-islamic-gold">
+                  Scheduled: {session.scheduledAt ? new Date(session.scheduledAt).toLocaleString() : "TBD"}
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-islamic-border flex items-center justify-between gap-2">
+                <a
+                  href={session.meetingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-red-600/20 text-red-400 text-xs font-bold rounded-lg flex items-center gap-1.5 hover:bg-red-600 hover:text-white transition"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Join Session
+                </a>
+                <button
+                  onClick={() => handleDeleteLiveSession(session._id)}
+                  className="p-1.5 text-red-400 hover:text-red-300 transition"
+                  title="Delete Live Session"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       )}
 
-      {/* Modal 1: Course Modal */}
+      {/* CREATE COURSE MODAL */}
       {showCourseModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-islamic-card border border-islamic-border rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-2xl relative text-islamic-text">
-            <div className="flex items-center justify-between border-b border-islamic-border pb-4">
-              <h2 className="text-lg font-bold">Publish New Course</h2>
-              <button onClick={() => setShowCourseModal(false)} className="p-1 text-islamic-muted hover:text-islamic-text">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-islamic-card border border-islamic-border w-full max-w-lg rounded-2xl p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-islamic-border pb-3">
+              <h3 className="font-bold text-lg">Add New Course</h3>
+              <button onClick={() => setShowCourseModal(false)}><X className="w-5 h-5 text-islamic-muted" /></button>
             </div>
-            <form onSubmit={handleCreateCourse} className="space-y-4">
-              <input
-                type="text"
-                required
-                placeholder="Course Title"
-                value={courseForm.title}
-                onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <input
-                type="text"
-                required
-                placeholder="Arabic Title"
-                value={courseForm.arabicTitle}
-                onChange={(e) => setCourseForm({ ...courseForm, arabicTitle: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text font-arabic focus:outline-none focus:border-islamic-gold"
-              />
-              <input
-                type="text"
-                required
-                placeholder="Instructor Name"
-                value={courseForm.instructor}
-                onChange={(e) => setCourseForm({ ...courseForm, instructor: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <input
-                type="url"
-                required
-                placeholder="Cover Image URL"
-                value={courseForm.image}
-                onChange={(e) => setCourseForm({ ...courseForm, image: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <textarea
-                rows={3}
-                required
-                placeholder="Description"
-                value={courseForm.description}
-                onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowCourseModal(false)} className="px-4 py-2 text-xs font-bold text-islamic-muted">
-                  Cancel
-                </button>
-                <button type="submit" disabled={submitting} className="px-5 py-2 bg-islamic-primary text-white rounded-xl text-xs font-bold">
-                  {submitting ? "Publishing..." : "Publish"}
+            <form onSubmit={handleCreateCourse} className="space-y-3 text-xs">
+              <input required type="text" placeholder="Course Title" value={courseForm.title} onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <input type="text" placeholder="Arabic Title" value={courseForm.arabicTitle} onChange={(e) => setCourseForm({ ...courseForm, arabicTitle: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5 font-arabic" />
+              <textarea required placeholder="Course Description" rows={3} value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowCourseModal(false)} className="px-4 py-2 font-bold text-islamic-muted">Cancel</button>
+                <button type="submit" disabled={submitting} className="px-5 py-2 bg-islamic-primary text-white font-bold rounded-xl flex items-center gap-2">
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Save Course
                 </button>
               </div>
             </form>
@@ -691,67 +1028,23 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Modal 2: Live Class Modal */}
+      {/* CREATE LIVE CLASS MODAL */}
       {showLiveModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-islamic-card border border-islamic-border rounded-2xl max-w-lg w-full p-6 space-y-6 shadow-2xl relative text-islamic-text">
-            <div className="flex items-center justify-between border-b border-islamic-border pb-4">
-              <h2 className="text-lg font-bold">Schedule Live Class</h2>
-              <button onClick={() => setShowLiveModal(false)} className="p-1 text-islamic-muted hover:text-islamic-text">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-islamic-card border border-islamic-border w-full max-w-lg rounded-2xl p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-islamic-border pb-3">
+              <h3 className="font-bold text-lg">Schedule Live Class</h3>
+              <button onClick={() => setShowLiveModal(false)}><X className="w-5 h-5 text-islamic-muted" /></button>
             </div>
-            <form onSubmit={handleCreateLiveSession} className="space-y-4">
-              <input
-                type="text"
-                required
-                placeholder="Session Title"
-                value={liveForm.title}
-                onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <select
-                required
-                value={liveForm.course}
-                onChange={(e) => setLiveForm({ ...liveForm, course: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              >
-                <option value="">-- Choose Course --</option>
-                {courses.map((c) => (
-                  <option key={c._id || c.id} value={c._id || c.id}>
-                    {c.title}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                required
-                placeholder="Scholar Name"
-                value={liveForm.scholarName}
-                onChange={(e) => setLiveForm({ ...liveForm, scholarName: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <input
-                type="url"
-                required
-                placeholder="Meeting URL"
-                value={liveForm.meetingUrl}
-                onChange={(e) => setLiveForm({ ...liveForm, meetingUrl: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <input
-                type="datetime-local"
-                required
-                value={liveForm.scheduledAt}
-                onChange={(e) => setLiveForm({ ...liveForm, scheduledAt: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowLiveModal(false)} className="px-4 py-2 text-xs font-bold text-islamic-muted">
-                  Cancel
-                </button>
-                <button type="submit" disabled={submitting} className="px-5 py-2 bg-red-600 text-white rounded-xl text-xs font-bold">
-                  {submitting ? "Scheduling..." : "Schedule"}
+            <form onSubmit={handleCreateLiveSession} className="space-y-3 text-xs">
+              <input required type="text" placeholder="Session Title" value={liveForm.title} onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <input required type="text" placeholder="Scholar/Instructor Name" value={liveForm.scholarName} onChange={(e) => setLiveForm({ ...liveForm, scholarName: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <input required type="url" placeholder="Meeting URL (Zoom / Google Meet)" value={liveForm.meetingUrl} onChange={(e) => setLiveForm({ ...liveForm, meetingUrl: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <input required type="datetime-local" value={liveForm.scheduledAt} onChange={(e) => setLiveForm({ ...liveForm, scheduledAt: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowLiveModal(false)} className="px-4 py-2 font-bold text-islamic-muted">Cancel</button>
+                <button type="submit" disabled={submitting} className="px-5 py-2 bg-red-600 text-white font-bold rounded-xl flex items-center gap-2">
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Schedule Broadcast
                 </button>
               </div>
             </form>
@@ -759,52 +1052,22 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Modal 3: Task Modal */}
+      {/* CREATE TASK MODAL */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-islamic-card border border-islamic-border rounded-2xl max-w-lg w-full p-6 space-y-6 shadow-2xl relative text-islamic-text">
-            <div className="flex items-center justify-between border-b border-islamic-border pb-4">
-              <h2 className="text-lg font-bold">Create New Admin Task</h2>
-              <button onClick={() => setShowTaskModal(false)} className="p-1 text-islamic-muted hover:text-islamic-text">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-islamic-card border border-islamic-border w-full max-w-md rounded-2xl p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-islamic-border pb-3">
+              <h3 className="font-bold text-lg">Add Task</h3>
+              <button onClick={() => setShowTaskModal(false)}><X className="w-5 h-5 text-islamic-muted" /></button>
             </div>
-            <form onSubmit={handleCreateTask} className="space-y-4">
-              <input
-                type="text"
-                required
-                placeholder="Task Title"
-                value={taskForm.title}
-                onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <textarea
-                rows={3}
-                required
-                placeholder="Task Description"
-                value={taskForm.description}
-                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <input
-                type="date"
-                value={taskForm.dueDate}
-                onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <input
-                type="text"
-                placeholder="Assigned To (Optional)"
-                value={taskForm.assignedTo}
-                onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowTaskModal(false)} className="px-4 py-2 text-xs font-bold text-islamic-muted">
-                  Cancel
-                </button>
-                <button type="submit" disabled={submitting} className="px-5 py-2 bg-islamic-gold text-slate-900 rounded-xl text-xs font-bold">
-                  {submitting ? "Saving..." : "Create Task"}
+            <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
+              <input required type="text" placeholder="Task Title" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <textarea placeholder="Description" rows={2} value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <input type="date" value={taskForm.dueDate} onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowTaskModal(false)} className="px-4 py-2 font-bold text-islamic-muted">Cancel</button>
+                <button type="submit" disabled={submitting} className="px-5 py-2 bg-islamic-gold text-slate-900 font-bold rounded-xl flex items-center gap-2">
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Save Task
                 </button>
               </div>
             </form>
@@ -812,47 +1075,25 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Modal 4: Announcement Modal */}
+      {/* CREATE ANNOUNCEMENT MODAL */}
       {showAnnouncementModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-islamic-card border border-islamic-border rounded-2xl max-w-lg w-full p-6 space-y-6 shadow-2xl relative text-islamic-text">
-            <div className="flex items-center justify-between border-b border-islamic-border pb-4">
-              <h2 className="text-lg font-bold">Post Global Announcement</h2>
-              <button onClick={() => setShowAnnouncementModal(false)} className="p-1 text-islamic-muted hover:text-islamic-text">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-islamic-card border border-islamic-border w-full max-w-md rounded-2xl p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-islamic-border pb-3">
+              <h3 className="font-bold text-lg">Post Announcement</h3>
+              <button onClick={() => setShowAnnouncementModal(false)}><X className="w-5 h-5 text-islamic-muted" /></button>
             </div>
-            <form onSubmit={handleCreateAnnouncement} className="space-y-4">
-              <input
-                type="text"
-                required
-                placeholder="Announcement Title"
-                value={announcementForm.title}
-                onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <textarea
-                rows={4}
-                required
-                placeholder="Announcement Content"
-                value={announcementForm.content}
-                onChange={(e) => setAnnouncementForm({ ...announcementForm, content: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              />
-              <select
-                value={announcementForm.priority}
-                onChange={(e) => setAnnouncementForm({ ...announcementForm, priority: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-islamic-border bg-islamic-bg text-xs text-islamic-text focus:outline-none focus:border-islamic-gold"
-              >
+            <form onSubmit={handleCreateAnnouncement} className="space-y-3 text-xs">
+              <input required type="text" placeholder="Title" value={announcementForm.title} onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <textarea required placeholder="Content" rows={3} value={announcementForm.content} onChange={(e) => setAnnouncementForm({ ...announcementForm, content: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5" />
+              <select value={announcementForm.priority} onChange={(e) => setAnnouncementForm({ ...announcementForm, priority: e.target.value })} className="w-full bg-islamic-bg border border-islamic-border rounded-xl p-2.5">
                 <option value="Normal">Normal Priority</option>
                 <option value="High">High Priority</option>
               </select>
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowAnnouncementModal(false)} className="px-4 py-2 text-xs font-bold text-islamic-muted">
-                  Cancel
-                </button>
-                <button type="submit" disabled={submitting} className="px-5 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold">
-                  {submitting ? "Posting..." : "Post Announcement"}
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowAnnouncementModal(false)} className="px-4 py-2 font-bold text-islamic-muted">Cancel</button>
+                <button type="submit" disabled={submitting} className="px-5 py-2 bg-amber-600 text-white font-bold rounded-xl flex items-center gap-2">
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Post
                 </button>
               </div>
             </form>
