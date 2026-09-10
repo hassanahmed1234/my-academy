@@ -12,7 +12,7 @@ const router = express.Router();
 router.use(protect);
 
 router.post("/:quizId/start", handleStartQuiz);
-router.post("/:quizId/submit", handleFinalSubmit);
+router.post("/attempt/:quizId/submit", handleFinalSubmit);
 router.get("/:quizId/results", handleFetchResults);
 
 export default router;

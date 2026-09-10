@@ -5,13 +5,11 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Maximize,
   ArrowRight,
   ArrowLeft,
   CheckSquare,
   ShieldAlert,
   Loader2,
-  BookOpen,
 } from "lucide-react";
 
 const QuizApp = () => {
@@ -31,7 +29,7 @@ const QuizApp = () => {
     try {
       setLoading(true);
       const res = await API.get("/quizzes");
-      setQuizzes(res.data);
+      setQuizzes(Array.isArray(res.data) ? res.data : res.data.quizzes || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -45,7 +43,7 @@ const QuizApp = () => {
 
   // Handle Timer & Auto-Submit
   useEffect(() => {
-    if (view !== "quiz" || !attempt) return;
+    if (view !== "quiz" || !attempt || !attempt.expiresAt) return;
 
     const interval = setInterval(() => {
       const remaining = Math.max(
@@ -77,7 +75,7 @@ const QuizApp = () => {
             alert("Quiz auto-submitted due to excessive tab switching!");
             handleFetchResults(attempt._id);
           } else {
-            setWarningMsg(`⚠️ Warning: Do not switch tabs! Warning count: ${res.data.tabSwitches}/2`);
+            setWarningMsg(`⚠️ Warning: Do not switch tabs! Warning count: ${res.data.tabSwitches || 1}/2`);
           }
         } catch (e) {
           console.error(e);
@@ -112,7 +110,21 @@ const QuizApp = () => {
     try {
       setLoading(true);
       const res = await API.post(`/student/quizzes/${selectedQuiz._id}/start`);
-      setAttempt(res.data.attempt);
+      
+      const quizMeta = res.data.quiz || res.data;
+      const questionsList = res.data.questions || [];
+
+      // Expiry timestamp setup based on timeLimit (Minutes)
+      const timeLimitMs = (quizMeta.timeLimit || 10) * 60 * 1000;
+      const expiresAt = res.data.expiresAt || new Date(Date.now() + timeLimitMs).toISOString();
+
+      setAttempt({
+        ...quizMeta,
+        questions: questionsList,
+        expiresAt,
+      });
+
+      setCurrentIndex(0);
 
       // Request Fullscreen
       if (containerRef.current && containerRef.current.requestFullscreen) {
@@ -128,6 +140,8 @@ const QuizApp = () => {
   };
 
   const handleSelectOption = async (option) => {
+    if (!attempt || !attempt.questions) return;
+
     const currentQ = attempt.questions[currentIndex];
     const updatedQuestions = [...attempt.questions];
     updatedQuestions[currentIndex].selectedAnswer = option;
@@ -136,7 +150,7 @@ const QuizApp = () => {
     // Auto-save answer to server
     try {
       await API.post(`/student/quizzes/attempt/${attempt._id}/answer`, {
-        questionId: currentQ.questionId,
+        questionId: currentQ._id || currentQ.questionId,
         selectedAnswer: option,
       });
     } catch (e) {
@@ -207,14 +221,14 @@ const QuizApp = () => {
                 <div>
                   <div className="flex justify-between items-center text-[10px] text-islamic-gold font-bold uppercase">
                     <span>{quiz.type} Exam</span>
-                    <span>{quiz.course?.title}</span>
+                    <span>{quiz.course?.title || "Course Assessment"}</span>
                   </div>
                   <h3 className="text-lg font-bold mt-1">{quiz.title}</h3>
                   <div className="grid grid-cols-2 gap-2 text-xs text-islamic-muted mt-3">
                     <p>Questions: {quiz.questionCount}</p>
                     <p>Passing: {quiz.passingScore}%</p>
                     <p>Time: {quiz.timeLimit} Mins</p>
-                    <p>Attempts: {quiz.attemptsUsed} / {quiz.attemptsAllowed}</p>
+                    <p>Attempts: {quiz.attemptsUsed || 0} / {quiz.attemptsAllowed}</p>
                   </div>
                 </div>
 
@@ -283,7 +297,7 @@ const QuizApp = () => {
       )}
 
       {/* 3. ACTIVE QUIZ ROOM */}
-      {view === "quiz" && attempt && (
+      {view === "quiz" && attempt && attempt.questions && (
         <div className="space-y-6">
           {/* Top Bar */}
           <div className="flex justify-between items-center bg-islamic-card border border-islamic-border p-4 rounded-2xl">
@@ -307,10 +321,10 @@ const QuizApp = () => {
 
           {/* Question Box */}
           <div className="bg-islamic-card border border-islamic-border p-6 rounded-2xl space-y-6">
-            <h2 className="text-base font-bold">{attempt.questions[currentIndex]?.questionText}</h2>
+            <h2 className="text-base font-bold">{attempt.questions[currentIndex]?.question}</h2>
 
             <div className="space-y-3">
-              {attempt.questions[currentIndex]?.options.map((opt, idx) => {
+              {attempt.questions[currentIndex]?.options?.map((opt, idx) => {
                 const isSelected = attempt.questions[currentIndex]?.selectedAnswer === opt;
                 return (
                   <button
@@ -403,25 +417,27 @@ const QuizApp = () => {
           </div>
 
           {/* Detailed Question Review */}
-          <div className="bg-islamic-card border border-islamic-border p-6 rounded-2xl space-y-4">
-            <h3 className="font-bold text-sm border-b border-islamic-border pb-3">Detailed Answer Review</h3>
-            <div className="space-y-4">
-              {result.review.map((q, idx) => (
-                <div key={idx} className="p-4 bg-islamic-bg rounded-xl border border-islamic-border space-y-2 text-xs">
-                  <div className="flex justify-between items-start gap-2">
-                    <p className="font-bold">Q{idx + 1}: {q.questionText}</p>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${q.isCorrect ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
-                      {q.isCorrect ? "Correct" : "Incorrect"}
-                    </span>
-                  </div>
+          {result.review && result.review.length > 0 && (
+            <div className="bg-islamic-card border border-islamic-border p-6 rounded-2xl space-y-4">
+              <h3 className="font-bold text-sm border-b border-islamic-border pb-3">Detailed Answer Review</h3>
+              <div className="space-y-4">
+                {result.review.map((q, idx) => (
+                  <div key={idx} className="p-4 bg-islamic-bg rounded-xl border border-islamic-border space-y-2 text-xs">
+                    <div className="flex justify-between items-start gap-2">
+                      <p className="font-bold">Q{idx + 1}: {q.questionText}</p>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${q.isCorrect ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
+                        {q.isCorrect ? "Correct" : "Incorrect"}
+                      </span>
+                    </div>
 
-                  <p className="text-islamic-muted">Your Answer: <span className={q.isCorrect ? "text-emerald-400 font-bold" : "text-red-400 font-bold"}>{q.selectedAnswer || "Not Answered"}</span></p>
-                  {!q.isCorrect && <p className="text-islamic-gold">Correct Answer: {q.correctAnswer}</p>}
-                  {q.explanation && <p className="text-islamic-muted text-[11px] italic mt-1">Explanation: {q.explanation}</p>}
-                </div>
-              ))}
+                    <p className="text-islamic-muted">Your Answer: <span className={q.isCorrect ? "text-emerald-400 font-bold" : "text-red-400 font-bold"}>{q.selectedAnswer || "Not Answered"}</span></p>
+                    {!q.isCorrect && <p className="text-islamic-gold">Correct Answer: {q.correctAnswer}</p>}
+                    {q.explanation && <p className="text-islamic-muted text-[11px] italic mt-1">Explanation: {q.explanation}</p>}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
