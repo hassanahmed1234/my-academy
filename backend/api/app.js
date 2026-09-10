@@ -83,7 +83,7 @@ app.use("/api/quizzes", adminQuizRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/tasks", taskRoutes);
-app.use("/api/student/quizzes", studentQuizRoutes);
+app.use("/api/quizzes", studentQuizRoutes);
 
 // Base Health Check Route
 app.get("/", (req, res) => {
