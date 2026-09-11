@@ -89,6 +89,7 @@ const StudentDashboard = () => {
       if (progressRes.status === "fulfilled") {
         progressData = progressRes.value.data?.data || progressRes.value.data || [];
       }
+      console.log(progressRes.value.data?.data)
       setCompletedCourses(progressData)
 
       const progressMap = {};
@@ -378,7 +379,7 @@ const StudentDashboard = () => {
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {completedCourses.map((course) => (
+                {completedCourses.map((course) =>(
                   <div
                     key={course._id}
                     className="bg-slate-900/40 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between gap-4"
@@ -388,7 +389,7 @@ const StudentDashboard = () => {
                         <CheckCircle2 className="w-3 h-3" /> 100% Completed
                       </span>
                       <h4 className="text-xs font-bold text-white line-clamp-1">
-                        {course.title || "Completed Course"}
+                        {course.course.courseId.title || "Completed Course"}
                       </h4>
                     </div>
 

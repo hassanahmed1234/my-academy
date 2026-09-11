@@ -17,6 +17,7 @@ import DashboardLayout from "./components/DashboardLayout";
 import MyCourses from "./pages/MyCourses";
 import Profile from "./pages/Profile";
 import QuizApp from "./pages/QuizApp";
+import AssignmentStudent from "./pages/AssignmentStudent";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
               <Route path="/my-courses" element={<MyCourses />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/quizzes" element={<QuizApp />} />
+              <Route path="/assignments" element={<AssignmentStudent />} />
             </Route>
           </Route>
 

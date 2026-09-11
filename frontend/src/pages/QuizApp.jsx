@@ -287,7 +287,7 @@ const QuizApp = () => {
             </button>
             <button
               onClick={handleStartQuiz}
-              className="px-5 py-2.5 bg-islamic-gold text-slate-900 text-xs font-bold rounded-xl hover:opacity-90 transition"
+              className="px-5 py-2.5 bg-amber-500 text-slate-900 text-xs font-bold rounded-xl hover:opacity-90 transition"
             >
               I Understand & Start Quiz
             </button>
