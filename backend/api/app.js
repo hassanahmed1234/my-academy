@@ -19,6 +19,7 @@ import contactRoutes from "./routes/contactRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import studentQuizRoutes from "./routes/studentQuizRoutes.js";
+import assignmentRoutes from "./routes/assignmentRoutes.js";
 
 const app = express();
 
@@ -84,6 +85,7 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/student/quizzes", studentQuizRoutes);
+app.use("/api/assignment", assignmentRoutes);
 
 // Base Health Check Route
 app.get("/", (req, res) => {
