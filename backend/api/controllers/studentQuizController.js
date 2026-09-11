@@ -1,70 +1,133 @@
 import Quiz from "../models/Quiz.js";
 import Question from "../models/Question.js";
-import QuizResult from "../models/QuizResult.js"; // Standard result model
+import QuizResult from "../models/QuizResult.js";
 
-// 1. Get/Start Quiz (Fetches Quiz Meta + Questions)
+// Temporary/In-Memory attempts map (or DB attempt model if used)
+// We will store user live selections here
+const activeAttempts = new Map();
+
+// 1. Start Quiz
 export const handleStartQuiz = async (req, res) => {
   try {
     const { quizId } = req.params;
+    const userId = req.user._id.toString();
 
     const quiz = await Quiz.findById(quizId);
-    if (!quiz) {
-      return res.status(404).json({ message: "Quiz not found" });
-    }
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    // Fetch questions without revealing correct answer
     const questions = await Question.find({ quiz: quizId }).select("-correctAnswer");
 
+    // Initialize attempt memory space
+    const attemptId = `${userId}_${quizId}`;
+    activeAttempts.set(attemptId, {
+      userId,
+      quizId,
+      answers: {},
+      tabSwitches: 0,
+      fullScreenExits: 0,
+      startedAt: new Date(),
+    });
+
     res.json({
-      quiz,
+      quiz: { ...quiz.toObject(), _id: attemptId },
       questions,
+      expiresAt: new Date(Date.now() + (quiz.timeLimit || 10) * 60 * 1000),
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to start quiz", error: error.message });
   }
 };
 
-// 2. Submit Final Quiz (Evaluates choices, visibility logs, and saves attempt)
+// 2. Auto-save live answer
+export const handleSaveAnswer = async (req, res) => {
+  try {
+    const { attemptId } = req.params;
+    const { questionId, selectedAnswer } = req.body;
+
+    const attempt = activeAttempts.get(attemptId);
+    if (attempt) {
+      attempt.answers[questionId] = selectedAnswer;
+    }
+
+    res.json({ success: true, message: "Answer saved" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to save answer", error: error.message });
+  }
+};
+
+// 3. Track anti-cheat violations
+export const handleLogViolation = async (req, res) => {
+  try {
+    const { attemptId } = req.params;
+    const { type } = req.body; // 'tab_switch' | 'fullscreen_exit'
+
+    const attempt = activeAttempts.get(attemptId) || { tabSwitches: 0, fullScreenExits: 0 };
+
+    if (type === "tab_switch") {
+      attempt.tabSwitches = (attempt.tabSwitches || 0) + 1;
+    } else if (type === "fullscreen_exit") {
+      attempt.fullScreenExits = (attempt.fullScreenExits || 0) + 1;
+    }
+
+    activeAttempts.set(attemptId, attempt);
+
+    const autoSubmitted = attempt.tabSwitches >= 3;
+
+    res.json({
+      tabSwitches: attempt.tabSwitches,
+      fullScreenExits: attempt.fullScreenExits,
+      autoSubmitted,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to log violation", error: error.message });
+  }
+};
+
+// 4. Final Submit Quiz
 export const handleFinalSubmit = async (req, res) => {
   try {
-    const { quizId } = req.params;
-    const { answers, visibilityViolations, fullScreenViolations, timeTaken } = req.body;
+    const { attemptId } = req.params;
     const userId = req.user._id;
 
-    // Fetch original questions with correct answers to evaluate
+    // Get live stored attempt from state or fallback to body payload
+    const liveAttempt = activeAttempts.get(attemptId);
+    const answers = liveAttempt?.answers || req.body?.answers || {};
+    const quizId = liveAttempt?.quizId || req.body?.quizId;
+
     const questions = await Question.find({ quiz: quizId });
 
     let score = 0;
     const detailedResults = questions.map((q) => {
-      const selectedOption = answers[q._id];
+      const selectedOption = answers[q._id.toString()];
       const isCorrect = selectedOption === q.correctAnswer;
       if (isCorrect) score += 1;
 
       return {
         questionId: q._id,
-        selectedOption,
+        selectedOption: selectedOption || null,
         correctAnswer: q.correctAnswer,
         isCorrect,
       };
     });
 
     const totalQuestions = questions.length;
-    const percentage = Math.round((score / totalQuestions) * 100);
+    const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
 
-    // Save user attempt and anti-cheat telemetry to DB
     const quizResult = await QuizResult.create({
       user: userId,
       quiz: quizId,
       score,
       totalQuestions,
       percentage,
-      timeTaken,
       answers: detailedResults,
       proctoringLogs: {
-        tabSwitches: visibilityViolations || 0,
-        fullScreenExits: fullScreenViolations || 0,
+        tabSwitches: liveAttempt?.tabSwitches || 0,
+        fullScreenExits: liveAttempt?.fullScreenExits || 0,
       },
     });
+
+    // Cleanup active attempt state
+    activeAttempts.delete(attemptId);
 
     res.status(201).json({
       message: "Quiz submitted successfully",
@@ -75,18 +138,36 @@ export const handleFinalSubmit = async (req, res) => {
   }
 };
 
-// 3. Fetch Student Quiz Results
+// 5. Fetch Quiz Result
 export const handleFetchResults = async (req, res) => {
   try {
-    const { quizId } = req.params;
+    const { attemptId } = req.params;
     const userId = req.user._id;
 
-    const results = await QuizResult.find({ quiz: quizId, user: userId })
-      .populate("quiz", "title totalMarks")
+    const result = await QuizResult.findOne({ user: userId })
+      .populate("quiz", "title passingScore")
+      .populate("answers.questionId", "questionText explanation")
       .sort({ createdAt: -1 });
 
-    res.json(results);
+    if (!result) return res.status(404).json({ message: "Result not found" });
+
+    // Format for frontend response
+    res.json({
+      passed: result.percentage >= (result.quiz?.passingScore || 50),
+      quizTitle: result.quiz?.title || "Assessment",
+      score: result.score,
+      totalQuestions: result.totalQuestions,
+      percentage: result.percentage,
+      passingScore: result.quiz?.passingScore || 50,
+      review: result.answers.map((ans) => ({
+        questionText: ans.questionId?.questionText || "Question",
+        selectedAnswer: ans.selectedOption,
+        correctAnswer: ans.correctAnswer,
+        isCorrect: ans.isCorrect,
+        explanation: ans.questionId?.explanation || "",
+      })),
+    });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch quiz results", error: error.message });
+    res.status(500).json({ message: "Failed to fetch result", error: error.message });
   }
 };

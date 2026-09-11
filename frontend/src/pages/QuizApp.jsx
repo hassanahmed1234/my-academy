@@ -139,24 +139,23 @@ const QuizApp = () => {
     }
   };
 
-  const handleSelectOption = async (option) => {
-    if (!attempt || !attempt.questions) return;
+ const handleSelectOption = async (option) => {
+  if (!attempt || !attempt.questions) return;
 
-    const currentQ = attempt.questions[currentIndex];
-    const updatedQuestions = [...attempt.questions];
-    updatedQuestions[currentIndex].selectedAnswer = option;
-    setAttempt({ ...attempt, questions: updatedQuestions });
+  const currentQ = attempt.questions[currentIndex];
+  const updatedQuestions = [...attempt.questions];
+  updatedQuestions[currentIndex].selectedAnswer = option;
+  setAttempt({ ...attempt, questions: updatedQuestions });
 
-    // Auto-save answer to server
-    try {
-      await API.post(`/student/quizzes/attempt/${attempt._id}/answer`, {
-        questionId: currentQ._id || currentQ.questionId,
-        selectedAnswer: option,
-      });
-    } catch (e) {
-      console.error("Autosave failed", e);
-    }
-  };
+  try {
+    await API.post(`/student/quizzes/attempt/${attempt._id}/answer`, {
+      questionId: currentQ._id, // Standard Mongo _id
+      selectedAnswer: option,
+    });
+  } catch (e) {
+    console.error("Autosave failed", e);
+  }
+};
 
   const handleFinalSubmit = async (isAuto = false) => {
     if (!isAuto && !window.confirm("Are you sure you want to submit your quiz?")) return;
