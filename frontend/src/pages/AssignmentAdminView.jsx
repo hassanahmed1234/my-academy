@@ -232,9 +232,9 @@ const AssignmentAdminView = () => {
             >
               <option value="" disabled>-- Select Assignment --</option>
               {assignments.map((a) => (
-                // <option key={a._id} value={a._id}>
-                //   {a.title} ({a.course?.title || "General"})
-                // </option>
+                <option key={a._id} value={a._id}>
+                  {a.title} ({a.course?.title || "General"})
+                </option>
               ))}
             </select>
           </div>
