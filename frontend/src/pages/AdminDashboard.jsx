@@ -25,7 +25,9 @@ import {
   Loader2,
   X,
   Check,
+  ClipboardList,
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 
 const AdminQuizBuilder = () => {
@@ -67,7 +69,7 @@ const AdminQuizBuilder = () => {
       ]);
       setQuizzes(resQuizzes.data);
       setCourses(resCourses.data);
-      
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -441,6 +443,8 @@ const AdminQuizBuilder = () => {
               </button>
             </form>
 
+
+
             {/* EXISTING QUESTIONS LIST */}
             <div className="space-y-3">
               <h3 className="font-bold text-sm">Configured Questions ({questions.length})</h3>
@@ -716,7 +720,7 @@ const AdminDashboard = () => {
           </button>
           <button
             onClick={() => setShowTaskModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-islamic-gold hover:opacity-90 text-slate-900 font-bold text-xs flex items-center gap-1.5 shadow-sm transition"
+            className="px-3.5 py-2 rounded-xl bg-amber-100 hover:opacity-90 text-slate-900 font-bold text-xs flex items-center gap-1.5 shadow-sm transition"
           >
             <CheckSquare className="w-4 h-4" /> New Task
           </button>
@@ -726,14 +730,20 @@ const AdminDashboard = () => {
           >
             <Megaphone className="w-4 h-4" /> Announcement
           </button>
+          <NavLink
+            to="/admin/assignment"
+            className= "flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition  bg-amber-500 text-slate-950  shadow-lg shadow-amber-500/20 " >
+            <ClipboardList className="w-4 h-4 shrink-0" />
+            <span>Assignments</span>
+          </NavLink>
         </div>
       </div>
 
       {message.text && (
         <div
           className={`p-4 text-xs rounded-xl font-semibold border ${message.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-              : "bg-red-500/10 border-red-500/30 text-red-400"
+            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+            : "bg-red-500/10 border-red-500/30 text-red-400"
             }`}
         >
           {message.text}
@@ -800,8 +810,8 @@ const AdminDashboard = () => {
         <button
           onClick={() => setActiveTab("overview")}
           className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "overview"
-              ? "border-islamic-primary text-islamic-primary"
-              : "border-transparent text-islamic-muted hover:text-islamic-text"
+            ? "border-islamic-primary text-islamic-primary"
+            : "border-transparent text-islamic-muted hover:text-islamic-text"
             }`}
         >
           <TrendingUp className="w-4 h-4" /> Overview & Operations
@@ -809,8 +819,8 @@ const AdminDashboard = () => {
         <button
           onClick={() => setActiveTab("courses")}
           className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "courses"
-              ? "border-islamic-primary text-islamic-primary"
-              : "border-transparent text-islamic-muted hover:text-islamic-text"
+            ? "border-islamic-primary text-islamic-primary"
+            : "border-transparent text-islamic-muted hover:text-islamic-text"
             }`}
         >
           <BookOpen className="w-4 h-4" /> Courses Catalog ({courses.length})
@@ -818,8 +828,8 @@ const AdminDashboard = () => {
         <button
           onClick={() => setActiveTab("live")}
           className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "live"
-              ? "border-red-500 text-red-500"
-              : "border-transparent text-islamic-muted hover:text-islamic-text"
+            ? "border-red-500 text-red-500"
+            : "border-transparent text-islamic-muted hover:text-islamic-text"
             }`}
         >
           <Video className="w-4 h-4" /> Live Broadcasts ({liveSessions.length})
@@ -831,7 +841,7 @@ const AdminDashboard = () => {
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
- {/* Task Management Section */}
+            {/* Task Management Section */}
             <div className="bg-islamic-card border border-islamic-border rounded-2xl p-5 space-y-4 shadow-sm">
               <div className="flex justify-between items-center border-b border-islamic-border pb-3">
                 <div className="flex items-center gap-2">

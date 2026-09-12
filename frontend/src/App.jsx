@@ -18,6 +18,8 @@ import MyCourses from "./pages/MyCourses";
 import Profile from "./pages/Profile";
 import QuizApp from "./pages/QuizApp";
 import AssignmentStudent from "./pages/AssignmentStudent";
+import AssignmentAdminView from "./pages/AssignmentAdminView";
+import Leaderboard from "./pages/Leaderboard";
 
 function App() {
   return (
@@ -32,6 +34,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/quizzes" element={<QuizApp />} />
               <Route path="/assignments" element={<AssignmentStudent />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
             </Route>
           </Route>
 
@@ -44,6 +47,20 @@ function App() {
                   <Navbar />
                   <main className="flex-1">
                     <AdminDashboard />
+                    
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+            <Route
+              path="/admin/assignment"
+              element={
+                <div className="flex flex-col min-h-screen justify-between">
+                  <Navbar />
+                  <main className="flex-1">
+                    <AssignmentAdminView/>
+                    
                   </main>
                   <Footer />
                 </div>

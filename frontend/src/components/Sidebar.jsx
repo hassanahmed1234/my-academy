@@ -119,16 +119,19 @@ const Sidebar = () => {
             <span>Assignments</span>
           </NavLink>
 
-          {/* Live Classes */}
-          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-500 opacity-60 cursor-not-allowed">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 shrink-0" />
-              <span>Live Classes</span>
-            </div>
-            <span className="bg-slate-800 text-amber-400/80 border border-amber-500/20 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
-              Soon
-            </span>
-          </div>
+          {/* Leaderboard */}
+          <NavLink
+            to="/leaderboard"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:bg-slate-900 hover:text-white"
+              }`
+            }
+          >
+            <ClipboardList className="w-4 h-4 shrink-0" />
+            <span>Leaderboard</span>
+          </NavLink>
 
           {/* Certificates */}
           <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-500 opacity-60 cursor-not-allowed">
