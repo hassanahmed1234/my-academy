@@ -89,7 +89,6 @@ const StudentDashboard = () => {
       if (progressRes.status === "fulfilled") {
         progressData = progressRes.value.data?.data || progressRes.value.data || [];
       }
-      console.log(progressRes.value.data?.data)
       setCompletedCourses(progressData)
 
       const progressMap = {};

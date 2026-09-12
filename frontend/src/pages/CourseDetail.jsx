@@ -44,7 +44,6 @@ const CourseDetail = () => {
             const { data } = await API.get("/my-courses");
 
             // Debug: Check exact response structure in browser console
-            console.log("My Courses Response:", data);
 
             const enrolledList = data?.data || data?.enrollments || data || [];
 

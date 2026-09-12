@@ -54,6 +54,7 @@ const Leaderboard = () => {
     const top3 = leaderboard.slice(0, 3);
     const fullList = leaderboard.slice(3);
 
+
     return (
         <div className="min-h-screen pb-28 text-slate-200 max-w-6xl mx-auto p-4 md:p-6 space-y-8">
             {/* 1. TOP HEADER SECTION */}

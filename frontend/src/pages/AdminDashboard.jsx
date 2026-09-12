@@ -545,7 +545,6 @@ const AdminDashboard = () => {
       ]);
 
       if (statsRes.data) {
-        console.log(statsRes.data)
         setStats(statsRes.data.stats || {});
       }
 

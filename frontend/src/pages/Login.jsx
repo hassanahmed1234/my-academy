@@ -30,13 +30,11 @@ const Login = () => {
       // React Context state global level par update karein
       login(userData, token);
 
-     
+
 
       // Role ke mutabiq redirection
       if (userData.role === "admin") {
-         console.log(userData)
         navigate("/admin/dashboard");
-         console.log(userData)
       } else {
         navigate("/dashboard");
       }

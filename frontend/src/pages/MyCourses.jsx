@@ -52,8 +52,6 @@ const MyCourses = () => {
           progressRes.data?.data ||
           (Array.isArray(progressRes.data) ? progressRes.data : []);
 
-          console.log('progressRes====>>>',progressRes)
-          console.log('progressList====>>>',progressList)
 
         setCompleted(Array.isArray(progressList) ? progressList : []);
 
@@ -171,8 +169,6 @@ const MyCourses = () => {
                 {inProgress.map((rawItem) => {
                   const course = getCourseDetails(rawItem);
                   const courseId = String(course._id || rawItem._id || rawItem.courseId);
-                  console.log(course)
-                  console.log(courseId)
 
                   // Extract total lessons
                   const allLessons = Array.isArray(course.modules)
@@ -182,8 +178,6 @@ const MyCourses = () => {
 
                   // Extract completed lessons from progress map
                   const completedLessons = progressMap[courseId] || [];
-                  console.log(progressMap)
-                  console.log(totalLessons)
 
                   const completedCount = completedLessons.length;
 
