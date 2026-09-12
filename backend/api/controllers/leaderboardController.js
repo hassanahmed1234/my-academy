@@ -2,12 +2,12 @@ import UserProgress from "../models/UserProgress.js";
 
 // XP Rules Table
 const XP_RULES = {
-    LESSON_COMPLETE: 10,
-    QUIZ_PASS: 20,
-    ASSIGNMENT_SUBMIT: 15,
-    EXCELLENT_GRADE: 30,
-    COURSE_COMPLETE: 100,
-    DAILY_STREAK: 5,
+  LESSON_COMPLETE: 10,
+  QUIZ_PASS: 20,
+  ASSIGNMENT_SUBMIT: 15,
+  EXCELLENT_GRADE: 30,
+  COURSE_COMPLETE: 100,
+  DAILY_STREAK: 5,
 };
 
 export const getLeaderboard = async (req, res) => {
@@ -107,46 +107,74 @@ export const getLeaderboard = async (req, res) => {
     }
 };
 
-// 2. Helper Method to Add XP securely (Internal system call)
-export const awardXP = async (userId, actionType) => {
-    try {
-        let progress = await UserProgress.findOne({ student: userId });
-
-        if (!progress) {
-            progress = new UserProgress({ student: userId });
-        }
-
-        // Daily Streak Logic Check
-        const today = new Date().setHours(0, 0, 0, 0);
-        const lastActive = new Date(progress.lastActiveDate).setHours(0, 0, 0, 0);
-        const diffDays = Math.round((today - lastActive) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 1) {
-            progress.streak += 1;
-            progress.xp += XP_RULES.DAILY_STREAK;
-        } else if (diffDays > 1) {
-            progress.streak = 1; // Reset streak if missed days
-        }
-        progress.lastActiveDate = Date.now();
-
-        // Award XP based on action
-        if (actionType === "LESSON_COMPLETE") progress.xp += XP_RULES.LESSON_COMPLETE;
-        if (actionType === "QUIZ_PASS") {
-            progress.xp += XP_RULES.QUIZ_PASS;
-            progress.quizzesPassed += 1;
-        }
-        if (actionType === "ASSIGNMENT_SUBMIT") {
-            progress.xp += XP_RULES.ASSIGNMENT_SUBMIT;
-            progress.assignmentsSubmitted += 1;
-        }
-        if (actionType === "EXCELLENT_GRADE") progress.xp += XP_RULES.EXCELLENT_GRADE;
-        if (actionType === "COURSE_COMPLETE") {
-            progress.xp += XP_RULES.COURSE_COMPLETE;
-            progress.coursesCompleted += 1;
-        }
-
-        await progress.save();
-    } catch (err) {
-        console.error("XP Award Error:", err);
+export const awardXP = async (userId, actionType, courseId = null) => {
+  try {
+    // Search query: Specific course ID agar hai toh use karo, nahi toh null check karo
+    let query = { userId };
+    if (courseId) {
+      query.courseId = courseId;
+    } else {
+      query.courseId = { $exists: false }; // Standalone activities (Quiz, Assignment, General XP)
     }
+
+    let progress = await UserProgress.findOne(query);
+
+    // Agar record nahi mila toh new record create karein
+    if (!progress) {
+      progress = new UserProgress({
+        userId,
+        ...(courseId && { courseId }),
+        completedLessons: [],
+        xp: 0,
+        streak: 1,
+      });
+    }
+
+    // 1. Daily Streak Logic
+    const today = new Date().setHours(0, 0, 0, 0);
+    const lastActive = new Date(progress.lastActiveDate || Date.now()).setHours(0, 0, 0, 0);
+    const diffDays = Math.round((today - lastActive) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      progress.streak += 1;
+      progress.xp += XP_RULES.DAILY_STREAK;
+    } else if (diffDays > 1) {
+      progress.streak = 1; // Streak reset agar din break ho gaya
+    }
+    progress.lastActiveDate = new Date();
+
+    // 2. Action Type Based XP Allocation
+    switch (actionType) {
+      case "QUIZ_PASS":
+        progress.xp += XP_RULES.QUIZ_PASS;
+        progress.quizzesPassed = (progress.quizzesPassed || 0) + 1;
+        break;
+
+      case "ASSIGNMENT_SUBMIT":
+        progress.xp += XP_RULES.ASSIGNMENT_SUBMIT;
+        progress.assignmentsSubmitted = (progress.assignmentsSubmitted || 0) + 1;
+        break;
+
+      case "COURSE_COMPLETE":
+        progress.xp += XP_RULES.COURSE_COMPLETE;
+        progress.isCourseCompleted = true;
+        break;
+
+      case "LESSON_COMPLETE":
+        progress.xp += XP_RULES.LESSON_COMPLETE;
+        break;
+
+      case "EXCELLENT_GRADE":
+        progress.xp += XP_RULES.EXCELLENT_GRADE;
+        break;
+
+      default:
+        break;
+    }
+
+    await progress.save();
+    return progress;
+  } catch (err) {
+    console.error("XP Award Error:", err.message);
+  }
 };

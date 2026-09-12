@@ -1,4 +1,5 @@
 import UserProgress from "../models/UserProgress.js";
+import { awardXP } from "./leaderboardController.js";
 
 // 1. Get Completed Lessons Count & IDs
 export const getCourseProgress = async (req, res) => {
@@ -20,6 +21,8 @@ export const getCourseProgress = async (req, res) => {
 // 2. Toggle Lesson Complete / Incomplete
 export const toggleLessonComplete = async (req, res) => {
   const { courseId, lessonId } = req.body;
+
+  let userId = req.user._id
 
   if (!courseId || !lessonId) {
     return res.status(400).json({ message: "Course ID and Lesson ID are required." });
@@ -49,6 +52,8 @@ export const toggleLessonComplete = async (req, res) => {
     }
 
     await progress.save();
+
+    await awardXP(userId,"COURSE_COMPLETE", courseId);
     res.json({ completedLessons: progress.completedLessons });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -1,6 +1,7 @@
 import Quiz from "../models/Quiz.js";
 import Question from "../models/Question.js";
 import QuizAttempt from "../models/QuizAttempt.js";
+import { awardXP } from "./leaderboardController.js";
 
 // Helper utility for Fisher-Yates shuffle
 const shuffleArray = (array) => {
@@ -207,7 +208,9 @@ export const submitQuiz = async (req, res) => {
     attempt.status = "submitted";
 
     await evaluateAttempt(attempt);
-
+   
+     
+    
     res.json({
       success: true,
       message: "Quiz submitted successfully",

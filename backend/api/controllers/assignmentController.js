@@ -1,5 +1,6 @@
 import Assignment from "../models/Assignment.js";
 import AssignmentSubmission from "../models/AssignmentSubmission.js";
+import { awardXP } from "./leaderboardController.js";
 
 // ================= ADMIN CONTROLLERS =================
 
@@ -203,6 +204,8 @@ export const saveOrSubmitAssignment = async (req, res) => {
     }
 
     await submission.save();
+
+    await awardXP(userId, "ASSIGNMENT_SUBMIT");
 
     res.json({
       success: true,
