@@ -31,6 +31,7 @@ export const getUserProfile = async (req, res) => {
 // @desc    Update user profile details
 // @route   PUT /api/users/profile
 // @access  Private
+
 export const updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -39,14 +40,21 @@ export const updateUserProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    user.name = req.body.fullName || req.body.name || user.name;
-    user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
-    user.location = req.body.location !== undefined ? req.body.location : user.location;
-    user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
-    user.website = req.body.website !== undefined ? req.body.website : user.website;
+    // Name / FullName support
+    if (req.body.fullName || req.body.name) {
+      user.name = req.body.fullName || req.body.name;
+    }
 
+    if (req.body.phone !== undefined) user.phone = req.body.phone;
+    if (req.body.location !== undefined) user.location = req.body.location;
+    if (req.body.bio !== undefined) user.bio = req.body.bio;
+    if (req.body.website !== undefined) user.website = req.body.website;
+
+    // File Upload via Multer / Cloudinary
     if (req.file && req.file.path) {
-      user.avatar = req.file.path; // Cloudinary secure image URL
+      user.avatar = req.file.path;
+    } else if (req.body.avatar) {
+      user.avatar = req.body.avatar;
     }
 
     const updatedUser = await user.save();
@@ -55,6 +63,7 @@ export const updateUserProfile = async (req, res) => {
       message: "Profile updated successfully",
       user: {
         _id: updatedUser._id,
+        name: updatedUser.name,
         fullName: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,

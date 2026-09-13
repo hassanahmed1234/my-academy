@@ -79,6 +79,7 @@ const Profile = () => {
   }, []);
 
   // Avatar Upload Handler (FormData)
+  // Avatar Upload Handler (File Upload)
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -90,12 +91,13 @@ const Profile = () => {
     setStatusMessage({ type: "", text: "" });
 
     try {
-      // Backend avatar upload route call
-      const { data } = await API.post("/users/upload-avatar", imageFormData, {
+      const { data } = await API.put("/users/profile", imageFormData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setFormData((prev) => ({ ...prev, avatar: data.avatar || data.url }));
+      const newAvatarUrl = data.user?.avatar || data.avatar;
+
+      setFormData((prev) => ({ ...prev, avatar: newAvatarUrl }));
       setStatusMessage({ type: "success", text: "Profile picture updated!" });
     } catch (error) {
       setStatusMessage({
@@ -107,14 +109,7 @@ const Profile = () => {
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handlePasswordChange = (e) => {
-    setPasswords({ ...passwords, [e.target.name]: e.target.value });
-  };
-
+  // Form Text Details Submit Handler
   const handleSubmitProfile = async (e) => {
     e.preventDefault();
     setUpdating(true);
@@ -130,9 +125,11 @@ const Profile = () => {
         avatar: formData.avatar,
       });
 
+      const updatedName = data.user?.name || data.name || formData.name;
+
       setStatusMessage({ type: "success", text: "Profile updated successfully!" });
       setIsEditing(false);
-      localStorage.setItem("userName", data.name || formData.name);
+      localStorage.setItem("userName", updatedName);
     } catch (error) {
       setStatusMessage({
         type: "error",
@@ -142,6 +139,15 @@ const Profile = () => {
       setUpdating(false);
     }
   };
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handlePasswordChange = (e) => {
+    setPasswords({ ...passwords, [e.target.name]: e.target.value });
+  };
+
+
 
   const handleSubmitPassword = async (e) => {
     e.preventDefault();
@@ -186,11 +192,10 @@ const Profile = () => {
       <div className="max-w-6xl mx-auto space-y-8">
         {statusMessage.text && (
           <div
-            className={`p-4 rounded-2xl flex items-center gap-3 text-xs font-semibold border ${
-              statusMessage.type === "success"
-                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                : "bg-red-500/10 border-red-500/20 text-red-400"
-            }`}
+            className={`p-4 rounded-2xl flex items-center gap-3 text-xs font-semibold border ${statusMessage.type === "success"
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+              : "bg-red-500/10 border-red-500/20 text-red-400"
+              }`}
           >
             {statusMessage.type === "success" ? (
               <CheckCircle className="w-4 h-4 shrink-0" />
@@ -351,31 +356,28 @@ const Profile = () => {
         <div className="border-b border-slate-800 flex gap-6 text-xs font-bold tracking-wide">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`pb-3 transition relative cursor-pointer ${
-              activeTab === "overview"
-                ? "text-amber-400 border-b-2 border-amber-400"
-                : "text-slate-400 hover:text-white"
-            }`}
+            className={`pb-3 transition relative cursor-pointer ${activeTab === "overview"
+              ? "text-amber-400 border-b-2 border-amber-400"
+              : "text-slate-400 hover:text-white"
+              }`}
           >
             Personal Details
           </button>
           <button
             onClick={() => setActiveTab("courses")}
-            className={`pb-3 transition relative cursor-pointer ${
-              activeTab === "courses"
-                ? "text-amber-400 border-b-2 border-amber-400"
-                : "text-slate-400 hover:text-white"
-            }`}
+            className={`pb-3 transition relative cursor-pointer ${activeTab === "courses"
+              ? "text-amber-400 border-b-2 border-amber-400"
+              : "text-slate-400 hover:text-white"
+              }`}
           >
             My Courses ({formData.enrolledCourses.length})
           </button>
           <button
             onClick={() => setActiveTab("security")}
-            className={`pb-3 transition relative cursor-pointer ${
-              activeTab === "security"
-                ? "text-amber-400 border-b-2 border-amber-400"
-                : "text-slate-400 hover:text-white"
-            }`}
+            className={`pb-3 transition relative cursor-pointer ${activeTab === "security"
+              ? "text-amber-400 border-b-2 border-amber-400"
+              : "text-slate-400 hover:text-white"
+              }`}
           >
             Security & Password
           </button>
@@ -396,11 +398,10 @@ const Profile = () => {
                       disabled={!isEditing}
                       value={formData.name}
                       onChange={handleChange}
-                      className={`w-full bg-slate-950 border text-xs text-white rounded-xl pl-10 pr-4 py-3 outline-none transition ${
-                        isEditing
-                          ? "border-amber-500/50 focus:border-amber-500"
-                          : "border-slate-800 opacity-70 cursor-not-allowed"
-                      }`}
+                      className={`w-full bg-slate-950 border text-xs text-white rounded-xl pl-10 pr-4 py-3 outline-none transition ${isEditing
+                        ? "border-amber-500/50 focus:border-amber-500"
+                        : "border-slate-800 opacity-70 cursor-not-allowed"
+                        }`}
                     />
                   </div>
                 </div>
@@ -429,11 +430,10 @@ const Profile = () => {
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="+92 300 0000000"
-                      className={`w-full bg-slate-950 border text-xs text-white rounded-xl pl-10 pr-4 py-3 outline-none transition ${
-                        isEditing
-                          ? "border-amber-500/50 focus:border-amber-500"
-                          : "border-slate-800 opacity-70 cursor-not-allowed"
-                      }`}
+                      className={`w-full bg-slate-950 border text-xs text-white rounded-xl pl-10 pr-4 py-3 outline-none transition ${isEditing
+                        ? "border-amber-500/50 focus:border-amber-500"
+                        : "border-slate-800 opacity-70 cursor-not-allowed"
+                        }`}
                     />
                   </div>
                 </div>
@@ -449,11 +449,10 @@ const Profile = () => {
                       value={formData.location}
                       onChange={handleChange}
                       placeholder="Karachi, Pakistan"
-                      className={`w-full bg-slate-950 border text-xs text-white rounded-xl pl-10 pr-4 py-3 outline-none transition ${
-                        isEditing
-                          ? "border-amber-500/50 focus:border-amber-500"
-                          : "border-slate-800 opacity-70 cursor-not-allowed"
-                      }`}
+                      className={`w-full bg-slate-950 border text-xs text-white rounded-xl pl-10 pr-4 py-3 outline-none transition ${isEditing
+                        ? "border-amber-500/50 focus:border-amber-500"
+                        : "border-slate-800 opacity-70 cursor-not-allowed"
+                        }`}
                     />
                   </div>
                 </div>
@@ -469,11 +468,10 @@ const Profile = () => {
                       value={formData.avatar}
                       onChange={handleChange}
                       placeholder="https://res.cloudinary.com/..."
-                      className={`w-full bg-slate-950 border text-xs text-white rounded-xl pl-10 pr-4 py-3 outline-none transition ${
-                        isEditing
-                          ? "border-amber-500/50 focus:border-amber-500"
-                          : "border-slate-800 opacity-70 cursor-not-allowed"
-                      }`}
+                      className={`w-full bg-slate-950 border text-xs text-white rounded-xl pl-10 pr-4 py-3 outline-none transition ${isEditing
+                        ? "border-amber-500/50 focus:border-amber-500"
+                        : "border-slate-800 opacity-70 cursor-not-allowed"
+                        }`}
                     />
                   </div>
                 </div>
@@ -488,11 +486,10 @@ const Profile = () => {
                   value={formData.bio}
                   onChange={handleChange}
                   placeholder="Tell us something about yourself..."
-                  className={`w-full bg-slate-950 border text-xs text-white rounded-xl p-4 outline-none transition ${
-                    isEditing
-                      ? "border-amber-500/50 focus:border-amber-500"
-                      : "border-slate-800 opacity-70 cursor-not-allowed"
-                  }`}
+                  className={`w-full bg-slate-950 border text-xs text-white rounded-xl p-4 outline-none transition ${isEditing
+                    ? "border-amber-500/50 focus:border-amber-500"
+                    : "border-slate-800 opacity-70 cursor-not-allowed"
+                    }`}
                 />
               </div>
 
