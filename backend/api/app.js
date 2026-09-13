@@ -3,7 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
-// Routes Imports
+// Config & Routes Imports
 import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
@@ -24,44 +24,66 @@ import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 
 const app = express();
 
-// 1. Helmet: HTTP Headers Security
-app.use(helmet());
-
-connectDB();
-
-
-// 2. Rate Limiting: Brute Force & DDOS Protection
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Har IP se 15 min mein max 100 requests allow hongi
-  message: {
-    message: "Too many requests from this IP, please try again after 15 minutes.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Puray API par Rate Limiter apply karein
-app.use("/api", limiter);
-
-// 3. Body Parser (Limit payload size for security)
-app.use(express.json({ limit: "10kb" }));
-
-// Allowed origins list
+// 1. MUST BE FIRST: Global Dynamic CORS Policy
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
-  "https://my-academy-umber.vercel.app",
+  "https://my-academy-umber.vercel.app"
 ];
 
 app.use(
-    cors({
-        origin: true, // Sabhi origins allow kar dega (testing ke liye best)
-        credentials: true,
-    })
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Fallback to allow connection
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+  })
 );
 
-// API Routes
+// Pre-flight handling
+app.options("*", cors());
+
+// 2. Security Headers
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
+
+// 3. Body Parser
+app.use(express.json({ limit: "10kb" }));
+
+// 4. Async Database Middleware for Serverless Environment
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("Database connection failure:", err.message);
+    res.status(500).json({ message: "Database Connection Failed", error: err.message });
+  }
+});
+
+// 5. Rate Limiter (Placed after CORS and DB connection)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    message: "Too many requests from this IP, please try again after 15 minutes."
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.use("/api", limiter);
+
+// 6. API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/live-sessions", liveSessionRoutes);
@@ -78,16 +100,26 @@ app.use("/api/student/quizzes", studentQuizRoutes);
 app.use("/api/assignment", assignmentRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 
-// Base Health Check Route
+// Base Route
 app.get("/", (req, res) => {
   res.send("Islamic Academy ES6 API is running...");
 });
 
-// Global 404 Handler (Undefined Routes)
+// Global 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: "Route not found"
+  });
+});
+
+// 7. Global Error Handler (Guarantees JSON response instead of HTML crash)
+app.use((err, req, res, next) => {
+  console.error("Server Error Stack:", err.stack);
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error",
+    error: err.message
   });
 });
 
