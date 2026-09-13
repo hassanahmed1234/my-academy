@@ -26,23 +26,26 @@ const app = express();
 
 // 1. MUST BE FIRST: Global Dynamic CORS Policy
 const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://my-academy-y59r.vercel.app"
-];
+  "http://localhost:5173", // Vite dev server
+  "http://localhost:3000", // React standard dev server
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000",
+  process.env.CLIENT_URL,   // Production frontend URL (from .env)
+].filter(Boolean); // Filter undefined values if CLIENT_URL is missing
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+    origin: (origin, callback) => {
+      // Postman, cURL, or local apps ke non-browser requests ko allow karne ke liye !origin check
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(null, true);
+        callback(new Error("CORS policy violation: Access denied"));
       }
     },
-    credentials: true,
+    credentials: true, // Cookies / Authorization headers allow karne ke liye
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
