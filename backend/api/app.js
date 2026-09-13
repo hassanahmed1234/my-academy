@@ -52,7 +52,7 @@ const allowedOrigins = [
   "http://localhost:5173", // Vite dev server
   "http://localhost:3000", // React standard dev server
   "http://127.0.0.1:5173",
-  "http://127.0.0.1:3000",
+  "https://my-academy-y59r.vercel.app/",
   process.env.CLIENT_URL,   // Production frontend URL (from .env)
 ].filter(Boolean); // Filter undefined values if CLIENT_URL is missing
 
