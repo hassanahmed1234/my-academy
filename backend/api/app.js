@@ -55,26 +55,10 @@ const allowedOrigins = [
 ];
 
 app.use(
-  cors({
-    origin: function (origin, callback) {
-      // 1. Postman, Server-to-Server, mobile apps, ya same-origin calls me `origin` undefined hota hai
-      if (!origin) return callback(null, true);
-
-      // 2. Dynamic Vercel previews aur exact domains match karein
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app") // Vercel ki sabhi deployment/preview domains allow karein
-      ) {
-        return callback(null, true);
-      } else {
-        console.error(`CORS Blocked for Origin: ${origin}`);
-        return callback(new Error(`CORS policy violation: ${origin} not allowed`));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
-  })
+    cors({
+        origin: true, // Sabhi origins allow kar dega (testing ke liye best)
+        credentials: true,
+    })
 );
 
 // API Routes
