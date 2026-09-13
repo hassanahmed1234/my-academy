@@ -49,26 +49,31 @@ app.use(express.json({ limit: "10kb" }));
 
 // Allowed origins list
 const allowedOrigins = [
-  "http://localhost:5173", // Vite dev server
-  "http://localhost:3000", // React standard dev server
-  "http://127.0.0.1:5173",
-  "https://my-academy-y59r.vercel.app/",
-  process.env.CLIENT_URL,   // Production frontend URL (from .env)
-].filter(Boolean); // Filter undefined values if CLIENT_URL is missing
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://my-academy-umber.vercel.app",
+];
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Postman, cURL, or local apps ke non-browser requests ko allow karne ke liye !origin check
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
+    origin: function (origin, callback) {
+      // 1. Postman, Server-to-Server, mobile apps, ya same-origin calls me `origin` undefined hota hai
+      if (!origin) return callback(null, true);
+
+      // 2. Dynamic Vercel previews aur exact domains match karein
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") // Vercel ki sabhi deployment/preview domains allow karein
+      ) {
+        return callback(null, true);
       } else {
-        callback(new Error("CORS policy violation: Access denied"));
+        console.error(`CORS Blocked for Origin: ${origin}`);
+        return callback(new Error(`CORS policy violation: ${origin} not allowed`));
       }
     },
-    credentials: true, // Cookies / Authorization headers allow karne ke liye
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
   })
 );
 
