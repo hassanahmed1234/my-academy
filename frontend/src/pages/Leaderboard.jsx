@@ -13,6 +13,7 @@ import {
     Star,
     Info,
     Loader2,
+    User,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +26,30 @@ const XP_RULES = [
     { action: "Daily Learning Streak", xp: "+5 XP", icon: Flame },
 ];
 
+// Helper Component for Avatar Image with Fallback
+const StudentAvatar = ({ student, size = "w-10 h-10", textSize = "text-sm" }) => {
+    const avatarUrl = student?.avatar || student?.profilePic;
+    const studentName = student?.name || "Student";
+
+    if (avatarUrl) {
+        return (
+            <img
+                src={avatarUrl}
+                alt={studentName}
+                className={`${size} rounded-full object-cover border border-amber-500/30 shadow-md shrink-0`}
+            />
+        );
+    }
+
+    return (
+        <div
+            className={`${size} rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-amber-400 ${textSize} uppercase shrink-0 shadow-md`}
+        >
+            {studentName.charAt(0)}
+        </div>
+    );
+};
+
 const Leaderboard = () => {
     const [timeFilter, setTimeFilter] = useState("overall");
     const [leaderboard, setLeaderboard] = useState([]);
@@ -32,7 +57,7 @@ const Leaderboard = () => {
     const [loading, setLoading] = useState(true);
     const [showXpModal, setShowXpModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-    const navigate = useNavigate(); // 2. Hook initialize karein
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchLeaderboard();
@@ -53,7 +78,6 @@ const Leaderboard = () => {
 
     const top3 = leaderboard.slice(0, 3);
     const fullList = leaderboard.slice(3);
-
 
     return (
         <div className="min-h-screen pb-28 text-slate-200 max-w-6xl mx-auto p-4 md:p-6 space-y-8">
@@ -108,10 +132,11 @@ const Leaderboard = () => {
                         <button
                             key={tab}
                             onClick={() => setTimeFilter(tab)}
-                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold capitalize transition ${timeFilter === tab
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold capitalize transition ${
+                                timeFilter === tab
                                     ? "bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20"
                                     : "text-slate-400 hover:text-white"
-                                }`}
+                            }`}
                         >
                             {tab.replace("_", " ")}
                         </button>
@@ -158,20 +183,23 @@ const Leaderboard = () => {
                 </div>
             ) : (
                 <>
-                    {/* 3. PODIUM (TOP 3 STUDENTS) */}
+                    {/* 3. PODIUM (TOP 3 STUDENTS WITH AVATARS) */}
                     {top3.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 items-end">
                             {/* RANK #2 */}
                             {top3[1] && (
-                                <div className="order-2 md:order-1 bg-slate-900 border border-slate-800 rounded-3xl p-5 text-center relative overflow-hidden">
+                                <div className="order-2 md:order-1 bg-slate-900 border border-slate-800 rounded-3xl p-5 text-center relative overflow-hidden flex flex-col items-center">
                                     <div className="absolute top-0 right-0 bg-slate-800 text-slate-300 font-extrabold text-xs px-3 py-1 rounded-bl-xl border-l border-b border-slate-700">
                                         🥈 #2
                                     </div>
-                                    <h3 className="font-bold text-white text-base mt-6">{top3[1].student?.name}</h3>
+                                    <div className="mt-4">
+                                        <StudentAvatar student={top3[1].student} size="w-16 h-16" textSize="text-xl" />
+                                    </div>
+                                    <h3 className="font-bold text-white text-base mt-3">{top3[1].student?.name}</h3>
                                     <div className="flex items-center justify-center gap-1 mt-1 text-amber-400 font-black text-lg">
                                         <Zap className="w-4 h-4 fill-amber-400" /> {top3[1].xp} <span className="text-xs text-slate-400">XP</span>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400">
+                                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 w-full">
                                         <div><span className="block font-bold text-slate-200">{top3[1].coursesCompleted}</span> Courses</div>
                                         <div className="flex items-center justify-center gap-0.5 font-semibold text-orange-400">
                                             <Flame className="w-3.5 h-3.5" /> {top3[1].streak}d Streak
@@ -182,15 +210,18 @@ const Leaderboard = () => {
 
                             {/* RANK #1 */}
                             {top3[0] && (
-                                <div className="order-1 md:order-2 bg-gradient-to-b from-amber-500/10 via-slate-900 to-slate-900 border-2 border-amber-500/50 rounded-3xl p-6 text-center relative overflow-hidden shadow-xl transform md:-translate-y-3">
+                                <div className="order-1 md:order-2 bg-gradient-to-b from-amber-500/10 via-slate-900 to-slate-900 border-2 border-amber-500/50 rounded-3xl p-6 text-center relative overflow-hidden shadow-xl transform md:-translate-y-3 flex flex-col items-center">
                                     <div className="absolute top-0 right-0 bg-amber-500 text-slate-950 font-black text-xs px-3.5 py-1 rounded-bl-xl">
                                         🥇 #1 CHAMPION
                                     </div>
-                                    <h3 className="font-extrabold text-white text-lg mt-6">{top3[0].student?.name}</h3>
+                                    <div className="mt-4 relative">
+                                        <StudentAvatar student={top3[0].student} size="w-20 h-20" textSize="text-2xl" />
+                                    </div>
+                                    <h3 className="font-extrabold text-white text-lg mt-3">{top3[0].student?.name}</h3>
                                     <div className="flex items-center justify-center gap-1 mt-1 text-amber-400 font-black text-2xl">
                                         <Zap className="w-5 h-5 fill-amber-400" /> {top3[0].xp} <span className="text-xs text-slate-400">XP</span>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400">
+                                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 w-full">
                                         <div><span className="block font-bold text-slate-200">{top3[0].coursesCompleted}</span> Courses Done</div>
                                         <div className="flex items-center justify-center gap-0.5 font-semibold text-orange-400">
                                             <Flame className="w-3.5 h-3.5" /> {top3[0].streak}d Streak
@@ -201,15 +232,18 @@ const Leaderboard = () => {
 
                             {/* RANK #3 */}
                             {top3[2] && (
-                                <div className="order-3 bg-slate-900 border border-slate-800 rounded-3xl p-5 text-center relative overflow-hidden">
+                                <div className="order-3 bg-slate-900 border border-slate-800 rounded-3xl p-5 text-center relative overflow-hidden flex flex-col items-center">
                                     <div className="absolute top-0 right-0 bg-slate-800 text-amber-600 font-extrabold text-xs px-3 py-1 rounded-bl-xl border-l border-b border-slate-700">
                                         🥉 #3
                                     </div>
-                                    <h3 className="font-bold text-white text-base mt-6">{top3[2].student?.name}</h3>
+                                    <div className="mt-4">
+                                        <StudentAvatar student={top3[2].student} size="w-16 h-16" textSize="text-xl" />
+                                    </div>
+                                    <h3 className="font-bold text-white text-base mt-3">{top3[2].student?.name}</h3>
                                     <div className="flex items-center justify-center gap-1 mt-1 text-amber-400 font-black text-lg">
                                         <Zap className="w-4 h-4 fill-amber-400" /> {top3[2].xp} <span className="text-xs text-slate-400">XP</span>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400">
+                                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 w-full">
                                         <div><span className="block font-bold text-slate-200">{top3[2].coursesCompleted}</span> Courses</div>
                                         <div className="flex items-center justify-center gap-0.5 font-semibold text-orange-400">
                                             <Flame className="w-3.5 h-3.5" /> {top3[2].streak}d Streak
@@ -261,7 +295,10 @@ const Leaderboard = () => {
                                                     #{index + 4}
                                                 </td>
                                                 <td className="p-4 font-semibold text-slate-100">
-                                                    {item.student?.name}
+                                                    <div className="flex items-center gap-3">
+                                                        <StudentAvatar student={item.student} size="w-8 h-8" textSize="text-xs" />
+                                                        <span>{item.student?.name}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="p-4 text-center">
                                                     <span className="inline-flex items-center gap-1 text-orange-400 font-semibold bg-orange-500/10 px-2 py-0.5 rounded-md border border-orange-500/20">
@@ -307,7 +344,6 @@ const Leaderboard = () => {
                     </div>
 
                     <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-slate-800 pt-2 sm:pt-0">
-                        
                         <button
                             onClick={() => navigate("/courses")}
                             className="px-3.5 py-2 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl hover:bg-amber-400 transition flex items-center gap-1 shadow-lg shadow-amber-500/20 cursor-pointer"
