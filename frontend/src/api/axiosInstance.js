@@ -2,6 +2,7 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: "https://my-academy-umber.vercel.app/api",
+  withCredentials: true,
 });
 
 // Automatic JWT Token Attachment
