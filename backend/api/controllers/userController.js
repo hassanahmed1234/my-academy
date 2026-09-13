@@ -41,14 +41,14 @@ export const updateUserProfile = async (req, res) => {
     }
 
     // Name / FullName support
-    // if (req.body.fullName || req.body.name) {
-    //   user.name = req.body.fullName || req.body.name;
-    // }
+    if (req.body.fullName || req.body.name) {
+      user.name = req.body.fullName || req.body.name;
+    }
 
-    // if (req.body.phone !== undefined) user.phone = req.body.phone;
-    // if (req.body.location !== undefined) user.location = req.body.location;
-    // if (req.body.bio !== undefined) user.bio = req.body.bio;
-    // if (req.body.website !== undefined) user.website = req.body.website;
+    if (req.body.phone !== undefined) user.phone = req.body.phone;
+    if (req.body.location !== undefined) user.location = req.body.location;
+    if (req.body.bio !== undefined) user.bio = req.body.bio;
+    if (req.body.website !== undefined) user.website = req.body.website;
 
     // File Upload via Multer / Cloudinary
     if (req.file && req.file.path) {
@@ -63,14 +63,14 @@ export const updateUserProfile = async (req, res) => {
       message: "Profile updated successfully",
       user: {
         _id: updatedUser._id,
-        // name: updatedUser.name,
-        // fullName: updatedUser.name,
-        // email: updatedUser.email,
-        // role: updatedUser.role,
-        // phone: updatedUser.phone,
-        // location: updatedUser.location,
-        // bio: updatedUser.bio,
-        // website: updatedUser.website,
+        name: updatedUser.name,
+        fullName: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        phone: updatedUser.phone,
+        location: updatedUser.location,
+        bio: updatedUser.bio,
+        website: updatedUser.website,
         avatar: updatedUser.avatar,
       },
     });
