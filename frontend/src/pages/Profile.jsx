@@ -87,6 +87,7 @@ const Profile = () => {
     const imageFormData = new FormData();
     imageFormData.append("avatar", file);
 
+    console.log(file)
     setUploadingImg(true);
     setStatusMessage({ type: "", text: "" });
 
@@ -94,6 +95,7 @@ const Profile = () => {
       const { data } = await API.put("/users/profile", imageFormData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      console.log(data)
 
       const newAvatarUrl = data.user?.avatar || data.avatar;
 
