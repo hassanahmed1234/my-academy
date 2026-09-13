@@ -1,4 +1,6 @@
 import User from "../models/User.js";
+import { cloudinary } from "../config/cloudinary.js";
+
 
 // @desc    Get current user profile
 // @route   GET /api/users/profile
@@ -32,6 +34,7 @@ export const getUserProfile = async (req, res) => {
 // @route   PUT /api/users/profile
 // @access  Private
 
+
 export const updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -50,16 +53,24 @@ export const updateUserProfile = async (req, res) => {
     if (req.body.bio !== undefined) user.bio = req.body.bio;
     if (req.body.website !== undefined) user.website = req.body.website;
 
-    // File Upload via Multer / Cloudinary
-    if (req.file && req.file.path) {
-      user.avatar = req.file.path;
+    // Handle Image File Upload via Buffer to Cloudinary
+    if (req.file) {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+      
+      const uploadResult = await cloudinary.uploader.upload(dataURI, {
+        folder: "profile_avatars",
+        transformation: [{ width: 500, height: 500, crop: "limit" }],
+      });
+      
+      user.avatar = uploadResult.secure_url;
     } else if (req.body.avatar) {
       user.avatar = req.body.avatar;
     }
 
     const updatedUser = await user.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Profile updated successfully",
       user: {
         _id: updatedUser._id,
@@ -75,10 +86,12 @@ export const updateUserProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("UPDATE_PROFILE_ERROR:", error);
+    return res.status(500).json({
+      message: error.message || "Server error during profile update",
+    });
   }
 };
-
 // @desc    Update user password
 // @route   PUT /api/users/change-password
 // @access  Private

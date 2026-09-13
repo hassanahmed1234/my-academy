@@ -79,15 +79,22 @@ const Profile = () => {
   }, []);
 
   // Avatar Upload Handler (FormData)
-  // Avatar Upload Handler (File Upload)
+  // --- Profile.jsx File Changes ---
+
+  // 1. handleImageUpload Handler Fix
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // File size check (Optional: 5MB limit backend par bhi hai)
+    if (file.size > 5 * 1024 * 1024) {
+      setStatusMessage({ type: "error", text: "File size must be less than 5MB." });
+      return;
+    }
+
     const imageFormData = new FormData();
     imageFormData.append("avatar", file);
 
-    console.log(file)
     setUploadingImg(true);
     setStatusMessage({ type: "", text: "" });
 
@@ -95,23 +102,26 @@ const Profile = () => {
       const { data } = await API.put("/users/profile", imageFormData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log(data)
 
+      // Backend Response Parsing:
+      // data.user check karega agar full user object aaya hai, warna direct data use karega
       const newAvatarUrl = data.user?.avatar || data.avatar;
 
-      setFormData((prev) => ({ ...prev, avatar: newAvatarUrl }));
-      setStatusMessage({ type: "success", text: "Profile picture updated!" });
+      if (newAvatarUrl) {
+        setFormData((prev) => ({ ...prev, avatar: newAvatarUrl }));
+        setStatusMessage({ type: "success", text: "Profile picture updated!" });
+      }
     } catch (error) {
       setStatusMessage({
         type: "error",
-        text: error.response?.data?.message || "Image upload failed.",
+        text: error.response?.data?.message || "Image upload failed. Please try again.",
       });
     } finally {
       setUploadingImg(false);
     }
   };
 
-  // Form Text Details Submit Handler
+  // 2. handleSubmitProfile Handler Fix
   const handleSubmitProfile = async (e) => {
     e.preventDefault();
     setUpdating(true);
@@ -124,9 +134,10 @@ const Profile = () => {
         location: formData.location,
         bio: formData.bio,
         website: formData.website,
-        avatar: formData.avatar,
+        avatar: formData.avatar, // Existing URL maintain karega text call mein
       });
 
+      // Backend Response Parsing for standard JSON update
       const updatedName = data.user?.name || data.name || formData.name;
 
       setStatusMessage({ type: "success", text: "Profile updated successfully!" });
