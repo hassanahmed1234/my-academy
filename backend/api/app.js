@@ -37,7 +37,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
         callback(null, true);
       } else {
-        callback(null, true); // Fallback to allow connection
+        callback(null, true);
       }
     },
     credentials: true,
@@ -45,7 +45,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
   })
 );
-
 
 // Pre-flight handling
 app.options("*", cors());
@@ -60,21 +59,13 @@ app.use(
 // 3. Body Parser
 app.use(express.json({ limit: "10kb" }));
 
-// 4. Async Database Middleware for Serverless Environment
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    console.error("Database connection failure:", err.message);
-    res.status(500).json({ message: "Database Connection Failed", error: err.message });
-  }
-});
+// 4. DB Connection Initializer (Cached connection in db.js)
+connectDB();
 
-// 5. Rate Limiter (Placed after CORS and DB connection)
+// 5. Rate Limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   message: {
     message: "Too many requests from this IP, please try again after 15 minutes."
   },
@@ -114,7 +105,7 @@ app.use((req, res) => {
   });
 });
 
-// 7. Global Error Handler (Guarantees JSON response instead of HTML crash)
+// 7. Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Server Error Stack:", err.stack);
   res.status(500).json({
