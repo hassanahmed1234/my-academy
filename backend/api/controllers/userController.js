@@ -35,33 +35,36 @@ export const updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
 
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
-      user.location = req.body.location !== undefined ? req.body.location : user.location;
-      user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
-      user.website = req.body.website !== undefined ? req.body.website : user.website;
-      user.avatar = req.body.avatar !== undefined ? req.avatar : user.avatar;
-
-      const updatedUser = await user.save();
-
-      res.status(200).json({
-        message: "Profile updated successfully",
-        user: {
-          _id: updatedUser._id,
-          name: updatedUser.name,
-          email: updatedUser.email,
-          role: updatedUser.role,
-          phone: updatedUser.phone,
-          location: updatedUser.location,
-          bio: updatedUser.bio,
-          website: updatedUser.website,
-          avatar: updatedUser.avatar,
-        },
-      });
-    } else {
-      res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    user.name = req.body.fullName || req.body.name || user.name;
+    user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
+    user.location = req.body.location !== undefined ? req.body.location : user.location;
+    user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
+    user.website = req.body.website !== undefined ? req.body.website : user.website;
+
+    if (req.file && req.file.path) {
+      user.avatar = req.file.path; // Cloudinary secure image URL
+    }
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        _id: updatedUser._id,
+        fullName: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        phone: updatedUser.phone,
+        location: updatedUser.location,
+        bio: updatedUser.bio,
+        website: updatedUser.website,
+        avatar: updatedUser.avatar,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
