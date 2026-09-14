@@ -61,7 +61,7 @@ const HeroSection = () => {
 
   const handleStartLearning = (targetRoute) => {
     if (isAuthenticated) {
-      navigate('/classroom');
+      navigate('/dashboard');
     } else {
       navigate('/login', { state: { redirectTo: targetRoute } });
     }
