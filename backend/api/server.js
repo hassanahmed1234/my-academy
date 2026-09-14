@@ -1,21 +1,21 @@
-import dotenv from "dotenv";
 import dns from "dns";
 import connectDB from "./config/db.js";
 import app from "./app.js";
+
+
+
 
 // Custom DNS Resolver Setup
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 // Load Environment Variables
-dotenv.config();
 
-// Local Development Only: Listen on Port
-if (process.env.NODE_ENV !== "production") {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server running locally on port ${PORT}`);
-  });
-}
+// Connect Database
+// connectDB();
 
-// Export app for Vercel Serverless Handler
-export default app;
+const PORT = process.env.PORT ;
+const CLIENT_URL = process.env.CLIENT_URL ;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}===${CLIENT_URL}`);
+});

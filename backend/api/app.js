@@ -1,10 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-
-// Config & Routes Imports
-import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
@@ -21,15 +20,19 @@ import taskRoutes from "./routes/taskRoutes.js";
 import studentQuizRoutes from "./routes/studentQuizRoutes.js";
 import assignmentRoutes from "./routes/assignmentRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import connectDB from "./config/db.js";
+
+
 
 const app = express();
 
+// Connect Database
+connectDB();
+
+
 // 1. MUST BE FIRST: Global Dynamic CORS Policy
 const allowedOrigins = [
-  "http://localhost:5173", // Vite dev server
-  "http://localhost:3000", // React standard dev server
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:3000",
+  "http://localhost:5173",
   process.env.CLIENT_URL,   // Production frontend URL (from .env)
 ].filter(Boolean); // Filter undefined values if CLIENT_URL is missing
 
@@ -49,8 +52,9 @@ app.use(
   })
 );
 
+
 // Pre-flight handling
-app.options("*", cors());
+// app.options("*", cors());
 
 // 2. Security Headers
 app.use(
@@ -62,8 +66,7 @@ app.use(
 // 3. Body Parser
 app.use(express.json({ limit: "10kb" }));
 
-// 4. DB Connection Initializer (Cached connection in db.js)
-connectDB();
+
 
 // 5. Rate Limiter
 const limiter = rateLimit({
