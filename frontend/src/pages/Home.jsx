@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import API from "../api/axiosInstance"; // adjust import path as needed
+import AOS from "aos";
+import "aos/dist/aos.css"; // AOS CSS imports
+
+import API from "../api/axiosInstance";
 import DashboardSection from "../components/DashboardSection";
 import OccasionalLive from "../components/OccasionalLive";
 import HeroSection from "../components/HeroSection";
@@ -15,56 +18,72 @@ const HomePage = () => {
   const [upcomingLive, setUpcomingLive] = useState([]);
   const [loading, setLoading] = useState(true);
   const [faqOpen, setFaqOpen] = useState(null);
- const dummyCourses = [
-  {
-    _id: "dummy-1",
-    title: "Quranic Tajweed Essentials",
-    description: "Master the rules of Tajweed and correct pronunciation with practical exercises.",
-    level: "Beginner",
-    isFree: true,
-    price: 0,
-    image: tajweedImg,
-  },
-  {
-    _id: "dummy-2",
-    title: "Seerah of Prophet Muhammad (PBUH)",
-    description: "In-depth study of the life, lessons, and leadership from authentic sources.",
-    level: "Intermediate",
-    isFree: true,
-    price: 0,
-    image: seerahImg,
-  },
-  {
-    _id: "dummy-3",
-    title: "Fundamentals of Fiqh",
-    description: "Comprehensive guide to daily worship rules and Islamic jurisprudence.",
-    level: "All Levels",
-    isFree: true,
-    price: 0,
-    image: fiqhImg,
-  },
-  {
-    _id: "dummy-4",
-    title: "Arabic Grammar & Vocabulary",
-    description: "Learn foundational Classical Arabic to understand the Quran directly.",
-    level: "Beginner",
-    isFree: true,
-    price: 0,
-    image: arabicImg,
-  },
-];
+
+  const dummyCourses = [
+    {
+      _id: "dummy-1",
+      title: "Quranic Tajweed Essentials",
+      description: "Master the rules of Tajweed and correct pronunciation with practical exercises.",
+      level: "Beginner",
+      isFree: true,
+      price: 0,
+      image: tajweedImg,
+    },
+    {
+      _id: "dummy-2",
+      title: "Seerah of Prophet Muhammad (PBUH)",
+      description: "In-depth study of the life, lessons, and leadership from authentic sources.",
+      level: "Intermediate",
+      isFree: true,
+      price: 0,
+      image: seerahImg,
+    },
+    {
+      _id: "dummy-3",
+      title: "Fundamentals of Fiqh",
+      description: "Comprehensive guide to daily worship rules and Islamic jurisprudence.",
+      level: "All Levels",
+      isFree: true,
+      price: 0,
+      image: fiqhImg,
+    },
+    {
+      _id: "dummy-4",
+      title: "Arabic Grammar & Vocabulary",
+      description: "Learn foundational Classical Arabic to understand the Quran directly.",
+      level: "Beginner",
+      isFree: true,
+      price: 0,
+      image: arabicImg,
+    },
+  ];
 
   const displayCourses = featuredCourses.length > 0 ? featuredCourses : dummyCourses;
+
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Initialize AOS
+    AOS.init({
+      duration: 800,
+      once: true,
+      easing: "ease-in-out",
+    });
+
     fetchHomeData();
   }, []);
+
+  // Refresh AOS after async data load to ensure positions recalculate
+  useEffect(() => {
+    if (!loading) {
+      AOS.refresh();
+    }
+  }, [loading]);
 
   const fetchHomeData = async () => {
     try {
       setLoading(true);
 
-      // Parallel Real API calls toBackend
       const [coursesRes, liveRes] = await Promise.allSettled([
         API.get("/courses"),
         API.get("/live-sessions"),
@@ -72,7 +91,6 @@ const HomePage = () => {
 
       if (coursesRes.status === "fulfilled") {
         const all = coursesRes.value.data || [];
-        // Real Filter: Featured and Free Courses
         setFeaturedCourses(all.filter((c) => c.isFeatured || c.rating >= 4.5).slice(0, 4));
         setFreeCourses(all.filter((c) => c.isFree || c.price === 0).slice(0, 4));
       }
@@ -92,12 +110,12 @@ const HomePage = () => {
   };
 
   return (
-    <div className="bg-[#0b0f19] text-slate-100 min-h-screen selection:bg-amber-500 selection:text-slate-950 font-sans">
+    <div className="bg-[#0b0f19] text-slate-100 min-h-screen selection:bg-amber-500 selection:text-slate-950 font-sans overflow-x-hidden">
 
       {/* 1. HERO SECTION */}
       <HeroSection />
 
-      {/* 3. TRUST / QUICK STATS */}
+      {/* 2. TRUST / QUICK STATS */}
       <section className="py-12 bg-slate-900/50 border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -107,7 +125,12 @@ const HomePage = () => {
               { num: "500+", label: "Video Lessons" },
               { num: "100%", label: "Online & Flexible" },
             ].map((stat, idx) => (
-              <div key={idx} className="p-6 rounded-2xl bg-slate-950/40 border border-slate-800/60 backdrop-blur-sm">
+              <div
+                key={idx}
+                data-aos="fade-up"
+                data-aos-delay={idx * 100}
+                className="p-6 rounded-2xl bg-slate-950/40 border border-slate-800/60 backdrop-blur-sm"
+              >
                 <div className="text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-amber-400 to-emerald-400 bg-clip-text text-transparent">
                   {stat.num}
                 </div>
@@ -118,9 +141,9 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 4. WHY LEARN WITH US */}
+      {/* 3. WHY LEARN WITH US */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-16" data-aos="fade-up">
           <h2 className="text-3xl md:text-4xl font-bold text-white">Why Learn With Us?</h2>
           <p className="text-slate-400 mt-3">Designed specifically for modern students seeking structured and traditional Islamic education.</p>
         </div>
@@ -134,7 +157,12 @@ const HomePage = () => {
             { icon: "🏆", title: "Certificates", desc: "Complete courses successfully and earn downloadable certificates." },
             { icon: "🕌", title: "Occasional Live Sessions", desc: "Join interactive live classes, Q&A sessions, and special spiritual workshops." },
           ].map((feature, i) => (
-            <div key={i} className="p-8 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-amber-500/40 transition-all duration-300 group hover:-translate-y-1">
+            <div
+              key={i}
+              data-aos="fade-up"
+              data-aos-delay={(i % 3) * 150}
+              className="p-8 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-amber-500/40 transition-all duration-300 group hover:-translate-y-1"
+            >
               <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300 inline-block">{feature.icon}</div>
               <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
               <p className="text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
@@ -143,10 +171,10 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 5. FEATURED COURSES ⭐ (REAL DATA) */}
+      {/* 4. FEATURED COURSES ⭐ (REAL DATA) */}
       <section className="py-20 bg-slate-950/80 border-y border-slate-800/80 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12" data-aos="fade-right">
             <div>
               <span className="text-amber-400 font-semibold text-sm uppercase tracking-wider">Top Rated Programs</span>
               <h2 className="text-3xl md:text-4xl font-bold text-white mt-1">Featured Courses ⭐</h2>
@@ -164,8 +192,13 @@ const HomePage = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayCourses.map((course) => (
-                <div key={course._id} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all">
+              {displayCourses.map((course, idx) => (
+                <div
+                  key={course._id}
+                  data-aos="zoom-in-up"
+                  data-aos-delay={idx * 100}
+                  className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all"
+                >
                   <div>
                     <div className="h-44 bg-slate-800 relative overflow-hidden">
                       <img
@@ -198,9 +231,9 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 6. HOW IT WORKS */}
+      {/* 5. HOW IT WORKS */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-xl mx-auto mb-16">
+        <div className="text-center max-w-xl mx-auto mb-16" data-aos="fade-up">
           <h2 className="text-3xl md:text-4xl font-bold text-white">How It Works</h2>
           <p className="text-slate-400 mt-2">Start your learning journey in 4 simple steps</p>
         </div>
@@ -212,7 +245,12 @@ const HomePage = () => {
             { num: "03", title: "Start Learning", desc: "Watch videos, read supplementary notes, and solve quizzes." },
             { num: "04", title: "Complete & Grow", desc: "Track knowledge growth and earn verified completion certificates." },
           ].map((step, idx) => (
-            <div key={idx} className="bg-slate-900/40 border border-slate-800/80 p-8 rounded-2xl relative">
+            <div
+              key={idx}
+              data-aos="fade-up"
+              data-aos-delay={idx * 150}
+              className="bg-slate-900/40 border border-slate-800/80 p-8 rounded-2xl relative"
+            >
               <span className="text-5xl font-black text-amber-50 mb-4 block">{step.num}</span>
               <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
               <p className="text-slate-400 text-xs leading-relaxed">{step.desc}</p>
@@ -221,16 +259,18 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* 6. LEARNING EXPERIENCE PREVIEW */}
+      <div data-aos="fade-up">
+        <DashboardSection liveSessions={upcomingLive} />
+      </div>
 
+      {/* 7. OCCASIONAL LIVE CLASSES */}
+      <div data-aos="fade-up">
+        <OccasionalLive liveSessions={upcomingLive} />
+      </div>
 
-      {/* 8. LEARNING EXPERIENCE PREVIEW (MOCKUP) */}
-      <DashboardSection liveSessions={upcomingLive} />
-
-      {/* 9. OCCASIONAL LIVE CLASSES */}
-      <OccasionalLive liveSessions={upcomingLive} />
-
-      {/* 10. ABOUT THE ACADEMY */}
-      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-800/80">
+      {/* 8. ABOUT THE ACADEMY */}
+      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-800/80" data-aos="zoom-in">
         <div className="max-w-3xl mx-auto text-center">
           <span className="text-amber-400 font-semibold text-sm uppercase">Our Mission</span>
           <h2 className="text-3xl md:text-4xl font-bold text-white mt-2">Authentic Knowledge for Everyone</h2>
@@ -245,9 +285,9 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 13. FAQ SECTION */}
+      {/* 9. FAQ SECTION */}
       <section className="py-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16" data-aos="fade-up">
           <h2 className="text-3xl md:text-4xl font-bold text-white">Frequently Asked Questions</h2>
           <p className="text-slate-400 mt-2">Everything you need to know about our learning platform.</p>
         </div>
@@ -261,7 +301,12 @@ const HomePage = () => {
             { q: "Can I access courses on mobile?", a: "Absolutely. Our platform is fully responsive and works smoothly across mobile phones, tablets, and desktops." },
             { q: "How do I enroll in a paid course?", a: "Simply select the course, click Enroll, and follow the simple checkout process to instantly unlock full course access." },
           ].map((faq, idx) => (
-            <div key={idx} className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden transition-all">
+            <div
+              key={idx}
+              data-aos="fade-up"
+              data-aos-delay={idx * 50}
+              className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden transition-all"
+            >
               <button
                 onClick={() => toggleFaq(idx)}
                 className="w-full p-6 text-left flex justify-between items-center text-white font-semibold text-base focus:outline-none"
@@ -279,9 +324,9 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* FINAL CALL TO ACTION */}
+      {/* 10. FINAL CALL TO ACTION */}
       <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-t border-slate-800 text-center relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-4 relative z-10">
+        <div className="max-w-4xl mx-auto px-4 relative z-10" data-aos="zoom-in-up">
           <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-tight">
             Start Your Islamic Learning Journey Today
           </h2>
