@@ -14,8 +14,6 @@ import {
   Circle,
 } from "lucide-react";
 
-
-
 const CoursePlayer = () => {
   const { id } = useParams();
   const [course, setCourse] = useState(null);
@@ -67,12 +65,10 @@ const CoursePlayer = () => {
   };
 
   // Toggle Mark as Complete / Incomplete API Handler: POST /api/my-progress/toggle
-
   const handleToggleComplete = async (lessonId) => {
     if (!lessonId || updating) return;
     try {
       setUpdating(true);
-      // Fixed Endpoint: matches POST /api/my-progress/toggle
       const { data } = await API.post("/my-progress/toggle", {
         courseId: id,
         lessonId,
@@ -97,21 +93,21 @@ const CoursePlayer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-10 h-10 text-amber-400 animate-spin" />
-        <p className="text-slate-400 text-xs font-semibold tracking-wider">LOADING STREAM...</p>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-10 h-10 text-amber-600 animate-spin" />
+        <p className="text-slate-500 text-xs font-semibold tracking-wider">LOADING STREAM...</p>
       </div>
     );
   }
 
   if (error || !course) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-        <div className="max-w-md w-full p-8 bg-slate-900 border border-slate-800 text-center rounded-3xl space-y-4 shadow-2xl">
-          <p className="text-sm font-semibold text-red-400">{error || "Course not found"}</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full p-8 bg-white border border-slate-200 text-center rounded-3xl space-y-4 shadow-xl">
+          <p className="text-sm font-semibold text-rose-600">{error || "Course not found"}</p>
           <Link
             to="/courses"
-            className="inline-flex items-center justify-center gap-2 text-xs font-bold text-amber-400 hover:text-amber-300 transition"
+            className="inline-flex items-center justify-center gap-2 text-xs font-bold text-amber-600 hover:text-amber-700 transition"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Catalog
           </Link>
@@ -121,38 +117,38 @@ const CoursePlayer = () => {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200 pt-4 pb-20 relative overflow-hidden">
+    <main className="min-h-screen bg-slate-50 text-slate-800 pt-4 pb-20 relative overflow-hidden">
       {/* Background Ambient Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-800px h-300px   bg-amber-500/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-amber-200/40 blur-[150px] rounded-full pointer-events-none" />
 
       {/* TOP NAVBAR HEADER */}
       <header className="max-w-7xl mx-auto px-4 sm:px-6 mb-6">
-        <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl px-5 py-4 flex items-center justify-between backdrop-blur-xl shadow-xl">
+        <div className="bg-white/90 border border-slate-200/80 rounded-2xl px-5 py-4 flex items-center justify-between backdrop-blur-xl shadow-sm">
           <div className="flex items-center gap-4">
             <Link
               to={`/course/${course._id}`}
-              className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-400 hover:text-white hover:border-slate-700 transition"
+              className="p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 hover:text-slate-900 hover:border-slate-300 transition"
               title="Back to Course Details"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
-              <h1 className="text-sm sm:text-base font-bold text-white line-clamp-1">{course.title}</h1>
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 line-clamp-1">{course.title}</h1>
               {course.arabicTitle && (
-                <p className="text-xs text-amber-400 font-serif font-semibold">{course.arabicTitle}</p>
+                <p className="text-xs text-amber-600 font-serif font-semibold">{course.arabicTitle}</p>
               )}
             </div>
           </div>
 
           {/* Progress Tracker Widget */}
-          <div className="hidden md:flex items-center gap-4 bg-slate-950/60 border border-slate-800/60 px-4 py-2 rounded-xl">
+          <div className="hidden md:flex items-center gap-4 bg-slate-100/80 border border-slate-200 px-4 py-2 rounded-xl">
             <div className="text-right">
-              <p className="text-[10px] text-slate-400 uppercase font-semibold">Course Progress</p>
-              <p className="text-xs font-bold text-amber-400">
+              <p className="text-[10px] text-slate-500 uppercase font-semibold">Course Progress</p>
+              <p className="text-xs font-bold text-amber-700">
                 {completedCount} / {totalLessons} Lessons ({progressPercentage}%)
               </p>
             </div>
-            <div className="w-24 bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+            <div className="w-24 bg-slate-200 rounded-full h-2 overflow-hidden border border-slate-300">
               <div
                 className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercentage}%` }}
@@ -167,7 +163,7 @@ const CoursePlayer = () => {
 
         {/* MAIN VIDEO STREAMING AREA */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-slate-950 rounded-3xl overflow-hidden shadow-2xl aspect-video relative border border-slate-800/80 group">
+          <div className="bg-slate-900 rounded-3xl overflow-hidden shadow-xl aspect-video relative border border-slate-300 group">
             {activeLesson?.cloudinaryUrl ? (
               <video
                 key={activeLesson.cloudinaryUrl}
@@ -180,17 +176,17 @@ const CoursePlayer = () => {
                 Your browser does not support the video tag.
               </video>
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 space-y-3 bg-slate-900/50">
-                <PlayCircle className="w-12 h-12 stroke-1 text-slate-600" />
-                <p className="text-xs text-slate-400">Select a lesson from playlist to start streaming.</p>
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 space-y-3 bg-slate-900">
+                <PlayCircle className="w-12 h-12 stroke-1 text-slate-500" />
+                <p className="text-xs text-slate-300">Select a lesson from playlist to start streaming.</p>
               </div>
             )}
           </div>
 
           {/* ACTIVE LESSON METADATA & MARK AS COMPLETE BUTTON */}
-          <div className="bg-slate-900/80 border border-slate-800/80 p-6 rounded-3xl space-y-4 shadow-xl backdrop-blur-xl">
+          <div className="bg-white border border-slate-200/80 p-6 rounded-3xl space-y-4 shadow-sm backdrop-blur-xl">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 border border-amber-200 px-3 py-1 rounded-full">
                 {activeLesson?.type || "Video Lesson"}
               </span>
 
@@ -199,14 +195,15 @@ const CoursePlayer = () => {
                 <button
                   disabled={updating}
                   onClick={() => handleToggleComplete(currentLessonId)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md cursor-pointer ${isCurrentCompleted
-                    ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-                    : "bg-amber-500 hover:bg-amber-400 text-slate-950"
-                    }`}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer ${
+                    isCurrentCompleted
+                      ? "bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                      : "bg-amber-500 hover:bg-amber-600 text-slate-950"
+                  }`}
                 >
                   {isCurrentCompleted ? (
                     <>
-                      <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
                       Completed
                     </>
                   ) : (
@@ -220,28 +217,28 @@ const CoursePlayer = () => {
             </div>
 
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-white">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">
                 {activeLesson?.title || "No Lesson Selected"}
               </h2>
               {activeLesson?.duration && (
-                <p className="text-xs text-slate-400 mt-1">Duration: {activeLesson.duration}</p>
+                <p className="text-xs text-slate-500 mt-1">Duration: {activeLesson.duration}</p>
               )}
             </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed pt-2 border-t border-slate-800/60">
+            <p className="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-100">
               Ensure you take notes during the lecture. For any queries regarding this module, reach out through the Q&A portal.
             </p>
           </div>
         </div>
 
         {/* SIDEBAR: MODULES & LESSONS ACCORDION */}
-        <div className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-5 space-y-4 shadow-xl backdrop-blur-xl h-fit">
-          <div className="border-b border-slate-800/80 pb-3 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-amber-400" />
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-4 shadow-sm backdrop-blur-xl h-fit">
+          <div className="border-b border-slate-200 pb-3 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-amber-600" />
               Course Curriculum
             </h3>
-            <span className="text-[11px] font-semibold text-slate-400 bg-slate-950 px-2.5 py-1 rounded-full border border-slate-800">
+            <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
               {completedCount}/{totalLessons} Done
             </span>
           </div>
@@ -250,26 +247,26 @@ const CoursePlayer = () => {
             {course.modules?.map((module, mIndex) => (
               <div
                 key={mIndex}
-                className="border border-slate-800/80 rounded-2xl overflow-hidden bg-slate-950/60"
+                className="border border-slate-200/80 rounded-2xl overflow-hidden bg-slate-50/50"
               >
                 {/* Module Header Toggle */}
                 <button
                   onClick={() => toggleModule(mIndex)}
-                  className="w-full p-3.5 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/60 transition text-left cursor-pointer"
+                  className="w-full p-3.5 flex items-center justify-between bg-slate-100/80 hover:bg-slate-200/60 transition text-left cursor-pointer"
                 >
-                  <span className="text-xs font-bold text-slate-200 line-clamp-1">
+                  <span className="text-xs font-bold text-slate-800 line-clamp-1">
                     {module.moduleTitle}
                   </span>
                   {expandedModules[mIndex] ? (
-                    <ChevronUp className="w-4 h-4 text-amber-400 shrink-0" />
+                    <ChevronUp className="w-4 h-4 text-amber-600 shrink-0" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
+                    <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                   )}
                 </button>
 
                 {/* Lessons List */}
                 {expandedModules[mIndex] && (
-                  <div className="p-2 space-y-1.5 bg-slate-950/80 border-t border-slate-800/60">
+                  <div className="p-2 space-y-1.5 bg-white border-t border-slate-200">
                     {module.lessons?.map((lesson, lIndex) => {
                       const lessonId = lesson._id || lesson.title;
                       const isActive = activeLesson?._id === lesson._id || activeLesson?.title === lesson.title;
@@ -279,14 +276,15 @@ const CoursePlayer = () => {
                         <button
                           key={lIndex}
                           onClick={() => setActiveLesson(lesson)}
-                          className={`w-full p-3 rounded-xl text-left text-xs transition flex items-center justify-between gap-2 cursor-pointer ${isActive
-                            ? "bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20"
-                            : "text-slate-400 hover:bg-slate-900 hover:text-white"
-                            }`}
+                          className={`w-full p-3 rounded-xl text-left text-xs transition flex items-center justify-between gap-2 cursor-pointer ${
+                            isActive
+                              ? "bg-amber-500 text-slate-950 font-black shadow-md"
+                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          }`}
                         >
                           <div className="flex items-center gap-2.5 overflow-hidden">
                             {isCompleted ? (
-                              <CheckCircle className={`w-4 h-4 shrink-0 ${isActive ? "text-slate-950" : "text-emerald-400"}`} />
+                              <CheckCircle className={`w-4 h-4 shrink-0 ${isActive ? "text-slate-950" : "text-emerald-600"}`} />
                             ) : lesson.type === "quiz" ? (
                               <HelpCircle className="w-4 h-4 shrink-0" />
                             ) : lesson.type === "assignment" ? (
@@ -297,7 +295,7 @@ const CoursePlayer = () => {
                             <span className="truncate">{lesson.title}</span>
                           </div>
                           {lesson.duration && (
-                            <span className={`text-[10px] shrink-0 ${isActive ? "text-slate-950 font-bold" : "text-slate-500"}`}>
+                            <span className={`text-[10px] shrink-0 ${isActive ? "text-slate-950 font-bold" : "text-slate-400"}`}>
                               {lesson.duration}
                             </span>
                           )}

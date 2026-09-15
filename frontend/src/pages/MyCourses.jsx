@@ -10,7 +10,6 @@ import {
   Loader2,
   ChevronDown,
   Sparkles,
-  CheckCircle,
 } from "lucide-react";
 
 const MyCourses = () => {
@@ -52,14 +51,12 @@ const MyCourses = () => {
           progressRes.data?.data ||
           (Array.isArray(progressRes.data) ? progressRes.data : []);
 
-
         setCompleted(Array.isArray(progressList) ? progressList : []);
 
         const pMap = {};
         if (Array.isArray(progressList)) {
           progressList.forEach((item) => {
-            // Safely resolve course ID key (handles populated object or raw string ID)
-            const cId = item.courseId ||  item._id;
+            const cId = item.courseId || item._id;
             if (cId) {
               pMap[String(cId)] = Array.isArray(item.completedLessons)
                 ? item.completedLessons
@@ -90,14 +87,14 @@ const MyCourses = () => {
   };
 
   return (
-    <div className="space-y-10 max-w-7xl mx-auto px-4 py-6">
+    <div className="space-y-10 max-w-7xl mx-auto px-4 py-6 font-sans">
       {/* 1. HEADER & SEARCH SECTION */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-800/80">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-wide flex items-center gap-2">
-            MY COURSES <Sparkles className="w-5 h-5 text-amber-400" />
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+            MY COURSES <Sparkles className="w-5 h-5 text-amber-500" />
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Continue your learning journey and track your educational progress.
           </p>
         </div>
@@ -105,13 +102,13 @@ const MyCourses = () => {
         {/* Search & Category Filter Bar */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search courses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
+              className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-sm"
             />
           </div>
 
@@ -119,7 +116,7 @@ const MyCourses = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="appearance-none bg-slate-900 border border-slate-800 rounded-xl pl-4 pr-10 py-2.5 text-xs text-slate-300 font-medium focus:outline-none focus:border-amber-500 transition cursor-pointer"
+              className="appearance-none bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs text-slate-700 font-medium focus:outline-none focus:border-emerald-500 transition cursor-pointer shadow-sm"
             >
               <option value="All">All Categories</option>
               <option value="Tajweed">Tajweed</option>
@@ -127,18 +124,18 @@ const MyCourses = () => {
               <option value="Fiqh">Fiqh</option>
               <option value="Hadith">Hadith</option>
             </select>
-            <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
       </div>
 
       {loading ? (
         <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-          <p className="text-slate-400 text-xs font-semibold">Loading enrolled courses...</p>
+          <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+          <p className="text-slate-500 text-xs font-semibold">Loading enrolled courses...</p>
         </div>
       ) : error ? (
-        <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-2xl text-center text-red-400 text-xs font-semibold">
+        <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-center text-red-600 text-xs font-semibold shadow-sm">
           {error}
         </div>
       ) : (
@@ -146,7 +143,7 @@ const MyCourses = () => {
           {/* 2. CONTINUE LEARNING SECTION */}
           <section className="space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold tracking-widest uppercase text-amber-400 flex items-center gap-2">
+              <h2 className="text-xs font-extrabold tracking-widest uppercase text-emerald-700 flex items-center gap-2">
                 <BookOpen className="w-4 h-4" /> Continue Learning
               </h2>
               <span className="text-xs text-slate-500 font-medium">
@@ -155,11 +152,11 @@ const MyCourses = () => {
             </div>
 
             {inProgress.length === 0 ? (
-              <div className="bg-slate-900/50 border border-slate-800/80 rounded-3xl p-8 text-center space-y-3">
-                <p className="text-xs text-slate-400">No active courses found.</p>
+              <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-3 shadow-sm">
+                <p className="text-xs text-slate-500">No active courses found.</p>
                 <Link
                   to="/courses"
-                  className="inline-block text-xs font-bold text-amber-400 hover:underline"
+                  className="inline-block text-xs font-bold text-emerald-600 hover:underline"
                 >
                   Explore Course Catalog →
                 </Link>
@@ -170,31 +167,14 @@ const MyCourses = () => {
                   const course = getCourseDetails(rawItem);
                   const courseId = String(course._id || rawItem._id || rawItem.courseId);
 
-                  // Extract total lessons
-                  const allLessons = Array.isArray(course.modules)
-                    ? course.modules.flatMap((m) => m.lessons || [])
-                    : [];
-                  const totalLessons = allLessons.length;
-
-                  // Extract completed lessons from progress map
-                  const completedLessons = progressMap[courseId] || [];
-
-                  const completedCount = completedLessons.length;
-
-                  // Calculate percentage
-                  const progressPercentage =
-                    totalLessons > 0
-                      ? Math.min(100, Math.round((completedCount / totalLessons) * 100))
-                      : 0;
-
                   return (
                     <div
                       key={courseId}
-                      className="bg-slate-900/80 border border-slate-800/80 rounded-3xl overflow-hidden hover:border-slate-700 transition group flex flex-col justify-between shadow-xl backdrop-blur-xl"
+                      className="bg-white border border-slate-200 rounded-3xl overflow-hidden hover:border-slate-300 hover:shadow-md transition group flex flex-col justify-between shadow-sm"
                     >
                       <div>
                         {/* Course Image */}
-                        <div className="aspect-video bg-slate-950 relative overflow-hidden">
+                        <div className="aspect-video bg-slate-100 relative overflow-hidden">
                           <img
                             src={
                               course.image ||
@@ -203,23 +183,20 @@ const MyCourses = () => {
                             alt={course.title || "Course"}
                             className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
                         </div>
 
                         {/* Card Info */}
                         <div className="p-5 space-y-4">
                           <div>
-                            <h3 className="text-sm font-bold text-white line-clamp-1">
+                            <h3 className="text-sm font-bold text-slate-900 line-clamp-1">
                               {course.title || "Untitled Course"}
                             </h3>
                             {course.arabicTitle && (
-                              <p className="text-xs text-amber-400 font-serif font-semibold mt-0.5">
+                              <p className="text-xs text-amber-600 font-serif font-semibold mt-0.5">
                                 {course.arabicTitle}
                               </p>
                             )}
                           </div>
-
-                       
                         </div>
                       </div>
 
@@ -227,7 +204,7 @@ const MyCourses = () => {
                       <div className="p-5 pt-0">
                         <Link
                           to={`/course/${courseId}/player`}
-                          className="w-full py-2.5 px-4 bg-amber-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 transition shadow-lg shadow-amber-500/20"
+                          className="w-full py-2.5 px-4 bg-emerald-600 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition shadow-sm"
                         >
                           <PlayCircle className="w-4 h-4 shrink-0" /> Continue
                         </Link>
@@ -242,8 +219,8 @@ const MyCourses = () => {
           {/* 3. COMPLETED COURSES SECTION */}
           <section className="space-y-5 pt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold tracking-widest uppercase text-emerald-400 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" /> Completed Courses
+              <h2 className="text-xs font-extrabold tracking-widest uppercase text-emerald-700 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Completed Courses
               </h2>
               <span className="text-xs text-slate-500 font-medium">
                 {completed.length} Completed
@@ -251,7 +228,7 @@ const MyCourses = () => {
             </div>
 
             {completed.length === 0 ? (
-              <div className="bg-slate-900/30 border border-slate-800/50 rounded-3xl p-6 text-center text-xs text-slate-500">
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center text-xs text-slate-500 shadow-sm">
                 No completed courses yet. Keep learning to earn your certificates!
               </div>
             ) : (
@@ -265,20 +242,20 @@ const MyCourses = () => {
                   return (
                     <div
                       key={rawItem._id || courseId}
-                      className="bg-slate-900/60 border border-emerald-500/20 rounded-3xl p-5 space-y-4 hover:border-emerald-500/40 transition shadow-xl flex flex-col justify-between"
+                      className="bg-white border border-emerald-200 rounded-3xl p-5 space-y-4 hover:border-emerald-300 transition shadow-sm flex flex-col justify-between"
                     >
                       <div className="space-y-3">
                         <div className="flex justify-between items-start">
-                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Completed
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Completed
                           </span>
                         </div>
                         <div>
-                          <h3 className="text-sm font-bold text-white line-clamp-1">
+                          <h3 className="text-sm font-bold text-slate-900 line-clamp-1">
                             {courseTitle}
                           </h3>
                           {arabicTitle && (
-                            <p className="text-xs text-amber-400 font-serif font-semibold mt-0.5">
+                            <p className="text-xs text-amber-600 font-serif font-semibold mt-0.5">
                               {arabicTitle}
                             </p>
                           )}
@@ -289,7 +266,7 @@ const MyCourses = () => {
                       <div className="pt-2">
                         <Link
                           to={`/course/${courseId}/player`}
-                          className="w-full py-2.5 px-4 bg-amber-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 transition shadow-lg shadow-amber-500/20"
+                          className="w-full py-2.5 px-4 bg-slate-900 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition shadow-sm"
                         >
                           <PlayCircle className="w-4 h-4 shrink-0" /> Review Course
                         </Link>
