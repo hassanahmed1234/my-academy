@@ -5,11 +5,7 @@ import {
   Mail,
   Phone,
   MapPin,
-  BookOpen,
-  Award,
-  Clock,
   Edit3,
-  CheckCircle2,
   Lock,
   Shield,
   Save,
@@ -18,6 +14,7 @@ import {
   AlertCircle,
   CheckCircle,
   Camera,
+  KeyRound,
 } from "lucide-react";
 
 const Profile = () => {
@@ -39,7 +36,6 @@ const Profile = () => {
     website: "",
     avatar: "",
     role: "student",
-    enrolledCourses: [],
   });
 
   const [passwords, setPasswords] = useState({
@@ -63,7 +59,6 @@ const Profile = () => {
           website: data.website || "",
           avatar: data.avatar || "",
           role: data.role || "student",
-          enrolledCourses: data.enrolledCourses || [],
         });
       } catch (error) {
         setStatusMessage({
@@ -156,8 +151,18 @@ const Profile = () => {
     e.preventDefault();
     setStatusMessage({ type: "", text: "" });
 
+    if (!passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword) {
+      setStatusMessage({ type: "error", text: "All password fields are required!" });
+      return;
+    }
+
     if (passwords.newPassword !== passwords.confirmPassword) {
       setStatusMessage({ type: "error", text: "New passwords do not match!" });
+      return;
+    }
+
+    if (passwords.newPassword.length < 6) {
+      setStatusMessage({ type: "error", text: "New password must be at least 6 characters long." });
       return;
     }
 
@@ -268,16 +273,18 @@ const Profile = () => {
                   </p>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setIsEditing(!isEditing);
-                    setStatusMessage({ type: "", text: "" });
-                  }}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-300/80 text-slate-700 text-xs font-semibold rounded-xl transition cursor-pointer"
-                >
-                  <Edit3 className="w-4 h-4 text-amber-600" />
-                  <span>{isEditing ? "Cancel Edit" : "Edit Profile"}</span>
-                </button>
+                {activeTab === "overview" && (
+                  <button
+                    onClick={() => {
+                      setIsEditing(!isEditing);
+                      setStatusMessage({ type: "", text: "" });
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-300/80 text-slate-700 text-xs font-semibold rounded-xl transition cursor-pointer"
+                  >
+                    <Edit3 className="w-4 h-4 text-amber-600" />
+                    <span>{isEditing ? "Cancel Edit" : "Edit Profile"}</span>
+                  </button>
+                )}
               </div>
 
               <p className="text-slate-600 text-xs md:text-sm max-w-2xl leading-relaxed">
@@ -313,53 +320,13 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* METRICS CARDS */}
-        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4 shadow-sm">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-slate-900">{formData.enrolledCourses.length}</p>
-              <p className="text-xs text-slate-500 font-medium">Enrolled Courses</p>
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4 shadow-sm">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-slate-900">0</p>
-              <p className="text-xs text-slate-500 font-medium">Completed Lessons</p>
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4 shadow-sm">
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
-              <Clock className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-slate-900">0</p>
-              <p className="text-xs text-slate-500 font-medium">Hours Spent</p>
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4 shadow-sm">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
-              <Award className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-slate-900">0</p>
-              <p className="text-xs text-slate-500 font-medium">Certificates</p>
-            </div>
-          </div>
-        </div> */}
-
         {/* TABS HEADER */}
         <div className="border-b border-slate-200 flex gap-6 text-xs font-bold tracking-wide">
           <button
-            onClick={() => setActiveTab("overview")}
+            onClick={() => {
+              setActiveTab("overview");
+              setStatusMessage({ type: "", text: "" });
+            }}
             className={`pb-3 transition relative cursor-pointer ${
               activeTab === "overview"
                 ? "text-amber-600 border-b-2 border-amber-600"
@@ -369,17 +336,10 @@ const Profile = () => {
             Personal Details
           </button>
           <button
-            onClick={() => setActiveTab("courses")}
-            className={`pb-3 transition relative cursor-pointer ${
-              activeTab === "courses"
-                ? "text-amber-600 border-b-2 border-amber-600"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            My Courses ({formData.enrolledCourses.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("security")}
+            onClick={() => {
+              setActiveTab("security");
+              setStatusMessage({ type: "", text: "" });
+            }}
             className={`pb-3 transition relative cursor-pointer ${
               activeTab === "security"
                 ? "text-amber-600 border-b-2 border-amber-600"
@@ -390,7 +350,7 @@ const Profile = () => {
           </button>
         </div>
 
-        {/* TAB 1: FORM DETAILS */}
+        {/* TAB 1: PERSONAL DETAILS */}
         {activeTab === "overview" && (
           <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
             <form onSubmit={handleSubmitProfile} className="space-y-6">
@@ -466,8 +426,6 @@ const Profile = () => {
                     />
                   </div>
                 </div>
-
-              
               </div>
 
               <div className="space-y-2">
@@ -499,6 +457,85 @@ const Profile = () => {
                   </button>
                 </div>
               )}
+            </form>
+          </div>
+        )}
+
+        {/* TAB 2: SECURITY & CHANGE PASSWORD */}
+        {activeTab === "security" && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">Change Password</h2>
+                <p className="text-xs text-slate-500">
+                  Ensure your account is using a strong and secure password.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmitPassword} className="space-y-5 max-w-xl">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Current Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={passwords.currentPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Enter current password"
+                    className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-xl pl-10 pr-4 py-3 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20 transition"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">New Password</label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={passwords.newPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Enter new password (min. 6 characters)"
+                    className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-xl pl-10 pr-4 py-3 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20 transition"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Confirm New Password</label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={passwords.confirmPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Confirm new password"
+                    className="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-xl pl-10 pr-4 py-3 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20 transition"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={passUpdating}
+                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-6 py-3 rounded-xl shadow-md transition cursor-pointer disabled:opacity-50 active:scale-[0.99]"
+                >
+                  {passUpdating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Lock className="w-4 h-4" />
+                  )}
+                  <span>{passUpdating ? "Updating Password..." : "Update Password"}</span>
+                </button>
+              </div>
             </form>
           </div>
         )}

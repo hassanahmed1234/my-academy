@@ -1,14 +1,19 @@
-import User from "../models/User.js";
-import bcrypt from "bcryptjs";
+import User from "../models/User.js"; // Aapka path
 import jwt from "jsonwebtoken";
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 };
 
-
+// ==========================================
+// REGISTER USER
+// ==========================================
 export const registerUser = async (req, res) => {
   const { name, email, password, role } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "Please fill all required fields" });
+  }
 
   try {
     const userExists = await User.findOne({ email });
@@ -16,13 +21,12 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
+    // Direct plain password pass karein!
+    // Model ka pre('save') hook isko automatic hash kar dega.
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password, // <--- Plain text password
       role: role || "student",
     });
 
@@ -40,29 +44,31 @@ export const registerUser = async (req, res) => {
   }
 };
 
+// ==========================================
+// LOGIN USER
+// ==========================================
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ message: "Please provide email and password" });
+  }
+
   try {
-    // 1. Password field ko explicitly select karein (.select('+password'))
+    // 1. Password field explicitly retrieve karein (+password)
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // 2. Check karein ki user ke pas password database mein exist karta hai ya nahi
-    if (!user.password) {
-      return res.status(500).json({ message: "User account password not found" });
-    }
-
-    // 3. Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
+    // 2. Schema method user.matchPassword() use karein clean code ke liye
+    const isMatch = await user.matchPassword(password);
 
     if (isMatch) {
       res.json({
         _id: user._id,
-        name: user.fullName || user.name,
+        name: user.name,
         email: user.email,
         role: user.role,
         token: generateToken(user._id),
