@@ -314,7 +314,7 @@ const Profile = () => {
         </div>
 
         {/* METRICS CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4 shadow-sm">
             <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
               <BookOpen className="w-6 h-6" />
@@ -354,7 +354,7 @@ const Profile = () => {
               <p className="text-xs text-slate-500 font-medium">Certificates</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* TABS HEADER */}
         <div className="border-b border-slate-200 flex gap-6 text-xs font-bold tracking-wide">
