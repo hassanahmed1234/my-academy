@@ -59,7 +59,7 @@ const Register = () => {
             Create Account
           </h1>
           <p className="text-xs text-slate-500">
-            Join AcademyPro as a student or instructor.
+            Join E-Islam as a student or instructor.
           </p>
         </div>
 

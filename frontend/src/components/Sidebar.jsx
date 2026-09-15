@@ -36,7 +36,7 @@ const Sidebar = () => {
           🕌
         </div>
         <div>
-          <h1 className="text-sm font-bold text-white tracking-wide">AcademyPro</h1>
+          <h1 className="text-sm font-bold text-white tracking-wide">E-Islam</h1>
           <p className="text-[10px] text-amber-400 font-medium tracking-widest uppercase">Learning Hub</p>
         </div>
       </NavLink>

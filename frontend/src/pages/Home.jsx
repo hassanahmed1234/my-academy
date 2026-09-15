@@ -11,6 +11,7 @@ import tajweedImg from "../assets/tajweed.jpg";
 import seerahImg from "../assets/seerah.jpg";
 import fiqhImg from "../assets/fiqh.jpg";
 import arabicImg from "../assets/arabic.jpg";
+import AIStudyAssistantSection from "../components/AIStudyAssistantSection";
 
 const HomePage = () => {
   const [featuredCourses, setFeaturedCourses] = useState([]);
@@ -139,26 +140,29 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 3. WHY LEARN WITH US */}
+      {/* 3. WHY LEARN WITH US - UPDATED WITH DASHBOARD & SIDEBAR FEATURES */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16" data-aos="fade-up">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Why Learn With Us?</h2>
-          <p className="text-slate-600 mt-3">Designed specifically for modern students seeking structured and traditional Islamic education.</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Why Learn With E-Islam?</h2>
+          <p className="text-slate-600 mt-3">An all-in-one Islamic learning ecosystem packed with modern tools and traditional scholarship.</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
             { icon: "📚", title: "Structured Courses", desc: "Step-by-step Islamic learning tailored from beginner to advanced levels." },
             { icon: "🎥", title: "Learn at Your Own Pace", desc: "Recorded high-quality video lessons accessible anytime, anywhere." },
-            { icon: "📝", title: "Quizzes & Assessments", desc: "Test your understanding after modules to lock in your knowledge." },
-            { icon: "📊", title: "Track Your Progress", desc: "Intuitive dashboard to monitor how much you have learned in real-time." },
-            { icon: "🏆", title: "Certificates", desc: "Complete courses successfully and earn downloadable certificates." },
+            { icon: "📝", title: "Quizzes & Assignments", desc: "Evaluate your progress through interactive quizzes and hands-on assignment submissions." },
+            { icon: "📊", title: "Task & Progress Tracking", desc: "Keep track of active, completed, and pending tasks in your student dashboard." },
+            { icon: "🏆", title: "Student Leaderboard", desc: "Stay motivated, compete with peers, and track your ranking across courses." },
+            { icon: "📢", title: "Academy Announcements", desc: "Never miss crucial updates, exam alerts, and new course module additions." },
+            { icon: "🤖", title: "AI Study Assistant", desc: "Smart AI-powered study assistance to help answer queries and clarify concepts faster." },
             { icon: "🕌", title: "Occasional Live Sessions", desc: "Join interactive live classes, Q&A sessions, and special spiritual workshops." },
+            { icon: "📜", title: "Certificates", desc: "Complete courses successfully and earn verified downloadable certificates." },
           ].map((feature, i) => (
             <div
               key={i}
               data-aos="fade-up"
-              data-aos-delay={(i % 3) * 150}
+              data-aos-delay={(i % 3) * 100}
               className="p-8 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:border-emerald-500/40 hover:shadow-md transition-all duration-300 group hover:-translate-y-1"
             >
               <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300 inline-block">{feature.icon}</div>
@@ -229,6 +233,11 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* AI STUDY ASSISTANT SECTION */}
+      <div data-aos="fade-up">
+        <AIStudyAssistantSection />
+      </div>
+
       {/* 5. HOW IT WORKS */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-xl mx-auto mb-16" data-aos="fade-up">
@@ -238,10 +247,10 @@ const HomePage = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
           {[
-            { num: "01", title: "Create Account", desc: "Sign up for free in seconds and customize your dashboard." },
-            { num: "02", title: "Choose a Course", desc: "Browse through our catalogue of free and premium courses." },
-            { num: "03", title: "Start Learning", desc: "Watch videos, read supplementary notes, and solve quizzes." },
-            { num: "04", title: "Complete & Grow", desc: "Track knowledge growth and earn verified completion certificates." },
+            { num: "01", title: "Create Account", desc: "Sign up for free in seconds and customize your profile." },
+            { num: "02", title: "Browse & Enroll", desc: "Explore our catalogue of structured courses and select your program." },
+            { num: "03", title: "Learn & Submit Tasks", desc: "Watch videos, complete quizzes, and submit assignments on time." },
+            { num: "04", title: "Climb Leaderboard", desc: "Track progress, check announcements, and earn completion certificates." },
           ].map((step, idx) => (
             <div
               key={idx}
@@ -249,7 +258,7 @@ const HomePage = () => {
               data-aos-delay={idx * 150}
               className="bg-white border border-slate-200 p-8 rounded-2xl relative shadow-sm"
             >
-              <span className="text-5xl font-black text-green-900 mb-4 block">{step.num}</span>
+              <span className="text-5xl font-black text-emerald-600 mb-4 block">{step.num}</span>
               <h3 className="text-lg font-bold text-slate-900 mb-2">{step.title}</h3>
               <p className="text-slate-600 text-xs leading-relaxed">{step.desc}</p>
             </div>
@@ -293,11 +302,11 @@ const HomePage = () => {
         <div className="space-y-4">
           {[
             { q: "Are the courses free?", a: "We offer both free introductory modules and comprehensive paid courses. You can start learning for free anytime." },
-            { q: "Can I learn at my own pace?", a: "Yes! All main course modules are pre-recorded so you can study according to your daily routine." },
-            { q: "Are live classes available?", a: "Yes, we organize periodic live Q&A sessions, Tajweed workshops, and special event classes." },
+            { q: "How do quizzes and assignments work?", a: "Each module includes interactive quizzes and written/recitation assignments that you can submit directly from your student dashboard." },
+            { q: "What is the Leaderboard feature?", a: "The leaderboard tracks your course completion, quiz scores, and assignment submissions to highlight top active learners." },
+            { q: "What is the AI Study Assistant?", a: "An upcoming AI assistant designed to help answer course questions, clarify Arabic/Tajweed concepts, and guide your studies." },
             { q: "Will I receive a certificate?", a: "Upon completing all lessons and passing the final assessments of a course, a verified certificate is generated." },
             { q: "Can I access courses on mobile?", a: "Absolutely. Our platform is fully responsive and works smoothly across mobile phones, tablets, and desktops." },
-            { q: "How do I enroll in a paid course?", a: "Simply select the course, click Enroll, and follow the simple checkout process to instantly unlock full course access." },
           ].map((faq, idx) => (
             <div
               key={idx}

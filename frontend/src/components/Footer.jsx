@@ -16,7 +16,7 @@ const Footer = () => {
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-amber-400" />
               </div>
-              <span className="text-lg font-extrabold text-slate-100">AcademyPro</span>
+              <span className="text-lg font-extrabold text-slate-100">E-Islam</span>
             </Link>
             <p className="text-slate-400 text-xs leading-relaxed">
               Empowering learners with authentic, structured Islamic knowledge through modern video courses and live sessions.
@@ -68,7 +68,7 @@ const Footer = () => {
 
         {/* Bottom Rights Bar */}
         <div className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
-          <p>© {new Date().getFullYear()} AcademyPro. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} E-Islam. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5 hover:text-slate-200 transition cursor-pointer">
               <Shield className="w-3.5 h-3.5 text-amber-400" /> Authentic Content

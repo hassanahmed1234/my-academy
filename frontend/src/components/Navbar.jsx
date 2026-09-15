@@ -66,7 +66,7 @@ const Navbar = () => {
             <div>
               <div className="flex items-center gap-1">
                 <span className="text-xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent group-hover:text-amber-400 transition">
-                  AcademyPro
+                  E-Islam
                 </span>
                 <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
               </div>

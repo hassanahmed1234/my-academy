@@ -115,10 +115,10 @@ const Contact = () => {
               <div>
                 <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Email Us</h3>
                 <a
-                  href="mailto:support@academypro.com"
+                  href="mailto:support@E-Islam.com"
                   className="text-slate-900 font-bold text-base hover:text-emerald-600 transition-colors mt-0.5 block"
                 >
-                  support@academypro.com
+                  support@E-Islam.com
                 </a>
                 <p className="text-slate-500 text-xs mt-1">For general inquiries and student support</p>
               </div>
@@ -149,7 +149,7 @@ const Contact = () => {
               <div>
                 <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Main Campus / Office</h3>
                 <p className="text-slate-900 font-bold text-base mt-0.5">
-                  AcademyPro Islamic Campus
+                  E-Islam Islamic Campus
                 </p>
                 <p className="text-slate-600 text-xs mt-1 leading-relaxed">
                   Korangi # 5, Karachi, Pakistan
