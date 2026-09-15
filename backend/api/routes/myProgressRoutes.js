@@ -1,8 +1,8 @@
 import express from "express";
 import { 
   getCourseProgress, 
-  toggleLessonComplete, 
-  getAllUserProgress 
+  getAllUserProgress, 
+  markLessonComplete
 } from "../controllers/myProgressController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -14,7 +14,6 @@ router.get("/all", protect, getAllUserProgress);
 // 2. Get specific course progress
 router.get("/:courseId", protect, getCourseProgress);
 
-// 3. Toggle lesson state
-router.post("/toggle", protect, toggleLessonComplete);
-
+// Mark lesson complete (One-time)
+router.post("/complete", protect, markLessonComplete);
 export default router;

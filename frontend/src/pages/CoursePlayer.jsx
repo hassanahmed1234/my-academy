@@ -64,18 +64,18 @@ const CoursePlayer = () => {
     }));
   };
 
-  // Toggle Mark as Complete / Incomplete API Handler: POST /api/my-progress/toggle
-  const handleToggleComplete = async (lessonId) => {
-    if (!lessonId || updating) return;
+  // Mark as Complete API Handler: POST /api/my-progress/complete
+  const handleMarkAsComplete = async (lessonId) => {
+    if (!lessonId || updating || isCurrentCompleted) return;
     try {
       setUpdating(true);
-      const { data } = await API.post("/my-progress/toggle", {
+      const { data } = await API.post("/my-progress/complete", {
         courseId: id,
         lessonId,
       });
       setCompletedLessons(data.completedLessons || []);
     } catch (err) {
-      console.error("Failed to update progress:", err.response?.data || err.message);
+      console.error("Failed to mark lesson as complete:", err.response?.data || err.message);
     } finally {
       setUpdating(false);
     }
@@ -193,13 +193,12 @@ const CoursePlayer = () => {
               {/* Mark as Complete Button */}
               {activeLesson && (
                 <button
-                  disabled={updating}
-                  onClick={() => handleToggleComplete(currentLessonId)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer ${
-                    isCurrentCompleted
-                      ? "bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100"
-                      : "bg-amber-500 hover:bg-amber-600 text-slate-950"
-                  }`}
+                  disabled={updating || isCurrentCompleted}
+                  onClick={() => handleMarkAsComplete(currentLessonId)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm ${isCurrentCompleted
+                    ? "bg-emerald-50 border border-emerald-300 text-emerald-700 opacity-80 cursor-not-allowed"
+                    : "bg-amber-500 hover:bg-amber-600 text-slate-950 cursor-pointer"
+                    }`}
                 >
                   {isCurrentCompleted ? (
                     <>
@@ -209,7 +208,7 @@ const CoursePlayer = () => {
                   ) : (
                     <>
                       <Circle className="w-4 h-4 text-slate-950" />
-                      Mark as Complete
+                      {updating ? "Updating..." : "Mark as Complete"}
                     </>
                   )}
                 </button>
@@ -276,11 +275,10 @@ const CoursePlayer = () => {
                         <button
                           key={lIndex}
                           onClick={() => setActiveLesson(lesson)}
-                          className={`w-full p-3 rounded-xl text-left text-xs transition flex items-center justify-between gap-2 cursor-pointer ${
-                            isActive
-                              ? "bg-amber-500 text-slate-950 font-black shadow-md"
-                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                          }`}
+                          className={`w-full p-3 rounded-xl text-left text-xs transition flex items-center justify-between gap-2 cursor-pointer ${isActive
+                            ? "bg-amber-500 text-slate-950 font-black shadow-md"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
                         >
                           <div className="flex items-center gap-2.5 overflow-hidden">
                             {isCompleted ? (
