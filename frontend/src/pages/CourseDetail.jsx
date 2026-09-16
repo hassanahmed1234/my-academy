@@ -25,43 +25,51 @@ const CourseDetail = () => {
   const [error, setError] = useState("");
   const [expandedModules, setExpandedModules] = useState({ 0: true });
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
+useEffect(() => {
+  window.scrollTo(0, 0);
 
-    const fetchCourseAndStatus = async () => {
-      try {
-        setLoading(true);
+  const fetchCourseAndStatus = async () => {
+    try {
+      setLoading(true);
 
-        // 1. Fetch Course Data
-        const { data: courseData } = await API.get(`/courses/${id}`);
-        setCourse(courseData);
+      // 1. Fetch Course Data
+      const { data: courseData } = await API.get(`/courses/${id}`);
+      setCourse(courseData);
 
-        // 2. Check Enrollment Status if User is Logged In
-        const token = localStorage.getItem("token");
-        if (token) {
-          try {
-            const { data } = await API.get("/my-courses");
-            const enrolledList = data?.data || data?.enrollments || data || [];
+      // 2. Check Enrollment Status if User is Logged In
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const { data } = await API.get("/my-courses");
 
-            const enrolled = enrolledList.some((item) => {
-              const enrolledCourseId = item.course?._id || item.course || item._id;
-              return String(enrolledCourseId) === String(id);
-            });
+          // Safe extraction to ensure enrolledList is ALWAYS an Array
+          const enrolledList = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.data)
+            ? data.data
+            : Array.isArray(data?.enrollments)
+            ? data.enrollments
+            : [];
 
-            setIsEnrolled(enrolled);
-          } catch (statusErr) {
-            console.error("Failed to check enrollment status:", statusErr);
-          }
+          const enrolled = enrolledList.some((item) => {
+            const enrolledCourseId = item.course?._id || item.course || item._id;
+            return String(enrolledCourseId) === String(id);
+          });
+
+          setIsEnrolled(enrolled);
+        } catch (statusErr) {
+          console.error("Failed to check enrollment status:", statusErr);
         }
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch course details.");
-      }  finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch course details.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (id) fetchCourseAndStatus();
-  }, [id]);
+  if (id) fetchCourseAndStatus();
+}, [id]);
 
   const toggleModule = (index) => {
     setExpandedModules((prev) => ({
