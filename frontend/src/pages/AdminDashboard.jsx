@@ -462,8 +462,8 @@ const AdminQuizBuilder = () => {
                       <span
                         key={oIdx}
                         className={`p-1.5 rounded border ${opt === q.correctAnswer
-                            ? "bg-emerald-50 border-emerald-300 text-emerald-700 font-bold"
-                            : "bg-white border-slate-200"
+                          ? "bg-emerald-50 border-emerald-300 text-emerald-700 font-bold"
+                          : "bg-white border-slate-200"
                           }`}
                       >
                         {opt} {opt === q.correctAnswer && "✓"}
@@ -505,11 +505,13 @@ const AdminDashboard = () => {
   const [courseForm, setCourseForm] = useState({
     title: "",
     arabicTitle: "",
-    category: "Seerah",
+    category: "Arabic Language",
     instructor: "",
     description: "",
     image: "",
     price: 0,
+    isFree: true,
+    modules: [],
   });
 
   const [liveForm, setLiveForm] = useState({
@@ -744,8 +746,8 @@ const AdminDashboard = () => {
       {message.text && (
         <div
           className={`p-4 text-xs rounded-xl font-semibold border ${message.type === "success"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-              : "bg-rose-50 border-rose-200 text-rose-700"
+            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+            : "bg-rose-50 border-rose-200 text-rose-700"
             }`}
         >
           {message.text}
@@ -812,8 +814,8 @@ const AdminDashboard = () => {
         <button
           onClick={() => setActiveTab("overview")}
           className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "overview"
-              ? "border-emerald-600 text-emerald-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+            ? "border-emerald-600 text-emerald-600"
+            : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
         >
           <TrendingUp className="w-4 h-4" /> Overview & Operations
@@ -821,8 +823,8 @@ const AdminDashboard = () => {
         <button
           onClick={() => setActiveTab("courses")}
           className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "courses"
-              ? "border-emerald-600 text-emerald-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+            ? "border-emerald-600 text-emerald-600"
+            : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
         >
           <BookOpen className="w-4 h-4" /> Courses Catalog ({courses.length})
@@ -830,8 +832,8 @@ const AdminDashboard = () => {
         <button
           onClick={() => setActiveTab("live")}
           className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${activeTab === "live"
-              ? "border-rose-600 text-rose-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+            ? "border-rose-600 text-rose-600"
+            : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
         >
           <Video className="w-4 h-4" /> Live Broadcasts ({liveSessions.length})
@@ -857,7 +859,7 @@ const AdminDashboard = () => {
                 </button>
               </div>
 
-              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-350px overflow-y-auto pr-1">
                 {tasks.length === 0 ? (
                   <p className="text-xs text-slate-400 py-4 text-center">No pending tasks found.</p>
                 ) : (
@@ -906,7 +908,7 @@ const AdminDashboard = () => {
                 </button>
               </div>
 
-              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-350px overflow-y-auto pr-1">
                 {announcements.length === 0 ? (
                   <p className="text-xs text-slate-400 py-4 text-center">No announcements posted.</p>
                 ) : (
@@ -1020,18 +1022,126 @@ const AdminDashboard = () => {
       {/* CREATE COURSE MODAL */}
       {showCourseModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-lg text-slate-900">Add New Course</h3>
-              <button onClick={() => setShowCourseModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
+              <button onClick={() => setShowCourseModal(false)}>
+                <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+              </button>
             </div>
+
             <form onSubmit={handleCreateCourse} className="space-y-3 text-xs">
-              <input required type="text" placeholder="Course Title" value={courseForm.title} onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
-              <input type="text" placeholder="Arabic Title" value={courseForm.arabicTitle} onChange={(e) => setCourseForm({ ...courseForm, arabicTitle: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-arabic text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
-              <textarea required placeholder="Course Description" rows={3} value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
-              <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setShowCourseModal(false)} className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700">Cancel</button>
-                <button type="submit" disabled={submitting} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2">
+              {/* Title & Arabic Title */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Course Title *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. Arabic Language"
+                    value={courseForm.title}
+                    onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Arabic Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. لغة القرآن"
+                    value={courseForm.arabicTitle}
+                    onChange={(e) => setCourseForm({ ...courseForm, arabicTitle: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-arabic text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Instructor & Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Instructor *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. Ustadh Ahmad"
+                    value={courseForm.instructor}
+                    onChange={(e) => setCourseForm({ ...courseForm, instructor: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Category</label>
+                  <select
+                    value={courseForm.category}
+                    onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  >
+                    <option value="Seerah">Seerah</option>
+                    <option value="Arabic Language">Arabic Language</option>
+                    <option value="Fiqh">Fiqh</option>
+                    <option value="Hadith">Hadith</option>
+                    <option value="Aqeedah">Aqeedah</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Price & Image URL */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Price (PKR)</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={courseForm.price}
+                    onChange={(e) =>
+                      setCourseForm({
+                        ...courseForm,
+                        price: Number(e.target.value),
+                        isFree: Number(e.target.value) === 0,
+                      })
+                    }
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Image URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={courseForm.image}
+                    onChange={(e) => setCourseForm({ ...courseForm, image: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-slate-600 font-semibold mb-1">Course Description *</label>
+                <textarea
+                  required
+                  placeholder="Course details..."
+                  rows={3}
+                  value={courseForm.description}
+                  onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCourseModal(false)}
+                  className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 disabled:opacity-50"
+                >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Save Course
                 </button>
               </div>
@@ -1039,7 +1149,6 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
-
       {/* CREATE LIVE CLASS MODAL */}
       {showLiveModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
