@@ -58,14 +58,15 @@ const CourseDetail = () => {
         }
 
         // 2. Fetch User Progress (isolated call so it won't trigger main error block)
-        // try {
-        //   const { data: progressData } = await API.get(`/my-progress/${id}`);
-        //   if (progressData?.completedLessons) {
-        //     setCompletedLessons(progressData.completedLessons);
-        //   }
-        // } catch (progErr) {
-        //   console.warn("User progress not loaded:", progErr?.message);
-        // }
+        try {
+          const { data: progressData } = await API.get(`/my-progress/${id}`);
+          console.log(progressData)
+          if (progressData?.completedLessons) {
+            setCompletedLessons(progressData.completedLessons);
+          }
+        } catch (progErr) {
+          console.warn("User progress not loaded:", progErr?.message);
+        }
 
       } catch (err) {
         console.error("Course Detail Load Error:", err);
