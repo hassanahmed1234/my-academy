@@ -25,6 +25,11 @@ const CourseDetail = () => {
   const [error, setError] = useState("");
   const [expandedModules, setExpandedModules] = useState({ 0: true });
 
+  // Missing states required by useEffect logic
+  const [activeLesson, setActiveLesson] = useState(null);
+  const [completedLessons, setCompletedLessons] = useState([]);
+
+  // EXACT USEEFFECT (UNCHANGED AS REQUESTED)
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchCourseAndProgress = async () => {
@@ -56,7 +61,6 @@ const CourseDetail = () => {
     fetchCourseAndProgress();
   }, [id]);
 
-
   const toggleModule = (index) => {
     setExpandedModules((prev) => ({
       ...prev,
@@ -72,7 +76,6 @@ const CourseDetail = () => {
       return;
     }
 
-    // Direct Navigate if state is true
     if (isEnrolled) {
       navigate(`/course/${id}/player`);
       return;
@@ -150,9 +153,11 @@ const CourseDetail = () => {
             {/* Left Column: Title & Metadata */}
             <div className="lg:col-span-2 space-y-5">
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-200 px-3 py-1 rounded-full">
-                  {course.category}
-                </span>
+                {course.category && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-200 px-3 py-1 rounded-full">
+                    {course.category}
+                  </span>
+                )}
                 {course.isFree && (
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-1 rounded-full">
                     Free Course
@@ -180,7 +185,7 @@ const CourseDetail = () => {
                   <User className="w-4 h-4 text-amber-600" />
                   <span>
                     Instructor:{" "}
-                    <strong className="text-slate-900 font-semibold">
+                    <strong className="text-slate-900 font-semibold capitalize">
                       {course.instructor || "Scholar"}
                     </strong>
                   </span>
@@ -214,7 +219,7 @@ const CourseDetail = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 font-medium">Access Fee</span>
                 <span className="text-2xl font-black text-slate-900">
-                  {course.isFree ? (
+                  {course.isFree || course.price === 0 ? (
                     <span className="text-emerald-600">FREE</span>
                   ) : (
                     `PKR ${course.price}`
@@ -237,8 +242,8 @@ const CourseDetail = () => {
                   {enrolling
                     ? "Enrolling..."
                     : isEnrolled
-                      ? "Continue Learning"
-                      : "Enroll Now"}
+                    ? "Continue Learning"
+                    : "Enroll Now"}
                 </span>
               </button>
 
@@ -268,7 +273,7 @@ const CourseDetail = () => {
         <div className="max-w-3xl space-y-4">
           {course.modules?.map((module, mIndex) => (
             <div
-              key={mIndex}
+              key={module._id || mIndex}
               className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200"
             >
               <button
@@ -288,21 +293,32 @@ const CourseDetail = () => {
 
               {expandedModules[mIndex] && (
                 <div className="p-4 bg-slate-50/80 border-t border-slate-200 space-y-2">
-                  {module.lessons?.map((lesson, lIndex) => (
-                    <div
-                      key={lIndex}
-                      className="p-3.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between text-xs hover:border-amber-400/50 transition shadow-sm"
-                    >
-                      <div className="flex items-center gap-3">
-                        <PlayCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span className="font-semibold text-slate-800">{lesson.title}</span>
+                  {module.lessons?.map((lesson, lIndex) => {
+                    const isCompleted = completedLessons.includes(lesson._id);
+                    return (
+                      <div
+                        key={lesson._id || lIndex}
+                        className="p-3.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between text-xs hover:border-amber-400/50 transition shadow-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <PlayCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span className="font-semibold text-slate-800">{lesson.title}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-slate-400">
+                          {lesson.duration && (
+                            <span className="text-[11px] font-medium text-slate-500">
+                              {lesson.duration}
+                            </span>
+                          )}
+                          {isCompleted ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : !isEnrolled ? (
+                            <Lock className="w-3.5 h-3.5" />
+                          ) : null}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-slate-400">
-                        {lesson.duration && <span className="text-[11px] font-medium text-slate-500">{lesson.duration}</span>}
-                        <Lock className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
