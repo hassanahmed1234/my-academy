@@ -502,7 +502,7 @@ const AdminDashboard = () => {
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
 
   // Forms State
-  const [courseForm, setCourseForm] = useState({
+  const initialFormState = {
     title: "",
     arabicTitle: "",
     category: "Arabic Language",
@@ -512,7 +512,9 @@ const AdminDashboard = () => {
     price: 0,
     isFree: true,
     modules: [],
-  });
+  };
+
+  const [courseForm, setCourseForm] = useState(initialFormState);
 
   const [liveForm, setLiveForm] = useState({
     title: "",
@@ -570,23 +572,7 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
-  // Handlers
-  const handleCreateCourse = async (e) => {
-    e.preventDefault();
-    try {
-      setSubmitting(true);
-      setMessage({ type: "", text: "" });
-      await API.post("/courses", courseForm);
-      setMessage({ type: "success", text: "Course published successfully!" });
-      setShowCourseModal(false);
-      setCourseForm({ title: "", arabicTitle: "", category: "Seerah", instructor: "", description: "", image: "", price: 0 });
-      fetchData();
-    } catch (err) {
-      setMessage({ type: "error", text: err.response?.data?.message || "Failed to publish course." });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+
 
   const handleCreateLiveSession = async (e) => {
     e.preventDefault();
@@ -682,6 +668,78 @@ const AdminDashboard = () => {
     } catch (err) {
       setMessage({ type: "error", text: "Failed to delete announcement." });
     }
+  };
+
+  // Reset Form Handlers
+  const handleCloseModal = () => {
+    setShowCourseModal(false);
+    setCourseForm(initialFormState);
+  };
+
+  const handleCreateCourse = async (e) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      setMessage({ type: "", text: "" });
+
+      await API.post("/courses", courseForm);
+
+      setMessage({ type: "success", text: "Course published successfully!" });
+      handleCloseModal();
+      fetchData();
+    } catch (err) {
+      setMessage({
+        type: "error",
+        text: err.response?.data?.message || "Failed to publish course.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Dynamic Modules Management
+  const addModule = () => {
+    setCourseForm({
+      ...courseForm,
+      modules: [...courseForm.modules, { moduleTitle: "", lessons: [] }],
+    });
+  };
+
+  const removeModule = (mIndex) => {
+    const updatedModules = courseForm.modules.filter((_, index) => index !== mIndex);
+    setCourseForm({ ...courseForm, modules: updatedModules });
+  };
+
+  const handleModuleTitleChange = (mIndex, title) => {
+    const updatedModules = [...courseForm.modules];
+    updatedModules[mIndex].moduleTitle = title;
+    setCourseForm({ ...courseForm, modules: updatedModules });
+  };
+
+  // Dynamic Lessons Management
+  const addLesson = (mIndex) => {
+    const updatedModules = [...courseForm.modules];
+    updatedModules[mIndex].lessons.push({
+      title: "",
+      cloudinaryUrl: "",
+      duration: "",
+      type: "video",
+    });
+    setCourseForm({ ...courseForm, modules: updatedModules });
+  };
+
+  const removeLesson = (mIndex, lIndex) => {
+    const updatedModules = [...courseForm.modules];
+    updatedModules[mIndex].lessons = updatedModules[mIndex].lessons.filter(
+      (_, index) => index !== lIndex
+    );
+    setCourseForm({ ...courseForm, modules: updatedModules });
+  };
+
+  const handleLessonChange = (mIndex, lIndex, field, value) => {
+    const updatedModules = [...courseForm.modules];
+    updatedModules[mIndex].lessons[lIndex][field] = value;
+    setCourseForm({ ...courseForm, modules: updatedModules });
   };
 
   if (loading) {
@@ -1022,15 +1080,15 @@ const AdminDashboard = () => {
       {/* CREATE COURSE MODAL */}
       {showCourseModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white border border-slate-200 w-full max-w-2xl rounded-2xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-lg text-slate-900">Add New Course</h3>
-              <button onClick={() => setShowCourseModal(false)}>
+              <button type="button" onClick={handleCloseModal}>
                 <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateCourse} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateCourse} className="space-y-4 text-xs">
               {/* Title & Arabic Title */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1038,7 +1096,7 @@ const AdminDashboard = () => {
                   <input
                     required
                     type="text"
-                    placeholder="e.g. Arabic Language"
+                    placeholder="e.g. Classical Arabic (Fusha)"
                     value={courseForm.title}
                     onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
@@ -1070,14 +1128,14 @@ const AdminDashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Category</label>
+                  <label className="block text-slate-600 font-semibold mb-1">Category *</label>
                   <select
                     value={courseForm.category}
                     onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   >
-                    <option value="Seerah">Seerah</option>
                     <option value="Arabic Language">Arabic Language</option>
+                    <option value="Seerah">Seerah</option>
                     <option value="Fiqh">Fiqh</option>
                     <option value="Hadith">Hadith</option>
                     <option value="Aqeedah">Aqeedah</option>
@@ -1091,23 +1149,25 @@ const AdminDashboard = () => {
                   <label className="block text-slate-600 font-semibold mb-1">Price (PKR)</label>
                   <input
                     type="number"
+                    min="0"
                     placeholder="0"
                     value={courseForm.price}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
                       setCourseForm({
                         ...courseForm,
-                        price: Number(e.target.value),
-                        isFree: Number(e.target.value) === 0,
-                      })
-                    }
+                        price: val,
+                        isFree: val === 0,
+                      });
+                    }}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Image URL</label>
+                  <label className="block text-slate-600 font-semibold mb-1">Course Image URL</label>
                   <input
                     type="url"
-                    placeholder="https://..."
+                    placeholder="https://images.unsplash.com/..."
                     value={courseForm.image}
                     onChange={(e) => setCourseForm({ ...courseForm, image: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
@@ -1117,22 +1177,120 @@ const AdminDashboard = () => {
 
               {/* Description */}
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Course Description *</label>
+                <label className="block text-slate-600 font-semibold mb-1">Course Description</label>
                 <textarea
-                  required
-                  placeholder="Course details..."
-                  rows={3}
+                  placeholder="Course overview and objectives..."
+                  rows={2}
                   value={courseForm.description}
                   onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
 
+              {/* Dynamic Modules & Lessons Builder */}
+              <div className="space-y-3 pt-2 border-t border-slate-200">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-bold text-slate-800 text-sm">Course Curriculum (Modules)</h4>
+                  <button
+                    type="button"
+                    onClick={addModule}
+                    className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold rounded-lg flex items-center gap-1 transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Module
+                  </button>
+                </div>
+
+                {courseForm.modules.map((module, mIndex) => (
+                  <div key={mIndex} className="p-3 border border-slate-200 rounded-xl bg-slate-50/50 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        required
+                        type="text"
+                        placeholder={`Module ${mIndex + 1} Title (e.g. Arabic Alphabets)`}
+                        value={module.moduleTitle}
+                        onChange={(e) => handleModuleTitleChange(mIndex, e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeModule(mIndex)}
+                        className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Nested Lessons Section */}
+                    <div className="pl-3 border-l-2 border-emerald-500/30 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-bold text-slate-600">Lessons</span>
+                        <button
+                          type="button"
+                          onClick={() => addLesson(mIndex)}
+                          className="text-[11px] text-emerald-600 font-bold hover:underline flex items-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" /> Add Lesson
+                        </button>
+                      </div>
+
+                      {module.lessons.map((lesson, lIndex) => (
+                        <div key={lIndex} className="p-2.5 bg-white border border-slate-200 rounded-lg space-y-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              required
+                              type="text"
+                              placeholder="Lesson Title"
+                              value={lesson.title}
+                              onChange={(e) => handleLessonChange(mIndex, lIndex, "title", e.target.value)}
+                              className="bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-none"
+                            />
+                            <input
+                              required
+                              type="url"
+                              placeholder="Cloudinary URL *"
+                              value={lesson.cloudinaryUrl}
+                              onChange={(e) => handleLessonChange(mIndex, lIndex, "cloudinaryUrl", e.target.value)}
+                              className="bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                            <input
+                              type="text"
+                              placeholder="Duration (e.g. 15 mins)"
+                              value={lesson.duration}
+                              onChange={(e) => handleLessonChange(mIndex, lIndex, "duration", e.target.value)}
+                              className="bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-none"
+                            />
+                            <select
+                              value={lesson.type}
+                              onChange={(e) => handleLessonChange(mIndex, lIndex, "type", e.target.value)}
+                              className="bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-none"
+                            >
+                              <option value="video">Video</option>
+                              <option value="quiz">Quiz</option>
+                              <option value="assignment">Assignment</option>
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => removeLesson(mIndex, lIndex)}
+                              className="text-rose-500 hover:text-rose-700 font-semibold text-[11px] text-right pr-1"
+                            >
+                              Remove Lesson
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {/* Actions */}
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowCourseModal(false)}
+                  onClick={handleCloseModal}
                   className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700"
                 >
                   Cancel
@@ -1140,7 +1298,7 @@ const AdminDashboard = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 disabled:opacity-50"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Save Course
                 </button>
