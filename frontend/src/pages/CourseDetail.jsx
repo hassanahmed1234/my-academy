@@ -136,8 +136,8 @@ const CourseDetail = () => {
   return (
     <main className="bg-slate-50 min-h-screen text-slate-800 pt-8 pb-24 relative overflow-hidden">
       {/* Background Ambient Soft Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-amber-200/40 blur-[140px] rounded-full pointer-events-none" />
-      <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-emerald-200/30 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-800px h-350px bg-amber-200/40 blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/3 right-0 w-400px h-400px bg-emerald-200/30 blur-[120px] rounded-full pointer-events-none" />
 
       {/* HEADER HERO SECTION */}
       <div className="border-b border-slate-200/80 pb-12 px-4 sm:px-6 lg:px-8 relative z-10">
