@@ -15,7 +15,7 @@ export const getCourseById = async (req, res) => {
     const course = await Course.findById(req.params.id).lean();
 
     if (course) {
-      return res.status(200).json(course);
+      return res.status(200).json({data:course});
     } else {
       return res.status(404).json({ message: "Course not found" });
     }
