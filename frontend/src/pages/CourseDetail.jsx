@@ -25,51 +25,37 @@ const CourseDetail = () => {
   const [error, setError] = useState("");
   const [expandedModules, setExpandedModules] = useState({ 0: true });
 
-useEffect(() => {
-  window.scrollTo(0, 0);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const fetchCourseAndProgress = async () => {
+      try {
+        // 1. Fetch Course Details
+        const { data } = await API.get(`/courses/${id}`);
+        setCourse(data);
 
-  const fetchCourseAndStatus = async () => {
-    try {
-      setLoading(true);
-
-      // 1. Fetch Course Data
-      const { data: courseData } = await API.get(`/courses/${id}`);
-      setCourse(courseData);
-
-      // 2. Check Enrollment Status if User is Logged In
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const { data } = await API.get("/my-courses");
-
-          // Safe extraction to ensure enrolledList is ALWAYS an Array
-          const enrolledList = Array.isArray(data)
-            ? data
-            : Array.isArray(data?.data)
-            ? data.data
-            : Array.isArray(data?.enrollments)
-            ? data.enrollments
-            : [];
-
-          const enrolled = enrolledList.some((item) => {
-            const enrolledCourseId = item.course?._id || item.course || item._id;
-            return String(enrolledCourseId) === String(id);
-          });
-
-          setIsEnrolled(enrolled);
-        } catch (statusErr) {
-          console.error("Failed to check enrollment status:", statusErr);
+        // Set first lesson as default active
+        if (data.modules?.length > 0 && data.modules[0].lessons?.length > 0) {
+          setActiveLesson(data.modules[0].lessons[0]);
+          setExpandedModules({ 0: true });
         }
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch course details.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  if (id) fetchCourseAndStatus();
-}, [id]);
+        // 2. Fetch Completed Progress: GET /api/my-progress/:id
+        try {
+          const { data: progressData } = await API.get(`/my-progress/${id}`);
+          setCompletedLessons(progressData.completedLessons || []);
+        } catch (progErr) {
+          console.warn("Could not fetch user progress", progErr);
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load course video stream.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourseAndProgress();
+  }, [id]);
+
 
   const toggleModule = (index) => {
     setExpandedModules((prev) => ({
