@@ -25,40 +25,61 @@ const CourseDetail = () => {
   const [error, setError] = useState("");
   const [expandedModules, setExpandedModules] = useState({ 0: true });
 
-  // Missing states required by useEffect logic
   const [activeLesson, setActiveLesson] = useState(null);
   const [completedLessons, setCompletedLessons] = useState([]);
 
-  // EXACT USEEFFECT (UNCHANGED AS REQUESTED)
   useEffect(() => {
     window.scrollTo(0, 0);
+
     const fetchCourseAndProgress = async () => {
       try {
-        // 1. Fetch Course Details
-        const { data } = await API.get(`/courses/${id}`);
-        setCourse(data);
+        setLoading(true);
+        setError("");
 
-        // Set first lesson as default active
-        if (data.modules?.length > 0 && data.modules[0].lessons?.length > 0) {
-          setActiveLesson(data.modules[0].lessons[0]);
+        // 1. Fetch Main Course Document
+        const res = await API.get(`/courses/${id}`);
+        const courseData = res?.data;
+
+        if (!courseData || !courseData._id) {
+          throw new Error("Invalid course data structure received.");
+        }
+
+        setCourse(courseData);
+
+        // Safe check for active lesson
+        if (
+          Array.isArray(courseData.modules) &&
+          courseData.modules.length > 0 &&
+          Array.isArray(courseData.modules[0]?.lessons) &&
+          courseData.modules[0].lessons.length > 0
+        ) {
+          setActiveLesson(courseData.modules[0].lessons[0]);
           setExpandedModules({ 0: true });
         }
 
-        // 2. Fetch Completed Progress: GET /api/my-progress/:id
+        // 2. Fetch User Progress (isolated call so it won't trigger main error block)
         try {
           const { data: progressData } = await API.get(`/my-progress/${id}`);
-          setCompletedLessons(progressData.completedLessons || []);
+          if (progressData?.completedLessons) {
+            setCompletedLessons(progressData.completedLessons);
+          }
         } catch (progErr) {
-          console.warn("Could not fetch user progress", progErr);
+          console.warn("User progress not loaded:", progErr?.message);
         }
+
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load course video stream.");
+        console.error("Course Detail Load Error:", err);
+        setError(
+          err.response?.data?.message || err.message || "Failed to load course details."
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourseAndProgress();
+    if (id) {
+      fetchCourseAndProgress();
+    }
   }, [id]);
 
   const toggleModule = (index) => {
@@ -85,7 +106,7 @@ const CourseDetail = () => {
       setEnrolling(true);
       const response = await API.post(`/enroll/${id}`);
 
-      if (response.data.success) {
+      if (response?.data?.success) {
         setIsEnrolled(true);
         navigate(`/course/${id}/player`);
       }
@@ -135,7 +156,7 @@ const CourseDetail = () => {
 
   return (
     <main className="bg-slate-50 min-h-screen text-slate-800 pt-8 pb-24 relative overflow-hidden">
-      {/* Background Ambient Soft Glows */}
+      {/* Background Ambient Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-800px h-350px bg-amber-200/40 blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute top-1/3 right-0 w-400px h-400px bg-emerald-200/30 blur-[120px] rounded-full pointer-events-none" />
 
@@ -150,7 +171,7 @@ const CourseDetail = () => {
           </Link>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* Left Column: Title & Metadata */}
+            {/* Left Column */}
             <div className="lg:col-span-2 space-y-5">
               <div className="flex items-center gap-3">
                 {course.category && (
@@ -203,7 +224,7 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            {/* Right Column: ENROLLMENT / ACCESS CARD */}
+            {/* Right Column: ENROLLMENT CARD */}
             <div className="bg-white/90 border border-slate-200/80 rounded-3xl p-6 space-y-6 shadow-xl backdrop-blur-xl relative">
               <div className="relative rounded-2xl overflow-hidden aspect-video border border-slate-200 bg-slate-100">
                 <img
@@ -227,7 +248,6 @@ const CourseDetail = () => {
                 </span>
               </div>
 
-              {/* DYNAMIC ACTION BUTTON */}
               <button
                 onClick={handleEnrollOrPlay}
                 disabled={enrolling}

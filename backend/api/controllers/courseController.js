@@ -11,14 +11,18 @@ export const getCourses = async (req, res) => {
 
 export const getCourseById = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    // .lean() adds performance & returns plain JS object without Mongoose metadata
+    const course = await Course.findById(req.params.id).lean();
+
     if (course) {
-      res.json(course);
+      return res.status(200).json(course);
     } else {
-      res.status(404).json({ message: "Course not found" });
+      return res.status(404).json({ message: "Course not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ 
+      message: error.message || "Failed to fetch course details" 
+    });
   }
 };
 
