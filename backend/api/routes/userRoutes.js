@@ -10,6 +10,9 @@ router
   .get(protect, getUserProfile)
   .put(protect, uploadCloud.single("avatar"), updateUserProfile);
 
+  router.post("/add-xp", protect, addGlobalXp);
+  
+
 router.put("/change-password", protect, updatePassword);
 
 export default router;
