@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false, // Security: Direct queries mein password hash return nahi hoga
     },
+     xp: {
+      type: Number,
+      default: 0,
+    },
     role: {
       type: String,
       enum: ["student", "instructor", "admin"],

@@ -1,3 +1,4 @@
+import User from "../models/User.js";
 import UserProgress from "../models/UserProgress.js";
 import { awardXP } from "./leaderboardController.js";
 
@@ -96,26 +97,23 @@ export const getAllUserProgress = async (req, res) => {
   }
 };
 
-export const addXpReward = async (req, res) => {
+export const addGlobalXp = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { courseId, xpAmount = 50 } = req.body;
+    const { xpAmount = 50 } = req.body;
 
-    if (!courseId) {
-      return res.status(400).json({ success: false, message: "Course ID is required" });
-    }
-
-    // Atomic $inc update so existing XP me value add ho jaye
-    const updatedProgress = await UserProgress.findOneAndUpdate(
-      { userId, courseId },
-      { $inc: { xp: xpAmount } },
-      { new: true, upsert: true }
-    );
+    // Direct User Document me XP increment
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $inc: { totalXp: Number(xpAmount) } },
+      { new: true }
+    ).select("-password");
 
     res.status(200).json({
       success: true,
       message: `${xpAmount} XP added successfully`,
-      data: updatedProgress,
+      totalXp: updatedUser.totalXp,
+      user: updatedUser,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -3,7 +3,7 @@ import {
   getCourseProgress, 
   getAllUserProgress, 
   markLessonComplete,
-  addXpReward
+  addGlobalXp
 } from "../controllers/myProgressController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -14,7 +14,7 @@ router.get("/all", protect, getAllUserProgress);
 
 // 2. Get specific course progress
 router.get("/:courseId", protect, getCourseProgress);
-router.post("/add-xp", protect, addXpReward);
+router.post("/add-xp", protect, addGlobalXp);
 
 // Mark lesson complete (One-time)
 router.post("/complete", protect, markLessonComplete);

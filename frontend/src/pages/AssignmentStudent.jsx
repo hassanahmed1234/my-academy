@@ -21,9 +21,9 @@ const AssignmentStudent = () => {
     assignmentData,
     fetchAssignments,
     fetchAssignmentDetail,
-    submitAssignment,triggerXpReward
+    submitAssignment, triggerXpReward
   } = useAuth();
-  
+
   const { assignments, loading: contextLoading, error: assignmentError } = assignmentData;
 
   const [view, setView] = useState("list"); // 'list' | 'detail'
@@ -55,7 +55,7 @@ const AssignmentStudent = () => {
       setView("detail");
     } catch (err) {
       alert(typeof err === "string" ? err : "Error fetching assignment details");
-    } finally{
+    } finally {
       setLoadingDetail(false);
     }
   };
@@ -98,12 +98,12 @@ const AssignmentStudent = () => {
 
       setSubmission(data.submission);
       setConfirmModal(false);
-
+      
       triggerXpReward({
-      xpAmount: 100,
-      reason: "assignment_submitted",
-      heading: "Excellent Score! 🌟",
-    });
+        xpAmount: 15,
+        reason: "assignment_submitted",
+        heading: "Excellent Score! 🌟",
+      });
     } catch (err) {
       alert(typeof err === "string" ? err : "Error saving submission");
     } finally {
@@ -163,11 +163,10 @@ const AssignmentStudent = () => {
                 <button
                   key={tab}
                   onClick={() => setFilter(tab)}
-                  className={`px-3.5 py-1.5 rounded-lg capitalize font-medium transition ${
-                    filter === tab
+                  className={`px-3.5 py-1.5 rounded-lg capitalize font-medium transition ${filter === tab
                       ? "bg-amber-500 text-white font-bold shadow-sm"
                       : "text-slate-600 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   {tab}
                 </button>
@@ -266,11 +265,10 @@ const AssignmentStudent = () => {
             {/* Score Banner */}
             {submission && (submission.status === "graded" || submission.status === "resubmit_required") && (
               <div
-                className={`p-4 rounded-xl border text-xs space-y-2 ${
-                  submission.isPassed
+                className={`p-4 rounded-xl border text-xs space-y-2 ${submission.isPassed
                     ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                     : "bg-purple-50 border-purple-200 text-purple-800"
-                }`}
+                  }`}
               >
                 <div className="flex justify-between items-center font-bold">
                   <span className="flex items-center gap-1.5 text-sm">

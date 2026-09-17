@@ -69,38 +69,34 @@ export const AuthProvider = ({ children }) => {
     error: "",
   });
 
+  // AuthContext.jsx me
   const [rewardModal, setRewardModal] = useState({
     isOpen: false,
     xpAmount: 50,
-    reason: "lesson_completed",
+    reason: "quiz_completed",
     heading: "MashaAllah! 🎉",
-    courseId: null,
   });
 
-  const triggerXpReward = async ({ xpAmount = 50, reason = "lesson_completed", heading, courseId }) => {
-    // 1. Show UI Modal immediately for smooth experience
+  const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
+    // 1. Show UI Modal immediately
     setRewardModal({
       isOpen: true,
       xpAmount,
       reason,
       heading: heading || "MashaAllah! 🎉",
-      courseId,
     });
 
-    // 2. Sync to Mongo Backend API
-    if (courseId) {
-      try {
-        await API.post("/my-progress/add-xp", {
-          courseId,
-          xpAmount,
-        });
-        // Optionally trigger dashboard sync
-        if (typeof fetchDashboardData === "function") {
-          fetchDashboardData(true);
-        }
-      } catch (error) {
-        console.error("Failed to persist XP in database:", error);
-      }
+    // 2. Direct User Profile XP Backend API Hit (No courseId needed)
+    try {
+      const { data } = await API.post("/users/add-xp", { xpAmount });
+
+      // Local user state update for immediate UI sync
+      setUser((prev) => (prev ? { ...prev, totalXp: data.totalXp } : prev));
+
+      // Refresh Profile / Dashboard Data
+      if (typeof fetchProfile === "function") fetchProfile(true);
+    } catch (error) {
+      console.error("Failed to update user total XP:", error);
     }
   };
 
