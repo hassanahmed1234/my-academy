@@ -13,8 +13,11 @@ import {
   CheckCircle,
   Circle,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const CoursePlayer = () => {
+    const {triggerXpReward } = useAuth();
+  
   const { id } = useParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +77,11 @@ const CoursePlayer = () => {
         lessonId,
       });
       setCompletedLessons(data.completedLessons || []);
+      triggerXpReward({
+        xpAmount: 10,
+        reason: "lesson_completed",
+        heading: "Excellent Score! 🌟",
+      });
     } catch (err) {
       console.error("Failed to mark lesson as complete:", err.response?.data || err.message);
     } finally {

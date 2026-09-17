@@ -95,3 +95,29 @@ export const getAllUserProgress = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const addXpReward = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { courseId, xpAmount = 50 } = req.body;
+
+    if (!courseId) {
+      return res.status(400).json({ success: false, message: "Course ID is required" });
+    }
+
+    // Atomic $inc update so existing XP me value add ho jaye
+    const updatedProgress = await UserProgress.findOneAndUpdate(
+      { userId, courseId },
+      { $inc: { xp: xpAmount } },
+      { new: true, upsert: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `${xpAmount} XP added successfully`,
+      data: updatedProgress,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

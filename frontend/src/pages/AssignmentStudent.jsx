@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import API from "../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 import {
   FileText,
   Clock,
@@ -16,8 +17,16 @@ import {
 } from "lucide-react";
 
 const AssignmentStudent = () => {
+  const {
+    assignmentData,
+    fetchAssignments,
+    fetchAssignmentDetail,
+    submitAssignment,triggerXpReward
+  } = useAuth();
+  
+  const { assignments, loading: contextLoading, error: assignmentError } = assignmentData;
+
   const [view, setView] = useState("list"); // 'list' | 'detail'
-  const [assignments, setAssignments] = useState([]);
   const [filter, setFilter] = useState("all");
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [submission, setSubmission] = useState(null);
@@ -26,41 +35,28 @@ const AssignmentStudent = () => {
   const [textResponse, setTextResponse] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
 
   useEffect(() => {
     fetchAssignments();
-  }, []);
+  }, [fetchAssignments]);
 
-  // Fetch Student Assignments List
-  const fetchAssignments = async () => {
-    try {
-      setLoading(true);
-      const res = await API.get("/assignment/student/list");
-      setAssignments(res.data);
-    } catch (err) {
-      console.error("Error fetching assignments:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch Single Assignment Detail with Draft/Submission
+  // Fetch Single Assignment Detail with Draft/Submission via Context
   const handleOpenAssignment = async (id) => {
     try {
-      setLoading(true);
-      const res = await API.get(`/assignment/student/detail/${id}`);
-      setSelectedAssignment(res.data.assignment);
-      setSubmission(res.data.submission);
-      setTextResponse(res.data.submission?.textResponse || "");
-      setFileUrl(res.data.submission?.fileUrl || "");
+      setLoadingDetail(true);
+      const data = await fetchAssignmentDetail(id);
+      setSelectedAssignment(data.assignment);
+      setSubmission(data.submission);
+      setTextResponse(data.submission?.textResponse || "");
+      setFileUrl(data.submission?.fileUrl || "");
       setView("detail");
     } catch (err) {
-      console.error("Error fetching assignment details:", err);
-    } finally {
-      setLoading(false);
+      alert(typeof err === "string" ? err : "Error fetching assignment details");
+    } finally{
+      setLoadingDetail(false);
     }
   };
 
@@ -85,7 +81,7 @@ const AssignmentStudent = () => {
     }
   };
 
-  // Save Draft or Submit
+  // Save Draft or Submit via Context
   const handleSaveOrSubmit = async (isFinalSubmit = false) => {
     if (isFinalSubmit && !confirmModal) {
       setConfirmModal(true);
@@ -94,22 +90,22 @@ const AssignmentStudent = () => {
 
     try {
       setSaving(true);
-      const res = await API.post(
-        `/assignment/student/submit/${selectedAssignment._id}`,
-        {
-          textResponse,
-          fileUrl,
-          isFinalSubmit,
-        }
-      );
+      const data = await submitAssignment(selectedAssignment._id, {
+        textResponse,
+        fileUrl,
+        isFinalSubmit,
+      });
 
-      setSubmission(res.data.submission);
+      setSubmission(data.submission);
       setConfirmModal(false);
-      if (isFinalSubmit) {
-        fetchAssignments();
-      }
+
+      triggerXpReward({
+      xpAmount: 100,
+      reason: "assignment_submitted",
+      heading: "Excellent Score! 🌟",
+    });
     } catch (err) {
-      alert(err.response?.data?.message || "Error saving submission");
+      alert(typeof err === "string" ? err : "Error saving submission");
     } finally {
       setSaving(false);
     }
@@ -142,7 +138,7 @@ const AssignmentStudent = () => {
 
   const isFormLocked = submission?.status === "submitted" || submission?.status === "graded";
 
-  if (loading) {
+  if (contextLoading && view === "list") {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
@@ -151,7 +147,7 @@ const AssignmentStudent = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto p-4 text-slate-800">
+    <div className="space-y-6 max-w-5xl mx-auto p-4 text-slate-800 font-sans">
       {view === "list" && (
         <>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4">
@@ -178,6 +174,12 @@ const AssignmentStudent = () => {
               ))}
             </div>
           </div>
+
+          {assignmentError && (
+            <div className="p-4 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl">
+              {assignmentError}
+            </div>
+          )}
 
           {filtered.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3 shadow-sm">
@@ -207,10 +209,17 @@ const AssignmentStudent = () => {
                   </div>
 
                   <button
+                    disabled={loadingDetail}
                     onClick={() => handleOpenAssignment(item._id)}
-                    className="w-full py-2 bg-slate-50 border border-slate-200 hover:bg-amber-500 hover:text-white hover:border-amber-500 text-xs font-bold text-slate-700 rounded-xl flex items-center justify-center gap-1 transition"
+                    className="w-full py-2 bg-slate-50 border border-slate-200 hover:bg-amber-500 hover:text-white hover:border-amber-500 text-xs font-bold text-slate-700 rounded-xl flex items-center justify-center gap-1 transition disabled:opacity-50"
                   >
-                    View Details & Submit <ChevronRight className="w-4 h-4" />
+                    {loadingDetail ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                    ) : (
+                      <>
+                        View Details & Submit <ChevronRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </div>
               ))}

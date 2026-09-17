@@ -1,15 +1,138 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import API from '../api/axiosInstance';
-import { CloudSnow } from 'lucide-react';
+import XpRewardModal from '../components/XpRewardModal';
 
 const AuthContext = createContext(null);
+
+const DUMMY_ANNOUNCEMENTS = [
+  {
+    _id: "ann_1",
+    title: "Mid-Term Evaluation Schedule Released",
+    createdAt: "2026-09-10",
+    category: "Exam Alert",
+  },
+  {
+    _id: "ann_2",
+    title: "New Tajweed Advanced Module Added",
+    createdAt: "2026-09-08",
+    category: "Course Update",
+  },
+];
+
+const DUMMY_TASKS = [
+  {
+    _id: "tsk_1",
+    title: "Tajweed Recitation Submission",
+    dueDate: "2026-09-14",
+    type: "Quiz",
+  },
+  {
+    _id: "tsk_2",
+    title: "Seerah Assignment #2",
+    dueDate: "2026-09-18",
+    type: "Assignment",
+  },
+];
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // App load hone par Server se Profile sync karein
+  // Central Dashboard State
+  const [dashboardData, setDashboardData] = useState({
+    inProgressCourses: [],
+    completedCourses: [],
+    upcomingLiveClass: null,
+    announcements: [],
+    tasks: [],
+    isLoaded: false,
+    loading: false,
+    error: "",
+  });
+
+  // Central My Courses State
+  const [myCoursesData, setMyCoursesData] = useState({
+    inProgress: [],
+    completed: [],
+    progressMap: {},
+    isLoaded: false,
+    loading: false,
+    error: "",
+  });
+
+  // Central Quizzes State
+  const [quizData, setQuizData] = useState({
+    quizzes: [],
+    isLoaded: false,
+    loading: false,
+    error: "",
+  });
+
+  const [rewardModal, setRewardModal] = useState({
+    isOpen: false,
+    xpAmount: 50,
+    reason: "lesson_completed",
+    heading: "MashaAllah! 🎉",
+    courseId: null,
+  });
+
+  const triggerXpReward = async ({ xpAmount = 50, reason = "lesson_completed", heading, courseId }) => {
+    // 1. Show UI Modal immediately for smooth experience
+    setRewardModal({
+      isOpen: true,
+      xpAmount,
+      reason,
+      heading: heading || "MashaAllah! 🎉",
+      courseId,
+    });
+
+    // 2. Sync to Mongo Backend API
+    if (courseId) {
+      try {
+        await API.post("/my-progress/add-xp", {
+          courseId,
+          xpAmount,
+        });
+        // Optionally trigger dashboard sync
+        if (typeof fetchDashboardData === "function") {
+          fetchDashboardData(true);
+        }
+      } catch (error) {
+        console.error("Failed to persist XP in database:", error);
+      }
+    }
+  };
+
+  const closeXpReward = () => {
+    setRewardModal((prev) => ({ ...prev, isOpen: false }));
+  };
+  // Central Assignments State
+  const [assignmentData, setAssignmentData] = useState({
+    assignments: [],
+    isLoaded: false,
+    loading: false,
+    error: "",
+  });
+
+  // Central Profile State
+  const [profileData, setProfileData] = useState({
+    data: {
+      name: "",
+      email: "",
+      phone: "",
+      location: "",
+      bio: "",
+      website: "",
+      avatar: "",
+      role: "student",
+    },
+    isLoaded: false,
+    loading: false,
+    error: "",
+  });
+
+  // Check Auth Status on Mount
   useEffect(() => {
     const checkAuthStatus = async () => {
       const storedToken = localStorage.getItem('token');
@@ -20,13 +143,10 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        // Fresh user profile API se mangwaiye
         const { data } = await API.get('/auth/me');
-       
         setUser(data);
         setIsAuthenticated(true);
       } catch (error) {
-        // Token invalid/expired hone par cleanup
         localStorage.removeItem('token');
         setUser(null);
         setIsAuthenticated(false);
@@ -38,23 +158,382 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // Login Function (Accepts user data and JWT token)
-  const login = (userData, token) => {
-    localStorage.setItem('token', token);
-    setUser(userData);
-    setIsAuthenticated(true);
+  // Fetch Dashboard Data (Cached)
+  const fetchDashboardData = useCallback(async (forceRefresh = false) => {
+    if (dashboardData.isLoaded && !forceRefresh) return;
+
+    setDashboardData((prev) => ({ ...prev, loading: true, error: "" }));
+
+    try {
+      const [coursesRes, progressRes, annRes, tasksRes] = await Promise.allSettled([
+        API.get("/my-courses"),
+        API.get("/my-progress/all"),
+        API.get("/announcements"),
+        API.get("/tasks"),
+      ]);
+
+      let rawCourses = [];
+      if (coursesRes.status === "fulfilled") {
+        const cData = coursesRes.value.data?.data || coursesRes.value.data || [];
+        rawCourses = Array.isArray(cData) ? cData : [...(cData.inProgress || []), ...(cData.completed || [])];
+      }
+
+      let progressData = [];
+      if (progressRes.status === "fulfilled") {
+        progressData = progressRes.value.data?.data || progressRes.value.data || [];
+      }
+
+      const progressMap = {};
+      if (Array.isArray(progressData)) {
+        progressData.forEach((p) => {
+          const cId = p.courseId?._id || p.courseId || p.course;
+          if (cId) progressMap[String(cId)] = p;
+        });
+      }
+
+      const inProgress = [];
+      const completed = [];
+
+      rawCourses.forEach((item) => {
+        const courseObj = item.courseId && typeof item.courseId === "object" ? item.courseId : (item.course || item);
+        const cId = String(courseObj._id || item._id || item.courseId);
+
+        const prog = progressMap[cId];
+        const isCompleted = item.isCompleted || prog?.isCompleted || (prog?.percentage >= 100);
+
+        const mergedCourse = {
+          ...courseObj,
+          progressPercentage: prog?.percentage || item.progress || 0,
+          isCompleted: Boolean(isCompleted),
+        };
+
+        if (isCompleted) {
+          completed.push(mergedCourse);
+        } else {
+          inProgress.push(mergedCourse);
+        }
+      });
+
+      let announcementsList = DUMMY_ANNOUNCEMENTS;
+      if (annRes.status === "fulfilled") {
+        const annData = annRes.value.data?.data || annRes.value.data || [];
+        if (Array.isArray(annData) && annData.length > 0) announcementsList = annData;
+      }
+
+      let tasksList = DUMMY_TASKS;
+      if (tasksRes.status === "fulfilled") {
+        const taskData = tasksRes.value.data?.data || tasksRes.value.data || [];
+        if (Array.isArray(taskData) && taskData.length > 0) tasksList = taskData;
+      }
+
+      let liveClassObj = null;
+      try {
+        const liveRes = await API.get("/live-sessions");
+        const sessions = Array.isArray(liveRes.data) ? liveRes.data : liveRes.data?.sessions || [];
+
+        if (sessions.length > 0) {
+          const activeSession = sessions[0];
+          liveClassObj = {
+            id: activeSession._id,
+            title: activeSession.title,
+            courseName: activeSession.course?.title || "Islamic Studies",
+            instructor: activeSession.scholarName || activeSession.instructor,
+            date: activeSession.scheduledAt,
+            time: new Date(activeSession.scheduledAt).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            meetingLink: activeSession.meetingUrl,
+          };
+        }
+      } catch {
+        liveClassObj = {
+          id: "lc101",
+          title: "Seerah Q&A & Open Discussion",
+          courseName: "Seerah of Prophet Muhammad ﷺ",
+          instructor: "Sheikh Abdul Rahman",
+          date: "2026-09-15",
+          time: "8:00 PM PKT",
+          meetingLink: "https://zoom.us/j/example123456",
+        };
+      }
+
+      setDashboardData({
+        inProgressCourses: inProgress,
+        completedCourses: completed.length > 0 ? completed : progressData,
+        upcomingLiveClass: liveClassObj,
+        announcements: announcementsList,
+        tasks: tasksList,
+        isLoaded: true,
+        loading: false,
+        error: "",
+      });
+    } catch (err) {
+      setDashboardData((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.response?.data?.message || "Failed to load dashboard data.",
+      }));
+    }
+  }, [dashboardData.isLoaded]);
+
+  // Fetch My Courses & Progress (Cached)
+  const fetchMyCourses = useCallback(async (forceRefresh = false) => {
+    if (myCoursesData.isLoaded && !forceRefresh) return;
+
+    setMyCoursesData((prev) => ({ ...prev, loading: true, error: "" }));
+
+    try {
+      const [coursesRes, progressRes] = await Promise.allSettled([
+        API.get("/my-courses"),
+        API.get("/my-progress/all"),
+      ]);
+
+      let inProgressList = [];
+      if (coursesRes.status === "fulfilled") {
+        const courseData = coursesRes.value.data?.data || coursesRes.value.data || {};
+        inProgressList = Array.isArray(courseData.inProgress)
+          ? courseData.inProgress
+          : Array.isArray(courseData)
+            ? courseData
+            : [];
+      }
+
+      let completedList = [];
+      let pMap = {};
+
+      if (progressRes.status === "fulfilled") {
+        const progressList =
+          progressRes.value.data?.data?.data ||
+          progressRes.value.data?.data ||
+          (Array.isArray(progressRes.value.data) ? progressRes.value.data : []);
+
+        completedList = Array.isArray(progressList) ? progressList : [];
+
+        if (Array.isArray(progressList)) {
+          progressList.forEach((item) => {
+            const cId = item.courseId || item._id;
+            if (cId) {
+              pMap[String(cId)] = Array.isArray(item.completedLessons)
+                ? item.completedLessons
+                : [];
+            }
+          });
+        }
+      }
+
+      setMyCoursesData({
+        inProgress: inProgressList,
+        completed: completedList,
+        progressMap: pMap,
+        isLoaded: true,
+        loading: false,
+        error: "",
+      });
+    } catch (err) {
+      setMyCoursesData((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.response?.data?.message || "Failed to load your courses.",
+      }));
+    }
+  }, [myCoursesData.isLoaded]);
+
+  // Fetch Quizzes List (Cached)
+  const fetchQuizzes = useCallback(async (forceRefresh = false) => {
+    if (quizData.isLoaded && !forceRefresh) return;
+
+    setQuizData((prev) => ({ ...prev, loading: true, error: "" }));
+
+    try {
+      const res = await API.get("/quizzes");
+      const list = Array.isArray(res.data) ? res.data : res.data.quizzes || [];
+      setQuizData({
+        quizzes: list,
+        isLoaded: true,
+        loading: false,
+        error: "",
+      });
+    } catch (err) {
+      setQuizData((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.response?.data?.message || "Failed to load quizzes.",
+      }));
+    }
+  }, [quizData.isLoaded]);
+
+  // Fetch Assignments List (Cached)
+  const fetchAssignments = useCallback(async (forceRefresh = false) => {
+    if (assignmentData.isLoaded && !forceRefresh) return;
+
+    setAssignmentData((prev) => ({ ...prev, loading: true, error: "" }));
+
+    try {
+      const res = await API.get("/assignment/student/list");
+      const list = Array.isArray(res.data) ? res.data : res.data.assignments || [];
+      setAssignmentData({
+        assignments: list,
+        isLoaded: true,
+        loading: false,
+        error: "",
+      });
+    } catch (err) {
+      setAssignmentData((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.response?.data?.message || "Failed to load assignments.",
+      }));
+    }
+  }, [assignmentData.isLoaded]);
+
+  // Fetch Single Assignment Detail
+  const fetchAssignmentDetail = async (id) => {
+    try {
+      const res = await API.get(`/assignment/student/detail/${id}`);
+      return res.data;
+    } catch (err) {
+      throw err.response?.data?.message || "Failed to fetch assignment details.";
+    }
   };
 
-  // Logout Function
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    setIsAuthenticated(false);
+  // Fetch Profile Data (Cached)
+  const fetchProfile = useCallback(async (forceRefresh = false) => {
+    if (profileData.isLoaded && !forceRefresh) return profileData.data;
+
+    setProfileData((prev) => ({ ...prev, loading: true, error: "" }));
+
+    try {
+      const { data } = await API.get("/users/profile");
+      const formattedData = {
+        name: data.name || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        location: data.location || "",
+        bio: data.bio || "",
+        website: data.website || "",
+        avatar: data.avatar || "",
+        role: data.role || "student",
+      };
+
+      setProfileData({
+        data: formattedData,
+        isLoaded: true,
+        loading: false,
+        error: "",
+      });
+
+      return formattedData;
+    } catch (err) {
+      const errMsg = err.response?.data?.message || "Failed to load profile.";
+      setProfileData((prev) => ({
+        ...prev,
+        loading: false,
+        error: errMsg,
+      }));
+      throw new Error(errMsg);
+    }
+  }, [profileData.isLoaded, profileData.data]);
+
+  // Update Profile Details
+  const updateProfile = async (updatedFields) => {
+    try {
+      const { data } = await API.put("/users/profile", updatedFields);
+      const updatedName = data.user?.name || data.name || updatedFields.name;
+
+      if (updatedName) {
+        localStorage.setItem("userName", updatedName);
+      }
+
+      setProfileData((prev) => ({
+        ...prev,
+        data: {
+          ...prev.data,
+          ...updatedFields,
+          name: updatedName || prev.data.name,
+        },
+      }));
+
+      setUser((prev) => (prev ? { ...prev, name: updatedName || prev.name } : prev));
+      return data;
+    } catch (err) {
+      throw err.response?.data?.message || "Failed to update profile.";
+    }
+  };
+
+  // Upload Avatar
+  const uploadAvatar = async (file) => {
+    const imageFormData = new FormData();
+    imageFormData.append("avatar", file);
+
+    try {
+      const { data } = await API.put("/users/profile", imageFormData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const newAvatarUrl = data.user?.avatar || data.avatar;
+
+      if (newAvatarUrl) {
+        setProfileData((prev) => ({
+          ...prev,
+          data: { ...prev.data, avatar: newAvatarUrl },
+        }));
+        setUser((prev) => (prev ? { ...prev, avatar: newAvatarUrl } : prev));
+      }
+
+      return newAvatarUrl;
+    } catch (err) {
+      throw err.response?.data?.message || "Image upload failed. Please try again.";
+    }
+  };
+
+  // Change Password
+  const changePassword = async ({ currentPassword, newPassword }) => {
+    try {
+      const { data } = await API.put("/users/change-password", {
+        currentPassword,
+        newPassword,
+      });
+      return data;
+    } catch (err) {
+      throw err.response?.data?.message || "Failed to update password.";
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout }}>
-      {!loading && children}
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        loading,
+        setUser,
+        setIsAuthenticated,
+        dashboardData,
+        fetchDashboardData,
+        myCoursesData,
+        fetchMyCourses,
+        quizData,
+        fetchQuizzes,
+        assignmentData,
+        fetchAssignments,
+        fetchAssignmentDetail,
+        profileData,
+        fetchProfile,
+        updateProfile,
+        uploadAvatar,
+        changePassword,
+        triggerXpReward
+      }}
+    >
+      {children}
+      <XpRewardModal
+        isOpen={rewardModal.isOpen}
+        onClose={closeXpReward}
+        xpAmount={rewardModal.xpAmount}
+        reason={rewardModal.reason}
+        heading={rewardModal.heading}
+        courseId={rewardModal.courseId}
+      />
     </AuthContext.Provider>
   );
 };

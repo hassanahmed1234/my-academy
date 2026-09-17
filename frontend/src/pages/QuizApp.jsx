@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import API from "../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 import {
   Clock,
   AlertTriangle,
@@ -13,33 +14,23 @@ import {
 } from "lucide-react";
 
 const QuizApp = () => {
+  const { quizData, fetchQuizzes,triggerXpReward } = useAuth();
+  const { quizzes, loading: contextQuizLoading, error: quizError } = quizData;
+
   const [view, setView] = useState("list"); // 'list' | 'instructions' | 'quiz' | 'result'
-  const [quizzes, setQuizzes] = useState([]);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [attempt, setAttempt] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [warningMsg, setWarningMsg] = useState("");
   const containerRef = useRef(null);
 
-  // Fetch Quiz List
-  const fetchQuizzes = async () => {
-    try {
-      setLoading(true);
-      const res = await API.get("/quizzes");
-      setQuizzes(Array.isArray(res.data) ? res.data : res.data.quizzes || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch Quizzes on Mount via Context
   useEffect(() => {
     fetchQuizzes();
-  }, []);
+  }, [fetchQuizzes]);
 
   // Handle Timer & Auto-Submit
   useEffect(() => {
@@ -108,7 +99,7 @@ const QuizApp = () => {
   // Actions
   const handleStartQuiz = async () => {
     try {
-      setLoading(true);
+      setActionLoading(true);
       const res = await API.post(`/student/quizzes/${selectedQuiz._id}/start`);
       
       const quizMeta = res.data.quiz || res.data;
@@ -135,7 +126,7 @@ const QuizApp = () => {
     } catch (err) {
       alert(err.response?.data?.message || "Failed to start quiz.");
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -160,29 +151,35 @@ const QuizApp = () => {
   const handleFinalSubmit = async (isAuto = false) => {
     if (!isAuto && !window.confirm("Are you sure you want to submit your quiz?")) return;
     try {
-      setLoading(true);
+      setActionLoading(true);
       await API.post(`/student/quizzes/attempt/${attempt._id}/submit`);
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
+
+      triggerXpReward({
+      xpAmount: 20,
+      reason: "perfect_quiz",
+      heading: "Excellent Score! 🌟",
+    });
       handleFetchResults(attempt._id);
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
   const handleFetchResults = async (attemptId) => {
     try {
-      setLoading(true);
+      setActionLoading(true);
       const res = await API.get(`/student/quizzes/attempt/${attemptId}/result`);
       setResult(res.data);
       setView("result");
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -192,7 +189,7 @@ const QuizApp = () => {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  if (loading) {
+  if (contextQuizLoading && view === "list") {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-800">
         <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
@@ -210,6 +207,12 @@ const QuizApp = () => {
             <h1 className="text-2xl font-extrabold text-slate-900">Course Assessments & Quizzes</h1>
             <p className="text-xs text-slate-500">Select an assessment to test your knowledge.</p>
           </div>
+
+          {quizError && (
+            <div className="p-4 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl">
+              {quizError}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {quizzes.map((quiz) => (
@@ -286,9 +289,11 @@ const QuizApp = () => {
               Cancel
             </button>
             <button
+              disabled={actionLoading}
               onClick={handleStartQuiz}
-              className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition shadow-sm"
+              className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm flex items-center gap-2"
             >
+              {actionLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               I Understand & Start Quiz
             </button>
           </div>
@@ -355,9 +360,11 @@ const QuizApp = () => {
 
             {currentIndex === attempt.questions.length - 1 ? (
               <button
+                disabled={actionLoading}
                 onClick={() => handleFinalSubmit(false)}
-                className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition shadow-sm"
+                className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition shadow-sm flex items-center gap-2"
               >
+                {actionLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Submit Assessment
               </button>
             ) : (
@@ -406,7 +413,7 @@ const QuizApp = () => {
 
             <button
               onClick={() => {
-                fetchQuizzes();
+                fetchQuizzes(true); // Force refresh updated attempt state
                 setView("list");
               }}
               className="px-6 py-2.5 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition shadow-sm"

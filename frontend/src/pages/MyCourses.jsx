@@ -1,79 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import API from "../api/axiosInstance";
 import {
   Search,
   BookOpen,
   PlayCircle,
-  Award,
   CheckCircle2,
   Loader2,
   ChevronDown,
   Sparkles,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const MyCourses = () => {
-  const [inProgress, setInProgress] = useState([]);
-  const [completed, setCompleted] = useState([]);
-  const [progressMap, setProgressMap] = useState({}); // Stores { courseId: [completedLessonIds] }
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { myCoursesData, fetchMyCourses } = useAuth();
+  const { inProgress, completed, loading, error } = myCoursesData;
 
-  // Search & Filter States
+  // Search & Category Filter States
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
-    fetchEnrolledCoursesAndProgress();
-  }, [searchTerm, selectedCategory]);
-
-  const fetchEnrolledCoursesAndProgress = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const params = {};
-      if (searchTerm.trim()) params.search = searchTerm.trim();
-      if (selectedCategory !== "All") params.category = selectedCategory;
-
-      // 1. Fetch Enrolled Courses
-      const { data } = await API.get("/my-courses", { params });
-      const courseData = data?.data || data || {};
-
-      setInProgress(Array.isArray(courseData.inProgress) ? courseData.inProgress : []);
-
-      // 2. Fetch User Lesson Progress
-      try {
-        const progressRes = await API.get("/my-progress/all");
-
-        const progressList =
-          progressRes.data?.data?.data ||
-          progressRes.data?.data ||
-          (Array.isArray(progressRes.data) ? progressRes.data : []);
-
-        setCompleted(Array.isArray(progressList) ? progressList : []);
-
-        const pMap = {};
-        if (Array.isArray(progressList)) {
-          progressList.forEach((item) => {
-            const cId = item.courseId || item._id;
-            if (cId) {
-              pMap[String(cId)] = Array.isArray(item.completedLessons)
-                ? item.completedLessons
-                : [];
-            }
-          });
-        }
-        setProgressMap(pMap);
-      } catch (pErr) {
-        console.error("Failed to load lesson progress:", pErr);
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to load your courses.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    window.scrollTo(0, 0);
+    fetchMyCourses();
+  }, [fetchMyCourses]);
 
   // Helper to safely extract target course object
   const getCourseDetails = (item) => {
@@ -85,6 +34,30 @@ const MyCourses = () => {
     }
     return item;
   };
+
+  // Client-Side Filter Function
+  const filterCourses = (list) => {
+    return list.filter((item) => {
+      const course = getCourseDetails(item);
+      const title = (course.title || "").toLowerCase();
+      const arabicTitle = (course.arabicTitle || "").toLowerCase();
+      const category = course.category || item.category || "";
+
+      const matchesSearch =
+        !searchTerm.trim() ||
+        title.includes(searchTerm.toLowerCase().trim()) ||
+        arabicTitle.includes(searchTerm.toLowerCase().trim());
+
+      const matchesCategory =
+        selectedCategory === "All" ||
+        category.toLowerCase() === selectedCategory.toLowerCase();
+
+      return matchesSearch && matchesCategory;
+    });
+  };
+
+  const filteredInProgress = useMemo(() => filterCourses(inProgress), [inProgress, searchTerm, selectedCategory]);
+  const filteredCompleted = useMemo(() => filterCourses(completed), [completed, searchTerm, selectedCategory]);
 
   return (
     <div className="space-y-10 max-w-7xl mx-auto px-4 py-6 font-sans">
@@ -147,11 +120,11 @@ const MyCourses = () => {
                 <BookOpen className="w-4 h-4" /> Continue Learning
               </h2>
               <span className="text-xs text-slate-500 font-medium">
-                {inProgress.length} Courses Active
+                {filteredInProgress.length} Courses Active
               </span>
             </div>
 
-            {inProgress.length === 0 ? (
+            {filteredInProgress.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-3 shadow-sm">
                 <p className="text-xs text-slate-500">No active courses found.</p>
                 <Link
@@ -163,7 +136,7 @@ const MyCourses = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {inProgress.map((rawItem) => {
+                {filteredInProgress.map((rawItem) => {
                   const course = getCourseDetails(rawItem);
                   const courseId = String(course._id || rawItem._id || rawItem.courseId);
 
@@ -223,17 +196,17 @@ const MyCourses = () => {
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Completed Courses
               </h2>
               <span className="text-xs text-slate-500 font-medium">
-                {completed.length} Completed
+                {filteredCompleted.length} Completed
               </span>
             </div>
 
-            {completed.length === 0 ? (
+            {filteredCompleted.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center text-xs text-slate-500 shadow-sm">
                 No completed courses yet. Keep learning to earn your certificates!
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {completed.map((rawItem) => {
+                {filteredCompleted.map((rawItem) => {
                   const course = getCourseDetails(rawItem);
                   const courseId = String(course._id || rawItem.courseId || rawItem._id);
                   const courseTitle = course.title || course.courseId?.title || "Completed Course";

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import API from "../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 import {
   User as UserIcon,
   Mail,
@@ -18,10 +18,11 @@ import {
 } from "lucide-react";
 
 const Profile = () => {
+  const { profileData, fetchProfile, updateProfile, uploadAvatar, changePassword } = useAuth();
+
   const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [passUpdating, setPassUpdating] = useState(false);
@@ -45,33 +46,26 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const loadProfile = async () => {
       try {
-        setLoading(true);
-        const { data } = await API.get("/users/profile");
-
-        setFormData({
-          name: data.name || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          location: data.location || "",
-          bio: data.bio || "",
-          website: data.website || "",
-          avatar: data.avatar || "",
-          role: data.role || "student",
-        });
-      } catch (error) {
+        const data = await fetchProfile();
+        setFormData(data);
+      } catch (err) {
         setStatusMessage({
           type: "error",
-          text: error.response?.data?.message || "Failed to load profile.",
+          text: err.message || "Failed to load profile.",
         });
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchProfile();
-  }, []);
+    loadProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (profileData.data) {
+      setFormData(profileData.data);
+    }
+  }, [profileData.data]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -82,19 +76,11 @@ const Profile = () => {
       return;
     }
 
-    const imageFormData = new FormData();
-    imageFormData.append("avatar", file);
-
     setUploadingImg(true);
     setStatusMessage({ type: "", text: "" });
 
     try {
-      const { data } = await API.put("/users/profile", imageFormData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      const newAvatarUrl = data.user?.avatar || data.avatar;
-
+      const newAvatarUrl = await uploadAvatar(file);
       if (newAvatarUrl) {
         setFormData((prev) => ({ ...prev, avatar: newAvatarUrl }));
         setStatusMessage({ type: "success", text: "Profile picture updated!" });
@@ -102,7 +88,7 @@ const Profile = () => {
     } catch (error) {
       setStatusMessage({
         type: "error",
-        text: error.response?.data?.message || "Image upload failed. Please try again.",
+        text: typeof error === "string" ? error : "Image upload failed. Please try again.",
       });
     } finally {
       setUploadingImg(false);
@@ -115,7 +101,7 @@ const Profile = () => {
     setStatusMessage({ type: "", text: "" });
 
     try {
-      const { data } = await API.put("/users/profile", {
+      await updateProfile({
         name: formData.name,
         phone: formData.phone,
         location: formData.location,
@@ -124,15 +110,12 @@ const Profile = () => {
         avatar: formData.avatar,
       });
 
-      const updatedName = data.user?.name || data.name || formData.name;
-
       setStatusMessage({ type: "success", text: "Profile updated successfully!" });
       setIsEditing(false);
-      localStorage.setItem("userName", updatedName);
     } catch (error) {
       setStatusMessage({
         type: "error",
-        text: error.response?.data?.message || "Failed to update profile.",
+        text: typeof error === "string" ? error : "Failed to update profile.",
       });
     } finally {
       setUpdating(false);
@@ -169,7 +152,7 @@ const Profile = () => {
     setPassUpdating(true);
 
     try {
-      await API.put("/users/change-password", {
+      await changePassword({
         currentPassword: passwords.currentPassword,
         newPassword: passwords.newPassword,
       });
@@ -179,14 +162,14 @@ const Profile = () => {
     } catch (error) {
       setStatusMessage({
         type: "error",
-        text: error.response?.data?.message || "Failed to update password.",
+        text: typeof error === "string" ? error : "Failed to update password.",
       });
     } finally {
       setPassUpdating(false);
     }
   };
 
-  if (loading) {
+  if (profileData.loading && !profileData.isLoaded) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-amber-600 gap-3">
         <Loader2 className="w-8 h-8 animate-spin" />
