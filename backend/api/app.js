@@ -87,6 +87,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/live-sessions", liveSessionRoutes);
 app.use("/api/my-courses", myCoursesRoutes);
 app.use("/api/enroll", enrollmentRoutes);
+app.use("/api/my-progress", myProgressRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/quizzes", adminQuizRoutes);

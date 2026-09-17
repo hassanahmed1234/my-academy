@@ -499,11 +499,34 @@ export const AuthProvider = ({ children }) => {
       throw err.response?.data?.message || "Failed to update password.";
     }
   };
+  const login = (userData, token) => {
+    localStorage.setItem('token', token);
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    setIsAuthenticated(false);
+    setDashboardData({
+      inProgressCourses: [],
+      completedCourses: [],
+      upcomingLiveClass: null,
+      announcements: [],
+      tasks: [],
+      isLoaded: false,
+      loading: false,
+      error: "",
+    });
+  };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        login,
+        logout,
         isAuthenticated,
         loading,
         setUser,
