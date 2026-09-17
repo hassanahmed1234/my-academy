@@ -2,6 +2,7 @@ import express from "express";
 import { getUserProfile, updateUserProfile, updatePassword } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { uploadCloud } from "../config/cloudinary.js";
+import { addGlobalXp } from "../controllers/myProgressController.js";
 
 const router = express.Router();
 
