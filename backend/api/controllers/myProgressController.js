@@ -102,17 +102,17 @@ export const addGlobalXp = async (req, res) => {
     const userId = req.user._id;
     const { xpAmount = 50 } = req.body;
 
-    // Direct User Document me XP increment
+    // Fixed: Schema me 'xp' hai, 'totalXp' nahi
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $inc: { totalXp: Number(xpAmount) } },
+      { $inc: { xp: Number(xpAmount) } },
       { new: true }
     ).select("-password");
 
     res.status(200).json({
       success: true,
       message: `${xpAmount} XP added successfully`,
-      totalXp: updatedUser.totalXp,
+      xp: updatedUser.xp,
       user: updatedUser,
     });
   } catch (error) {

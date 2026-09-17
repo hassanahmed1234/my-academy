@@ -77,28 +77,28 @@ export const AuthProvider = ({ children }) => {
     heading: "MashaAllah! 🎉",
   });
 
-  const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
-    // 1. Show UI Modal immediately
-    setRewardModal({
-      isOpen: true,
-      xpAmount,
-      reason,
-      heading: heading || "MashaAllah! 🎉",
-    });
+ const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
+  // 1. Show UI Modal immediately
+  setRewardModal({
+    isOpen: true,
+    xpAmount,
+    reason,
+    heading: heading || "MashaAllah! 🎉",
+  });
 
-    // 2. Direct User Profile XP Backend API Hit (No courseId needed)
-    try {
-      const { data } = await API.post("/users/add-xp", { xpAmount });
+  // 2. Direct User Profile XP Backend API Hit
+  try {
+    const { data } = await API.post("/users/add-xp", { xpAmount });
 
-      // Local user state update for immediate UI sync
-      setUser((prev) => (prev ? { ...prev, totalXp: data.totalXp } : prev));
+    // Fixed: Updated data.xp se user state update karo
+    setUser((prev) => (prev ? { ...prev, xp: data.xp, totalXp: data.xp } : prev));
 
-      // Refresh Profile / Dashboard Data
-      if (typeof fetchProfile === "function") fetchProfile(true);
-    } catch (error) {
-      console.error("Failed to update user total XP:", error);
-    }
-  };
+    // Refresh Profile / Dashboard Data
+    if (typeof fetchProfile === "function") fetchProfile(true);
+  } catch (error) {
+    console.error("Failed to update user total XP:", error);
+  }
+};
 
   const closeXpReward = () => {
     setRewardModal((prev) => ({ ...prev, isOpen: false }));
