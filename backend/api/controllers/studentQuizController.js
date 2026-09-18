@@ -1,47 +1,9 @@
 import mongoose from "mongoose";
-import QuizAttempt from "../models/QuizAttempt.js";
-import Quiz from "../models/Quiz.js";
 import Question from "../models/Question.js";
+import Quiz from "../models/Quiz.js";
+import QuizAttempt from "../models/QuizAttempt.js";
 import QuizResult from "../models/QuizResult.js";
 import { awardXP } from "./leaderboardController.js";
-
-// Temporary/In-Memory attempts map (or DB attempt model if used)
-// We will store user live selections here
-const activeAttempts = new Map();
-
-// 1. Start Quiz
-// 1. Start Quiz
-export const handleStartQuiz = async (req, res) => {
-    try {
-        const { quizId } = req.params;
-        const userId = req.user._id.toString();
-
-        const quiz = await Quiz.findById(quizId);
-        if (!quiz) return res.status(404).json({ message: "Quiz not found" });
-
-        const questions = await Question.find({ quiz: quizId }).select("-correctAnswer");
-
-        const attemptId = `${userId}_${quizId}`;
-
-        // Real quiz Mongo ObjectId standard object key me preserve karein
-        activeAttempts.set(attemptId, {
-            userId,
-            quizId: quiz._id, // Real ObjectId reference
-            answers: {},
-            tabSwitches: 0,
-            fullScreenExits: 0,
-            startedAt: new Date(),
-        });
-
-        res.json({
-            quiz: { ...quiz.toObject(), _id: attemptId, originalQuizId: quiz._id },
-            questions,
-            expiresAt: new Date(Date.now() + (quiz.timeLimit || 10) * 60 * 1000),
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Failed to start quiz", error: error.message });
-    }
-};
 
 // 4. Final Submit Quiz
 export const handleFinalSubmit = async (req, res) => {
@@ -149,6 +111,45 @@ export const handleFinalSubmit = async (req, res) => {
         res.status(500).json({ message: "Failed to submit quiz", error: error.message });
     }
 };
+// Temporary/In-Memory attempts map (or DB attempt model if used)
+// We will store user live selections here
+const activeAttempts = new Map();
+
+// 1. Start Quiz
+// 1. Start Quiz
+export const handleStartQuiz = async (req, res) => {
+    try {
+        const { quizId } = req.params;
+        const userId = req.user._id.toString();
+
+        const quiz = await Quiz.findById(quizId);
+        if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+
+        const questions = await Question.find({ quiz: quizId }).select("-correctAnswer");
+
+        const attemptId = `${userId}_${quizId}`;
+
+        // Real quiz Mongo ObjectId standard object key me preserve karein
+        activeAttempts.set(attemptId, {
+            userId,
+            quizId: quiz._id, // Real ObjectId reference
+            answers: {},
+            tabSwitches: 0,
+            fullScreenExits: 0,
+            startedAt: new Date(),
+        });
+
+        res.json({
+            quiz: { ...quiz.toObject(), _id: attemptId, originalQuizId: quiz._id },
+            questions,
+            expiresAt: new Date(Date.now() + (quiz.timeLimit || 10) * 60 * 1000),
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to start quiz", error: error.message });
+    }
+};
+
+
 
 // 2. Auto-save live answer
 export const handleSaveAnswer = async (req, res) => {

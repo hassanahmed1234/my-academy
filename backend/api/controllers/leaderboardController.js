@@ -1,6 +1,5 @@
 import User from "../models/User.js";
 
-// XP Rules Config
 const XP_RULES = {
   DAILY_STREAK: 10,
   LESSON_COMPLETE: 15,
@@ -22,7 +21,6 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     
-    // Fallback if lastActiveDate doesn't exist on user model yet
     const lastActiveDate = user.lastActiveDate ? new Date(user.lastActiveDate) : new Date();
     const lastActive = new Date(
       lastActiveDate.getFullYear(),
@@ -36,16 +34,15 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
       user.streak += 1;
       user.xp += XP_RULES.DAILY_STREAK;
     } else if (diffDays > 1) {
-      user.streak = 1; // Streak reset agar 1 din se zyada ka gap aaye
+      user.streak = 1; // Streak reset agar gap ho
     } else if (diffDays === 0 && user.streak === 0) {
-      user.streak = 1; // Initial streak set
+      user.streak = 1; // Initial streak
     }
 
     user.lastActiveDate = now;
 
     // 2. Action Type Based XP & Counter Allocation
     if (pointsOverride && typeof pointsOverride === "number") {
-      // Manual/Custom XP points override (e.g. awardXP(userId, "QUIZ_PASS", 50))
       user.xp += pointsOverride;
     }
 
@@ -86,7 +83,6 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
     console.error("XP Award Error:", err.message);
   }
 };
-
 
 export const getLeaderboard = async (req, res) => {
   try {

@@ -48,7 +48,6 @@ const userSchema = new mongoose.Schema(
     },
     phone: { type: String, default: "" },
     location: { type: String, default: "" },
-    // Add this inside userSchema definition
     lastActiveDate: {
       type: Date,
       default: Date.now,
@@ -63,7 +62,6 @@ const userSchema = new mongoose.Schema(
       },
     ],
   },
-
   {
     timestamps: true,
   }
