@@ -93,10 +93,11 @@ export const handleFinalSubmit = async (req, res) => {
         activeAttempts.delete(attemptId);
 
 
-        await awardXP(userId, "QUIZ_PASS");
+       let XPs = await awardXP(userId, "QUIZ_PASS");
         
         res.status(201).json({
             message: "Quiz submitted successfully",
+            XPs : XPs,
             result: quizResult,
         });
     } catch (error) {
