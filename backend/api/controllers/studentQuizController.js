@@ -86,8 +86,8 @@ export const handleFinalSubmit = async (req, res) => {
             _id: { $ne: quizResult._id },
         });
 
-        let updatedUserData = null;
-        let isFirstPass = false;
+        // let updatedUserData = null;
+        // let isFirstPass = false;
 
         // 7. Award XP & Increment Counters ONLY on First Pass
         isFirstPass = true;
