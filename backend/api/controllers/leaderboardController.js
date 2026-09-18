@@ -30,21 +30,21 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
 
     const diffDays = Math.round((today - lastActive) / (1000 * 60 * 60 * 24));
 
-    // if (diffDays === 1) {
-    //   user.streak += 1;
-    //   user.xp += XP_RULES.DAILY_STREAK;
-    // } else if (diffDays > 1) {
-    //   user.streak = 1; // Streak reset agar gap ho
-    // } else if (diffDays === 0 && user.streak === 0) {
-    //   user.streak = 1; // Initial streak
-    // }
+    if (diffDays === 1) {
+      user.streak += 1;
+      user.xp += XP_RULES.DAILY_STREAK;
+    } else if (diffDays > 1) {
+      user.streak = 1; // Streak reset agar gap ho
+    } else if (diffDays === 0 && user.streak === 0) {
+      user.streak = 1; // Initial streak
+    }
 
-    // user.lastActiveDate = now;
+    user.lastActiveDate = now;
 
-    // // 2. Action Type Based XP & Counter Allocation
-    // if (pointsOverride && typeof pointsOverride === "number") {
-    //   user.xp += pointsOverride;
-    // }
+    // 2. Action Type Based XP & Counter Allocation
+    if (pointsOverride && typeof pointsOverride === "number") {
+      user.xp += pointsOverride;
+    }
 
     switch (actionType) {
       case "QUIZ_PASS":
