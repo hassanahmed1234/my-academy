@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+import QuizAttempt from "../models/QuizAttempt.js";
 import Quiz from "../models/Quiz.js";
 import Question from "../models/Question.js";
 import QuizResult from "../models/QuizResult.js";
@@ -45,20 +47,32 @@ export const handleStartQuiz = async (req, res) => {
 export const handleFinalSubmit = async (req, res) => {
     try {
         const { attemptId } = req.params;
-        const userId = req.user._id;
+        const userId = req.user._id || req.user.id;
 
         const liveAttempt = activeAttempts.get(attemptId);
 
-        // Extract real Quiz ID (Fallback check included)
-        const targetQuizId = liveAttempt?.quizId || req.body?.quizId || attemptId.split("_")[1];
+        // 1. Extract Target Quiz ID Safely
+        const rawQuizId = liveAttempt?.quizId || req.body?.quizId || attemptId.split("_")[1];
 
-        if (!targetQuizId) {
-            return res.status(400).json({ message: "Quiz ID not found in attempt scope" });
+        if (!rawQuizId || !mongoose.Types.ObjectId.isValid(rawQuizId)) {
+            return res.status(400).json({ message: "Invalid or missing Quiz ID in attempt scope" });
+        }
+
+        const targetQuizId = rawQuizId;
+
+        // 2. Fetch Quiz & Questions concurrently
+        const [quiz, questions] = await Promise.all([
+            Quiz.findById(targetQuizId),
+            Question.find({ quiz: targetQuizId }),
+        ]);
+
+        if (!quiz) {
+            return res.status(404).json({ message: "Quiz not found" });
         }
 
         const answers = liveAttempt?.answers || req.body?.answers || {};
-        const questions = await Question.find({ quiz: targetQuizId });
 
+        // 3. Evaluate Questions
         let score = 0;
         const detailedResults = questions.map((q) => {
             const selectedOption = answers[q._id.toString()];
@@ -75,11 +89,12 @@ export const handleFinalSubmit = async (req, res) => {
 
         const totalQuestions = questions.length;
         const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
+        const passed = percentage >= (quiz.passingScore || 70);
 
-        // QuizResult Document Creation with valid Mongo ObjectId
+        // 4. Save to QuizResult Collection
         const quizResult = await QuizResult.create({
             user: userId,
-            quiz: targetQuizId, // Valid Mongo ObjectId assigned
+            quiz: targetQuizId,
             score,
             totalQuestions,
             percentage,
@@ -90,14 +105,44 @@ export const handleFinalSubmit = async (req, res) => {
             },
         });
 
+        // 5. Sync QuizAttempt status (if database attempt exists)
+        if (mongoose.Types.ObjectId.isValid(attemptId)) {
+            await QuizAttempt.findByIdAndUpdate(attemptId, {
+                status: "submitted",
+                submittedAt: new Date(),
+                score,
+                percentage,
+                passed,
+            });
+        }
+
+        // 6. Check Previous Passes (Prevent Duplicate XP Farming)
+        const previouslyPassed = await QuizResult.findOne({
+            user: userId,
+            quiz: targetQuizId,
+            percentage: { $gte: quiz.passingScore || 70 },
+            _id: { $ne: quizResult._id },
+        });
+
+        let updatedUserData = null;
+        let isFirstPass = false;
+
+        // 7. Award XP & Increment Counters ONLY on First Pass
+        if (passed && !previouslyPassed) {
+            isFirstPass = true;
+            updatedUserData = await awardXP(userId, "QUIZ_PASS");
+        }
+
+        // Cleanup in-memory active attempt tracking
         activeAttempts.delete(attemptId);
 
-
-       let XPs = await awardXP(userId, "QUIZ_PASS");
-        
         res.status(201).json({
             message: "Quiz submitted successfully",
-            XPs : XPs,
+            passed,
+            isFirstPass,
+            score,
+            percentage,
+            userStats: updatedUserData,
             result: quizResult,
         });
     } catch (error) {
