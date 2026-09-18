@@ -90,8 +90,8 @@ export const handleFinalSubmit = async (req, res) => {
         // let isFirstPass = false;
 
         // 7. Award XP & Increment Counters ONLY on First Pass
-        isFirstPass = true;
-        updatedUserData = await awardXP(userId, "QUIZ_PASS");
+       let  isFirstPass = true;
+      let  updatedUserData = await awardXP(userId, "QUIZ_PASS");
         // if (passed && !previouslyPassed) {
         // }
 
