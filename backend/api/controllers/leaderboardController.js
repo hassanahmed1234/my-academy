@@ -1,14 +1,90 @@
 import User from "../models/User.js";
-import UserProgress from "../models/UserProgress.js";
 
-// XP Rules Table
+// XP Rules Config
 const XP_RULES = {
-  LESSON_COMPLETE: 10,
-  QUIZ_PASS: 20,
-  ASSIGNMENT_SUBMIT: 15,
+  DAILY_STREAK: 10,
+  LESSON_COMPLETE: 15,
+  QUIZ_PASS: 50,
+  ASSIGNMENT_SUBMIT: 40,
   EXCELLENT_GRADE: 30,
-  COURSE_COMPLETE: 100,
-  DAILY_STREAK: 5,
+  COURSE_COMPLETE: 200,
+};
+
+export const awardXP = async (userId, actionType, pointsOverride = null) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error("XP Award Error: User not found");
+      return null;
+    }
+
+    // 1. Daily Streak Logic
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    
+    // Fallback if lastActiveDate doesn't exist on user model yet
+    const lastActiveDate = user.lastActiveDate ? new Date(user.lastActiveDate) : new Date();
+    const lastActive = new Date(
+      lastActiveDate.getFullYear(),
+      lastActiveDate.getMonth(),
+      lastActiveDate.getDate()
+    ).getTime();
+
+    const diffDays = Math.round((today - lastActive) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      user.streak += 1;
+      user.xp += XP_RULES.DAILY_STREAK;
+    } else if (diffDays > 1) {
+      user.streak = 1; // Streak reset agar 1 din se zyada ka gap aaye
+    } else if (diffDays === 0 && user.streak === 0) {
+      user.streak = 1; // Initial streak set
+    }
+
+    user.lastActiveDate = now;
+
+    // 2. Action Type Based XP & Counter Allocation
+    if (pointsOverride && typeof pointsOverride === "number") {
+      // Manual/Custom XP points override (e.g. awardXP(userId, "QUIZ_PASS", 50))
+      user.xp += pointsOverride;
+    }
+
+    switch (actionType) {
+      case "QUIZ_PASS":
+      case "quiz_pass":
+        if (!pointsOverride) user.xp += XP_RULES.QUIZ_PASS;
+        user.quizzesPassed = (user.quizzesPassed || 0) + 1;
+        break;
+
+      case "ASSIGNMENT_SUBMIT":
+      case "assignment_submit":
+        if (!pointsOverride) user.xp += XP_RULES.ASSIGNMENT_SUBMIT;
+        user.assignmentsSubmitted = (user.assignmentsSubmitted || 0) + 1;
+        break;
+
+      case "COURSE_COMPLETE":
+      case "course_completion_bonus":
+        if (!pointsOverride) user.xp += XP_RULES.COURSE_COMPLETE;
+        user.coursesCompleted = (user.coursesCompleted || 0) + 1;
+        break;
+
+      case "LESSON_COMPLETE":
+        if (!pointsOverride) user.xp += XP_RULES.LESSON_COMPLETE;
+        break;
+
+      case "EXCELLENT_GRADE":
+        if (!pointsOverride) user.xp += XP_RULES.EXCELLENT_GRADE;
+        break;
+
+      default:
+        break;
+    }
+
+    await user.save();
+    return user;
+  } catch (err) {
+    console.error("XP Award Error:", err.message);
+  }
 };
 
 
@@ -92,77 +168,5 @@ export const getLeaderboard = async (req, res) => {
       message: "Error fetching leaderboard",
       error: err.message,
     });
-  }
-};
-
-export const awardXP = async (userId, actionType, courseId = null) => {
-  try {
-    // Search query: Specific course ID agar hai toh use karo, nahi toh null check karo
-    let query = { userId };
-    if (courseId) {
-      query.courseId = courseId;
-    } else {
-      query.courseId = { $exists: false }; // Standalone activities (Quiz, Assignment, General XP)
-    }
-
-    let progress = await UserProgress.findOne(query);
-
-    // Agar record nahi mila toh new record create karein
-    if (!progress) {
-      progress = new UserProgress({
-        userId,
-        ...(courseId && { courseId }),
-        completedLessons: [],
-        xp: 0,
-        streak: 1,
-      });
-    }
-
-    // 1. Daily Streak Logic
-    const today = new Date().setHours(0, 0, 0, 0);
-    const lastActive = new Date(progress.lastActiveDate || Date.now()).setHours(0, 0, 0, 0);
-    const diffDays = Math.round((today - lastActive) / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 1) {
-      progress.streak += 1;
-      progress.xp += XP_RULES.DAILY_STREAK;
-    } else if (diffDays > 1) {
-      progress.streak = 1; // Streak reset agar din break ho gaya
-    }
-    progress.lastActiveDate = new Date();
-
-    // 2. Action Type Based XP Allocation
-    switch (actionType) {
-      case "QUIZ_PASS":
-        progress.xp += XP_RULES.QUIZ_PASS;
-        progress.quizzesPassed = (progress.quizzesPassed || 0) + 1;
-        break;
-
-      case "ASSIGNMENT_SUBMIT":
-        progress.xp += XP_RULES.ASSIGNMENT_SUBMIT;
-        progress.assignmentsSubmitted = (progress.assignmentsSubmitted || 0) + 1;
-        break;
-
-      case "COURSE_COMPLETE":
-        progress.xp += XP_RULES.COURSE_COMPLETE;
-        progress.isCourseCompleted = true;
-        break;
-
-      case "LESSON_COMPLETE":
-        progress.xp += XP_RULES.LESSON_COMPLETE;
-        break;
-
-      case "EXCELLENT_GRADE":
-        progress.xp += XP_RULES.EXCELLENT_GRADE;
-        break;
-
-      default:
-        break;
-    }
-
-    await progress.save();
-    return progress;
-  } catch (err) {
-    console.error("XP Award Error:", err.message);
   }
 };

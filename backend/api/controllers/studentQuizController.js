@@ -2,7 +2,6 @@ import Quiz from "../models/Quiz.js";
 import Question from "../models/Question.js";
 import QuizResult from "../models/QuizResult.js";
 import { awardXP } from "./leaderboardController.js";
-import { addGlobalXp } from "./myProgressController.js";
 
 // Temporary/In-Memory attempts map (or DB attempt model if used)
 // We will store user live selections here
@@ -94,7 +93,7 @@ export const handleFinalSubmit = async (req, res) => {
         activeAttempts.delete(attemptId);
 
 
-        await addGlobalXp(userId, "QUIZ_PASS");
+        await awardXP(userId, "QUIZ_PASS");
         
         res.status(201).json({
             message: "Quiz submitted successfully",
