@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     error: "",
   });
 
-  // AuthContext.jsx me
+  // Global XP Reward Modal State
   const [rewardModal, setRewardModal] = useState({
     isOpen: false,
     xpAmount: 50,
@@ -77,32 +77,36 @@ export const AuthProvider = ({ children }) => {
     heading: "MashaAllah! 🎉",
   });
 
- const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
-  // 1. Show UI Modal immediately
-  setRewardModal({
-    isOpen: true,
-    xpAmount,
-    reason,
-    heading: heading || "MashaAllah! 🎉",
-  });
+  // Refreshes Logged-in User Profile directly from /auth/me or /users/profile
+  const fetchProfile = useCallback(async () => {
+    try {
+      const { data } = await API.get("/auth/me");
+      const userData = data.user || data;
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error("Failed to fetch fresh user profile:", error);
+    }
+  }, []);
 
-  // 2. Direct User Profile XP Backend API Hit
-  try {
-    const { data } = await API.post("/users/add-xp", { xpAmount });
+  // Simplified XP Reward Trigger (State clean & UI fast)
+  const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
+    // 1. Instantly open Modal for User Feedback
+    setRewardModal({
+      isOpen: true,
+      xpAmount,
+      reason,
+      heading: heading || "MashaAllah! 🎉",
+    });
 
-    // Fixed: Updated data.xp se user state update karo
-    setUser((prev) => (prev ? { ...prev, xp: data.xp, totalXp: data.xp } : prev));
-
-    // Refresh Profile / Dashboard Data
-    if (typeof fetchProfile === "function") fetchProfile(true);
-  } catch (error) {
-    console.error("Failed to update user total XP:", error);
-  }
-};
+    // 2. Fetch fresh user model to ensure auth/me XP balance is active
+    await fetchProfile();
+  };
 
   const closeXpReward = () => {
     setRewardModal((prev) => ({ ...prev, isOpen: false }));
   };
+
   // Central Assignments State
   const [assignmentData, setAssignmentData] = useState({
     assignments: [],
@@ -140,7 +144,8 @@ export const AuthProvider = ({ children }) => {
 
       try {
         const { data } = await API.get('/auth/me');
-        setUser(data);
+        const userData = data.user || data;
+        setUser(userData);
         setIsAuthenticated(true);
       } catch (error) {
         localStorage.removeItem('token');
@@ -393,44 +398,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Fetch Profile Data (Cached)
-  const fetchProfile = useCallback(async (forceRefresh = false) => {
-    if (profileData.isLoaded && !forceRefresh) return profileData.data;
-
-    setProfileData((prev) => ({ ...prev, loading: true, error: "" }));
-
-    try {
-      const { data } = await API.get("/users/profile");
-      const formattedData = {
-        name: data.name || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        location: data.location || "",
-        bio: data.bio || "",
-        website: data.website || "",
-        avatar: data.avatar || "",
-        role: data.role || "student",
-      };
-
-      setProfileData({
-        data: formattedData,
-        isLoaded: true,
-        loading: false,
-        error: "",
-      });
-
-      return formattedData;
-    } catch (err) {
-      const errMsg = err.response?.data?.message || "Failed to load profile.";
-      setProfileData((prev) => ({
-        ...prev,
-        loading: false,
-        error: errMsg,
-      }));
-      throw new Error(errMsg);
-    }
-  }, [profileData.isLoaded, profileData.data]);
-
   // Update Profile Details
   const updateProfile = async (updatedFields) => {
     try {
@@ -495,6 +462,7 @@ export const AuthProvider = ({ children }) => {
       throw err.response?.data?.message || "Failed to update password.";
     }
   };
+
   const login = (userData, token) => {
     localStorage.setItem('token', token);
     setUser(userData);
@@ -541,7 +509,7 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         uploadAvatar,
         changePassword,
-        triggerXpReward
+        triggerXpReward,
       }}
     >
       {children}
@@ -551,7 +519,7 @@ export const AuthProvider = ({ children }) => {
         xpAmount={rewardModal.xpAmount}
         reason={rewardModal.reason}
         heading={rewardModal.heading}
-        courseId={rewardModal.courseId}
+        totalXp={user?.xp}
       />
     </AuthContext.Provider>
   );

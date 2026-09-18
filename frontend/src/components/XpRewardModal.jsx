@@ -13,73 +13,44 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import API from "../api/axiosInstance";
 
 const XpRewardModal = ({
   isOpen,
   onClose,
   xpAmount: propXpAmount,
-  reason: propReason = "lesson_completed",
+  reason: propReason = "quiz_completed",
   totalXp: propTotalXp,
   heading: propHeading = "MashaAllah! 🎉",
-  courseId,
 }) => {
-  const { dashboardData, fetchDashboardData } = useAuth();
-  const [liveXpData, setLiveXpData] = useState(null);
+  const { user, fetchProfile } = useAuth();
   const [fetching, setFetching] = useState(false);
 
-  // Backend Real Data Sync Logic
+  // Sync Global User Data on Modal Open
   useEffect(() => {
     if (!isOpen) return;
 
-    const syncLiveProgress = async () => {
+    const syncUserData = async () => {
       setFetching(true);
       try {
-        // Option 1: Direct Progress API Endpoint Trigger
-        const res = await API.get("/my-progress/all");
-        const progressList = res.data?.data || res.data || [];
-        
-        let targetProgress = null;
-        if (courseId && Array.isArray(progressList)) {
-          targetProgress = progressList.find(
-            (p) => String(p.courseId?._id || p.courseId || p.course?._id || p.course) === String(courseId)
-          );
+        if (typeof fetchProfile === "function") {
+          await fetchProfile(true);
         }
-
-        // Fallback to primary active item in array response
-        const activeRecord = targetProgress || progressList[0] || {};
-        const courseData = activeRecord.course || activeRecord;
-
-        setLiveXpData({
-          totalXp: courseData.xp ?? 400,
-          streak: courseData.streak ?? 1,
-        });
-
-        // Trigger context refresh simultaneously
-        fetchDashboardData(true);
       } catch (error) {
-        console.error("Failed to fetch reward progress:", error);
+        console.error("Failed to sync latest user XP:", error);
       } finally {
         setFetching(false);
       }
     };
 
-    syncLiveProgress();
-  }, [isOpen, courseId, fetchDashboardData]);
+    syncUserData();
+  }, [isOpen, fetchProfile]);
 
   if (!isOpen) return null;
 
-  // Real backend calculations with fallback to context/props
-  const primaryDashboardRecord = dashboardData?.completedCourses?.[0] || {};
-  const currentTotalXp =
-    propTotalXp ??
-    liveXpData?.totalXp ??
-    primaryDashboardRecord?.course?.xp ??
-    primaryDashboardRecord?.xp ??
-    400;
-
+  // Direct User Model XP with Prop Overrides & Fallbacks
+  const currentTotalXp = propTotalXp ?? user?.xp ?? user?.totalXp ?? 0;
   const currentXpEarned = propXpAmount ?? 50;
-  const currentStreak = liveXpData?.streak ?? primaryDashboardRecord?.course?.streak ?? 1;
+  const currentStreak = user?.streak ?? 1;
 
   // Dynamic Reason Configuration Mapping
   const getReasonConfig = (reasonKey) => {
@@ -186,7 +157,7 @@ const XpRewardModal = ({
           </div>
         </div>
 
-        {/* 5. LIVE TOTAL XP BALANCE FROM BACKEND */}
+        {/* 5. LIVE TOTAL XP BALANCE FROM GLOBAL USER MODEL */}
         <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-600">
           <span className="flex items-center gap-1.5 text-slate-500">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Total Balance

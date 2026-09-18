@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import API from "../api/axiosInstance";
 import {
     Trophy,
@@ -25,7 +25,7 @@ const XP_RULES = [
     { action: "Daily Learning Streak", xp: "+5 XP", icon: Flame },
 ];
 
-const StudentAvatar = ({ student, size = "w-10 h-10", textSize = "text-sm" }) => {
+const StudentAvatar = memo(({ student, size = "w-10 h-10", textSize = "text-sm" }) => {
     const avatarUrl = student?.avatar || student?.profilePic;
     const studentName = student?.name || "Student";
 
@@ -35,6 +35,7 @@ const StudentAvatar = ({ student, size = "w-10 h-10", textSize = "text-sm" }) =>
                 src={avatarUrl}
                 alt={studentName}
                 className={`${size} rounded-full object-cover border-2 border-amber-400/60 shadow-sm shrink-0`}
+                loading="lazy"
             />
         );
     }
@@ -46,7 +47,9 @@ const StudentAvatar = ({ student, size = "w-10 h-10", textSize = "text-sm" }) =>
             {studentName.charAt(0)}
         </div>
     );
-};
+});
+
+StudentAvatar.displayName = "StudentAvatar";
 
 const Leaderboard = () => {
     const [timeFilter, setTimeFilter] = useState("overall");
@@ -57,30 +60,37 @@ const Leaderboard = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchLeaderboard();
-    }, [timeFilter]);
-
-    const fetchLeaderboard = async () => {
+    const fetchLeaderboard = useCallback(async (signal) => {
         try {
             setLoading(true);
-            const res = await API.get(`/leaderboard/list?timeFrame=${timeFilter}`);
+            const res = await API.get(`/leaderboard/list?timeFrame=${timeFilter}`, { signal });
             setLeaderboard(res.data?.leaderboard || []);
             setUserStats(res.data?.currentUserStats || null);
         } catch (err) {
-            console.error("Error fetching leaderboard:", err);
-            setLeaderboard([]);
+            if (err.name !== "CanceledError" && err.name !== "AbortError") {
+                console.error("Error fetching leaderboard:", err);
+                setLeaderboard([]);
+            }
         } finally {
             setLoading(false);
         }
-    };
+    }, [timeFilter]);
 
-    const top3 = leaderboard.slice(0, 3);
-    const fullList = leaderboard.slice(3);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchLeaderboard(controller.signal);
+        return () => controller.abort();
+    }, [fetchLeaderboard]);
 
-    const filteredFullList = fullList.filter((s) =>
-        s.student?.name?.toLowerCase().includes(searchTerm.trim().toLowerCase())
-    );
+    const query = searchTerm.trim().toLowerCase();
+    
+    // Top 3 Podium
+    const top3 = query ? [] : leaderboard.slice(0, 3);
+    
+    // Ranks List (Shows all matches if searching, otherwise excludes Top 3)
+    const filteredList = query
+        ? leaderboard.filter((s) => s.student?.name?.toLowerCase().includes(query))
+        : leaderboard.slice(3);
 
     return (
         <div className="min-h-screen pb-28 text-slate-800 bg-slate-50/50 max-w-6xl mx-auto p-4 md:p-6 space-y-8">
@@ -147,7 +157,7 @@ const Leaderboard = () => {
                 </div>
 
                 <button
-                    onClick={() => setShowXpModal(!showXpModal)}
+                    onClick={() => setShowXpModal((prev) => !prev)}
                     className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold px-3.5 py-2 rounded-xl border border-amber-200 flex items-center gap-1.5 transition w-full sm:w-auto justify-center shadow-sm"
                 >
                     <Sparkles className="w-4 h-4 text-amber-500" /> How to earn XP?
@@ -288,30 +298,33 @@ const Leaderboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {filteredFullList.length > 0 ? (
-                                        filteredFullList.map((item, index) => (
-                                            <tr key={item._id || index} className="hover:bg-amber-50/30 transition">
-                                                <td className="p-4 text-center font-extrabold text-slate-400">
-                                                    #{index + 4}
-                                                </td>
-                                                <td className="p-4 font-semibold text-slate-900">
-                                                    <div className="flex items-center gap-3">
-                                                        <StudentAvatar student={item.student} size="w-8 h-8" textSize="text-xs" />
-                                                        <span>{item.student?.name || "Unknown"}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 text-center">
-                                                    <span className="inline-flex items-center gap-1 text-orange-600 font-semibold bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
-                                                        <Flame className="w-3 h-3 text-orange-500" /> {item.streak || 0}d
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 text-center font-medium text-slate-700">{item.coursesCompleted || 0}</td>
-                                                <td className="p-4 text-center text-slate-500">{item.quizzesPassed || 0}</td>
-                                                <td className="p-4 text-right font-black text-slate-900">
-                                                    {item.xp || 0} <span className="text-[10px] font-normal text-slate-400">XP</span>
-                                                </td>
-                                            </tr>
-                                        ))
+                                    {filteredList.length > 0 ? (
+                                        filteredList.map((item, index) => {
+                                            const actualRank = item.rank || (query ? leaderboard.findIndex((l) => l._id === item._id) + 1 : index + 4);
+                                            return (
+                                                <tr key={item._id || index} className="hover:bg-amber-50/30 transition">
+                                                    <td className="p-4 text-center font-extrabold text-slate-400">
+                                                        #{actualRank}
+                                                    </td>
+                                                    <td className="p-4 font-semibold text-slate-900">
+                                                        <div className="flex items-center gap-3">
+                                                            <StudentAvatar student={item.student} size="w-8 h-8" textSize="text-xs" />
+                                                            <span>{item.student?.name || "Unknown"}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-center">
+                                                        <span className="inline-flex items-center gap-1 text-orange-600 font-semibold bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                                                            <Flame className="w-3 h-3 text-orange-500" /> {item.streak || 0}d
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-center font-medium text-slate-700">{item.coursesCompleted || 0}</td>
+                                                    <td className="p-4 text-center text-slate-500">{item.quizzesPassed || 0}</td>
+                                                    <td className="p-4 text-right font-black text-slate-900">
+                                                        {item.xp || 0} <span className="text-[10px] font-normal text-slate-400">XP</span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     ) : (
                                         <tr>
                                             <td colSpan="6" className="p-6 text-center text-slate-400">

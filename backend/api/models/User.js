@@ -19,9 +19,25 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
-      select: false, // Security: Direct queries mein password hash return nahi hoga
+      select: false,
     },
-     xp: {
+    xp: {
+      type: Number,
+      default: 0,
+    },
+    streak: {
+      type: Number,
+      default: 0,
+    },
+    coursesCompleted: {
+      type: Number,
+      default: 0,
+    },
+    quizzesPassed: {
+      type: Number,
+      default: 0,
+    },
+    assignmentsSubmitted: {
       type: Number,
       default: 0,
     },
@@ -30,26 +46,11 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "instructor", "admin"],
       default: "student",
     },
-    phone: {
-      type: String,
-      default: "",
-    },
-    location: {
-      type: String,
-      default: "",
-    },
-    bio: {
-      type: String,
-      default: "",
-    },
-    website: {
-      type: String,
-      default: "",
-    },
-    avatar: {
-      type: String,
-      default: "",
-    },
+    phone: { type: String, default: "" },
+    location: { type: String, default: "" },
+    bio: { type: String, default: "" },
+    website: { type: String, default: "" },
+    avatar: { type: String, default: "" },
     enrolledCourses: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -62,15 +63,13 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash Password before saving to database
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next(); // <-- Isko uncomment rakhein
+  next();
 });
 
-// Compare Entered Password with Hashed Password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

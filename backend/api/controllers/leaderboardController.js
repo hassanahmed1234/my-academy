@@ -1,3 +1,4 @@
+import User from "../models/User.js";
 import UserProgress from "../models/UserProgress.js";
 
 // XP Rules Table
@@ -10,101 +11,88 @@ const XP_RULES = {
   DAILY_STREAK: 5,
 };
 
+
 export const getLeaderboard = async (req, res) => {
-    try {
-        const { timeFrame } = req.query; // 'overall' | 'this_week' | 'this_month'
+  try {
+    const { timeFrame } = req.query;
+    let matchQuery = { role: "student" };
+    const now = new Date();
 
-        let matchQuery = {};
-        const now = new Date();
-
-        if (timeFrame === "this_week") {
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-            matchQuery = { updatedAt: { $gte: startOfWeek } };
-        } else if (timeFrame === "this_month") {
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            matchQuery = { updatedAt: { $gte: startOfMonth } };
-        }
-
-        // Common Pipeline Stage: Grouping User Progress per Student
-        const basePipeline = [
-            { $match: matchQuery },
-            {
-                $group: {
-                    _id: "$userId",
-                    xp: { $sum: "$xp" },
-                    streak: { $max: "$streak" },
-                    coursesCompleted: {
-                        $sum: { $cond: [{ $eq: ["$isCourseCompleted", true] }, 1, 0] },
-                    },
-                    quizzesPassed: { $sum: "$quizzesPassed" },
-                    assignmentsSubmitted: { $sum: "$assignmentsSubmitted" },
-                },
-            },
-            { $sort: { xp: -1 } },
-        ];
-
-        // Fetch Top 50 Leaderboard entries with populated User details
-        const leaderboard = await UserProgress.aggregate([
-            ...basePipeline,
-            { $limit: 50 },
-            {
-                $lookup: {
-                    from: "users", // MongoDB collection name for User model
-                    localField: "_id",
-                    foreignField: "_id",
-                    as: "student",
-                },
-            },
-            { $unwind: "$student" },
-            {
-                $project: {
-                    _id: 1,
-                    xp: 1,
-                    streak: 1,
-                    coursesCompleted: 1,
-                    quizzesPassed: 1,
-                    assignmentsSubmitted: 1,
-                    student: {
-                        _id: "$student._id",
-                        name: "$student.name",
-                        email: "$student.email",
-                        avatar: "$student.avatar",
-                    },
-                },
-            },
-        ]);
-
-        // Calculate All Rankings to identify current user's position
-        const allRankings = await UserProgress.aggregate(basePipeline);
-
-        const currentUserIdStr = req.user._id.toString();
-        const userRankIndex = allRankings.findIndex(
-            (item) => item._id.toString() === currentUserIdStr
-        );
-
-        let currentUserStats = null;
-        if (userRankIndex !== -1) {
-            const userDoc = allRankings[userRankIndex];
-            const targetRankIndex = Math.max(0, userRankIndex - 2);
-            const targetUser = allRankings[targetRankIndex];
-
-            currentUserStats = {
-                rank: userRankIndex + 1,
-                xp: userDoc.xp,
-                courses: userDoc.coursesCompleted,
-                quizzes: userDoc.quizzesPassed,
-                streak: userDoc.streak,
-                xpToNextRank: targetUser ? Math.max(0, targetUser.xp - userDoc.xp + 10) : 0,
-            };
-        }
-
-        res.json({
-            leaderboard,
-            currentUserStats,
-        });
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching leaderboard", error: err.message });
+    if (timeFrame === "this_week") {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      matchQuery.updatedAt = { $gte: startOfWeek };
+    } else if (timeFrame === "this_month") {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      matchQuery.updatedAt = { $gte: startOfMonth };
     }
+
+    // Top 50 Students Query
+    const leaderboardDocs = await User.find(matchQuery)
+      .select("name email avatar xp streak coursesCompleted quizzesPassed assignmentsSubmitted role")
+      .sort({ xp: -1 })
+      .limit(50)
+      .lean();
+
+    const leaderboard = leaderboardDocs.map((user) => ({
+      _id: user._id,
+      xp: user.xp || 0,
+      streak: user.streak || 0,
+      coursesCompleted: user.coursesCompleted || 0,
+      quizzesPassed: user.quizzesPassed || 0,
+      assignmentsSubmitted: user.assignmentsSubmitted || 0,
+      student: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar || "",
+      },
+    }));
+
+    // Current User Data & Rank Calculation
+    const currentUser = await User.findById(req.user._id).select("xp streak coursesCompleted quizzesPassed").lean();
+    let currentUserStats = null;
+
+    if (currentUser) {
+      // Calculate rank using count Documents with higher XP
+      const higherXpCount = await User.countDocuments({
+        ...matchQuery,
+        xp: { $gt: currentUser.xp || 0 },
+      });
+
+      const userRank = higherXpCount + 1;
+
+      // Fetch immediate higher user to determine xpToNextRank
+      const nextRankUser = await User.findOne({
+        ...matchQuery,
+        xp: { $gt: currentUser.xp || 0 },
+      })
+        .select("xp")
+        .sort({ xp: 1 })
+        .lean();
+
+      currentUserStats = {
+        rank: userRank,
+        xp: currentUser.xp || 0,
+        courses: currentUser.coursesCompleted || 0,
+        quizzes: currentUser.quizzesPassed || 0,
+        streak: currentUser.streak || 0,
+        xpToNextRank: nextRankUser ? Math.max(0, nextRankUser.xp - currentUser.xp + 1) : 0,
+      };
+    }
+
+    return res.status(200).json({
+      leaderboard,
+      currentUserStats,
+    });
+  } catch (err) {
+    console.error("Leaderboard Error:", err);
+    return res.status(500).json({
+      message: "Error fetching leaderboard",
+      error: err.message,
+    });
+  }
 };
 
 export const awardXP = async (userId, actionType, courseId = null) => {
