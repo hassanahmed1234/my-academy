@@ -21,6 +21,7 @@ import studentQuizRoutes from "./routes/studentQuizRoutes.js";
 import assignmentRoutes from "./routes/assignmentRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import connectDB from "./config/db.js";
+import xpRoutes from "./routes/xpRoutes.js";
 
 
 
@@ -97,6 +98,7 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/student/quizzes", studentQuizRoutes);
 app.use("/api/assignment", assignmentRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/xp", xpRoutes);
 
 // Base Route
 app.get("/", (req, res) => {

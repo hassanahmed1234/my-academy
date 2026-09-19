@@ -1,6 +1,5 @@
 import User from "../models/User.js";
 import UserProgress from "../models/UserProgress.js";
-import { awardXP } from "./leaderboardController.js";
 
 // 1. Get Completed Lessons Count & IDs
 export const getCourseProgress = async (req, res) => {
@@ -95,25 +94,3 @@ export const getAllUserProgress = async (req, res) => {
   }
 };
 
-export const addGlobalXp = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { xpAmount = 50 } = req.body;
-
-    // Fixed: Schema me 'xp' hai, 'totalXp' nahi
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $inc: { xp: Number(xpAmount) } },
-      { new: true }
-    ).select("-password");
-
-    res.status(200).json({
-      success: true,
-      message: `${xpAmount} XP added successfully`,
-      xp: updatedUser.xp,
-      user: updatedUser,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};

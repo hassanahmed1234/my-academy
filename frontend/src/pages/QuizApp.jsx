@@ -150,29 +150,35 @@ const QuizApp = () => {
 
 const handleFinalSubmit = async (isAuto = false) => {
     if (!isAuto && !window.confirm("Are you sure you want to submit your quiz?")) return;
-    
+
     try {
         setActionLoading(true);
-        const { data } = await API.post(`/student/quizzes/attempt/${attempt._id}/submit`);
-        
+
+        // 1. Submit Quiz
+        await API.post(`/student/quizzes/attempt/${attempt._id}/submit`);
+
         if (document.fullscreenElement) {
             document.exitFullscreen().catch(() => {});
         }
 
-        // Backend Response se dynamic XP & Feedback trigger karo
-        if (data?.earnedXp && data.earnedXp > 0) {
-            const isPerfect = data.result?.percentage === 100;
-            
-            triggerXpReward({
-                xpAmount: data.earnedXp,
-                reason: isPerfect ? "perfect_quiz" : "quiz_completed",
-                heading: isPerfect ? "Perfect Score! 🌟" : "MashaAllah! Quiz Passed 🎉",
-            });
-        }
+        // 2. Direct API call to Award XP
+        const xpRes = await API.post("/xp/award", {
+            actionType: "QUIZ_PASS",
+            xpAmount: 20, // Customize amount or omit to let BE decide default
+        });
+
+        const earnedXp = xpRes.data?.earnedXp || 20;
+
+        // 3. Trigger Modal with Response Data
+        triggerXpReward({
+            xpAmount: earnedXp,
+            reason: "perfect_quiz",
+            heading: "Excellent Score! 🌟",
+        });
 
         handleFetchResults(attempt._id);
     } catch (err) {
-        console.error("Quiz submission error:", err);
+        console.error("Quiz submission / XP award error:", err);
     } finally {
         setActionLoading(false);
     }

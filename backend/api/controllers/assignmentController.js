@@ -1,6 +1,5 @@
 import Assignment from "../models/Assignment.js";
 import AssignmentSubmission from "../models/AssignmentSubmission.js";
-import { awardXP } from "./leaderboardController.js";
 
 // ================= ADMIN CONTROLLERS =================
 
