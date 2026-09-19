@@ -16,8 +16,8 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const CoursePlayer = () => {
-    const {triggerXpReward } = useAuth();
-  
+  const { triggerXpReward } = useAuth();
+
   const { id } = useParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,20 +68,40 @@ const CoursePlayer = () => {
   };
 
   // Mark as Complete API Handler: POST /api/my-progress/complete
+  // Mark as Complete API Handler: POST /api/my-progress/complete
   const handleMarkAsComplete = async (lessonId) => {
     if (!lessonId || updating || isCurrentCompleted) return;
     try {
       setUpdating(true);
+
+      // 1. Mark lesson as complete in Database
       const { data } = await API.post("/my-progress/complete", {
         courseId: id,
         lessonId,
       });
       setCompletedLessons(data.completedLessons || []);
+
+      // 2. Direct API call to Award XP for Lesson Completion
+      let earnedXp = 15; // Default fallback for lesson complete
+      try {
+        const xpRes = await API.post("/xp/award", {
+          actionType: "LESSON_COMPLETE",
+          xpAmount: 15, // Aap custom amount paas kar sakte hain ya BE default use karega
+        });
+        if (xpRes.data?.earnedXp) {
+          earnedXp = xpRes.data.earnedXp;
+        }
+      } catch (xpErr) {
+        console.error("XP Award API error:", xpErr.response?.data || xpErr.message);
+      }
+
+      // 3. Dynamic XP Reward Modal Display
       triggerXpReward({
-        xpAmount: 10,
+        xpAmount: earnedXp,
         reason: "lesson_completed",
-        heading: "Excellent Score! 🌟",
+        heading: "Lesson Completed! 🌟",
       });
+
     } catch (err) {
       console.error("Failed to mark lesson as complete:", err.response?.data || err.message);
     } finally {

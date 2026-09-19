@@ -33,6 +33,8 @@ export const markLessonComplete = async (req, res) => {
       courseId,
     });
 
+    let isNewCompletion = false;
+
     if (!progress) {
       // First time completion for this course
       progress = new UserProgress({
@@ -41,6 +43,7 @@ export const markLessonComplete = async (req, res) => {
         completedLessons: [lessonId],
       });
       await progress.save();
+      isNewCompletion = true;
     } else {
       // Check if lesson is already marked complete
       const isAlreadyCompleted = progress.completedLessons.includes(lessonId);
@@ -48,14 +51,20 @@ export const markLessonComplete = async (req, res) => {
       if (!isAlreadyCompleted) {
         progress.completedLessons.push(lessonId);
         await progress.save();
-
-     
+        isNewCompletion = true;
       }
+    }
+
+    // Naye lesson completion par User Model me count +1 increment hoga
+    if (isNewCompletion) {
+      await User.findByIdAndUpdate(userId, {
+        $inc: { lessonsCompleted: 1 },
+      });
     }
 
     res.json({
       completedLessons: progress.completedLessons,
-      message: "Lesson completed successfully."
+      message: "Lesson completed successfully.",
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
