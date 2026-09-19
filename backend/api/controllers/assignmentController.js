@@ -205,8 +205,6 @@ export const saveOrSubmitAssignment = async (req, res) => {
 
     await submission.save();
 
-    // await awardXP(userId, "ASSIGNMENT_SUBMIT");
-
     res.json({
       success: true,
       message: isFinalSubmit ? "Assignment submitted successfully!" : "Draft saved successfully!",
