@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import API from "../api/axiosInstance";
 import {
     Trophy,
@@ -7,7 +7,6 @@ import {
     BookOpen,
     CheckCircle2,
     Zap,
-    ChevronRight,
     Sparkles,
     Search,
     Star,
@@ -53,7 +52,7 @@ StudentAvatar.displayName = "StudentAvatar";
 
 const Leaderboard = () => {
     const [timeFilter, setTimeFilter] = useState("overall");
-    const [leaderboard, setLeaderboard] = useState([]);
+    const [leaderboardData, setLeaderboardData] = useState([]);
     const [userStats, setUserStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showXpModal, setShowXpModal] = useState(false);
@@ -64,12 +63,12 @@ const Leaderboard = () => {
         try {
             setLoading(true);
             const res = await API.get(`/leaderboard/list?timeFrame=${timeFilter}`, { signal });
-            setLeaderboard(res.data?.leaderboard || []);
+            setLeaderboardData(res.data?.leaderboard || []);
             setUserStats(res.data?.currentUserStats || null);
         } catch (err) {
             if (err.name !== "CanceledError" && err.name !== "AbortError") {
                 console.error("Error fetching leaderboard:", err);
-                setLeaderboard([]);
+                setLeaderboardData([]);
             }
         } finally {
             setLoading(false);
@@ -82,15 +81,31 @@ const Leaderboard = () => {
         return () => controller.abort();
     }, [fetchLeaderboard]);
 
+    // Multi-criteria sorting: XP > Courses Completed > Quizzes Passed > Streak
+    const sortedLeaderboard = useMemo(() => {
+        return [...leaderboardData].sort((a, b) => {
+            if ((b.xp || 0) !== (a.xp || 0)) {
+                return (b.xp || 0) - (a.xp || 0); // Primary: XP
+            }
+            if ((b.coursesCompleted || 0) !== (a.coursesCompleted || 0)) {
+                return (b.coursesCompleted || 0) - (a.coursesCompleted || 0); // Secondary: Courses
+            }
+            if ((b.quizzesPassed || 0) !== (a.quizzesPassed || 0)) {
+                return (b.quizzesPassed || 0) - (a.quizzesPassed || 0); // Tertiary: Quizzes
+            }
+            return (b.streak || 0) - (a.streak || 0); // Quaternary: Streak
+        });
+    }, [leaderboardData]);
+
     const query = searchTerm.trim().toLowerCase();
     
     // Top 3 Podium
-    const top3 = query ? [] : leaderboard.slice(0, 3);
+    const top3 = query ? [] : sortedLeaderboard.slice(0, 3);
     
     // Ranks List (Shows all matches if searching, otherwise excludes Top 3)
     const filteredList = query
-        ? leaderboard.filter((s) => s.student?.name?.toLowerCase().includes(query))
-        : leaderboard.slice(3);
+        ? sortedLeaderboard.filter((s) => s.student?.name?.toLowerCase().includes(query))
+        : sortedLeaderboard.slice(3);
 
     return (
         <div className="min-h-screen pb-28 text-slate-800 bg-slate-50/50 max-w-6xl mx-auto p-4 md:p-6 space-y-8">
@@ -214,9 +229,7 @@ const Leaderboard = () => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 w-full">
                                         <div><span className="block font-bold text-slate-800">{top3[1].coursesCompleted || 0}</span> Courses</div>
-                                        <div className="flex items-center justify-center gap-0.5 font-bold text-orange-600">
-                                            <Flame className="w-3.5 h-3.5 text-orange-500" /> {top3[1].streak || 0}d Streak
-                                        </div>
+                                        <div><span className="block font-bold text-slate-800">{top3[1].quizzesPassed || 0}</span> Quizzes</div>
                                     </div>
                                 </div>
                             )}
@@ -236,9 +249,7 @@ const Leaderboard = () => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 w-full">
                                         <div><span className="block font-bold text-slate-800">{top3[0].coursesCompleted || 0}</span> Courses Done</div>
-                                        <div className="flex items-center justify-center gap-0.5 font-bold text-orange-600">
-                                            <Flame className="w-3.5 h-3.5 text-orange-500" /> {top3[0].streak || 0}d Streak
-                                        </div>
+                                        <div><span className="block font-bold text-slate-800">{top3[0].quizzesPassed || 0}</span> Quizzes Passed</div>
                                     </div>
                                 </div>
                             )}
@@ -258,9 +269,7 @@ const Leaderboard = () => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 w-full">
                                         <div><span className="block font-bold text-slate-800">{top3[2].coursesCompleted || 0}</span> Courses</div>
-                                        <div className="flex items-center justify-center gap-0.5 font-bold text-orange-600">
-                                            <Flame className="w-3.5 h-3.5 text-orange-500" /> {top3[2].streak || 0}d Streak
-                                        </div>
+                                        <div><span className="block font-bold text-slate-800">{top3[2].quizzesPassed || 0}</span> Quizzes</div>
                                     </div>
                                 </div>
                             )}
@@ -300,7 +309,7 @@ const Leaderboard = () => {
                                 <tbody className="divide-y divide-slate-100">
                                     {filteredList.length > 0 ? (
                                         filteredList.map((item, index) => {
-                                            const actualRank = item.rank || (query ? leaderboard.findIndex((l) => l._id === item._id) + 1 : index + 4);
+                                            const actualRank = item.rank || (query ? sortedLeaderboard.findIndex((l) => l._id === item._id) + 1 : index + 4);
                                             return (
                                                 <tr key={item._id || index} className="hover:bg-amber-50/30 transition">
                                                     <td className="p-4 text-center font-extrabold text-slate-400">
@@ -341,35 +350,20 @@ const Leaderboard = () => {
 
             {/* 5. STICKY BOTTOM BAR */}
             {userStats && (
-                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-5xl bg-white/95 border border-amber-300 rounded-2xl p-4 shadow-xl backdrop-blur-md z-40 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-5xl bg-white/95 border border-amber-300 rounded-2xl p-4 shadow-xl backdrop-blur-md z-40 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
                         <div className="bg-amber-400 text-slate-950 font-black text-sm px-3 py-2 rounded-xl flex flex-col items-center leading-none shadow-sm">
                             <span className="text-[9px] uppercase tracking-wider font-extrabold opacity-80">Rank</span>
                             #{userStats.rank || "-"}
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-slate-900 text-sm">Your Status</h4>
-                                <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
-                                    {userStats.xp || 0} XP
-                                </span>
-                            </div>
-                            <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-3">
-                                <span>📚 {userStats.coursesCompleted || userStats.courses || 0} Courses</span>
-                                <span className="text-orange-600 font-semibold flex items-center gap-0.5">
-                                    <Flame className="w-3 h-3 text-orange-500" /> {userStats.streak || 0} Day Streak
-                                </span>
-                            </p>
+                            <p className="font-bold text-slate-900 text-sm">Your Current Standing</p>
+                            <p className="text-xs text-slate-500">Keep completing courses and quizzes to boost your rank!</p>
                         </div>
                     </div>
-
-                    <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-slate-100 pt-2 sm:pt-0">
-                        <button
-                            onClick={() => navigate("/courses")}
-                            className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition flex items-center gap-1 shadow-md cursor-pointer"
-                        >
-                            Keep Learning <ChevronRight className="w-4 h-4 text-amber-400" />
-                        </button>
+                    <div className="flex items-center gap-3 text-xs font-bold">
+                        <span className="bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">{userStats.coursesCompleted || 0} Courses</span>
+                        <span className="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg border border-amber-200">{userStats.xp || 0} XP</span>
                     </div>
                 </div>
             )}
