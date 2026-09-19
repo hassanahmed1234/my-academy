@@ -12,6 +12,13 @@ import {
   HelpCircle,
   CheckCircle,
   Circle,
+  Award,
+  Share2,
+  Instagram,
+  Copy,
+  X,
+  Trophy,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -29,6 +36,10 @@ const CoursePlayer = () => {
   const [completedLessons, setCompletedLessons] = useState([]);
   const [updating, setUpdating] = useState(false);
 
+  // Social CTA Completion Modal State
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchCourseAndProgress = async () => {
@@ -43,10 +54,17 @@ const CoursePlayer = () => {
           setExpandedModules({ 0: true });
         }
 
-        // 2. Fetch Completed Progress: GET /api/my-progress/:id
+        // 2. Fetch Completed Progress
         try {
           const { data: progressData } = await API.get(`/my-progress/${id}`);
-          setCompletedLessons(progressData.completedLessons || []);
+          const fetchedCompleted = progressData.completedLessons || [];
+          setCompletedLessons(fetchedCompleted);
+
+          // Calculate total lessons count
+          const total = data.modules?.flatMap((m) => m.lessons).length || 0;
+          if (total > 0 && fetchedCompleted.length === total) {
+            setShowCompletionModal(true);
+          }
         } catch (progErr) {
           console.warn("Could not fetch user progress", progErr);
         }
@@ -67,8 +85,7 @@ const CoursePlayer = () => {
     }));
   };
 
-  // Mark as Complete API Handler: POST /api/my-progress/complete
-  // Mark as Complete API Handler: POST /api/my-progress/complete
+  // Mark as Complete API Handler
   const handleMarkAsComplete = async (lessonId) => {
     if (!lessonId || updating || isCurrentCompleted) return;
     try {
@@ -79,14 +96,16 @@ const CoursePlayer = () => {
         courseId: id,
         lessonId,
       });
-      setCompletedLessons(data.completedLessons || []);
+
+      const updatedCompleted = data.completedLessons || [];
+      setCompletedLessons(updatedCompleted);
 
       // 2. Direct API call to Award XP for Lesson Completion
-      let earnedXp = 15; // Default fallback for lesson complete
+      let earnedXp = 15;
       try {
         const xpRes = await API.post("/xp/award", {
           actionType: "LESSON_COMPLETE",
-          xpAmount: 15, // Aap custom amount paas kar sakte hain ya BE default use karega
+          xpAmount: 15,
         });
         if (xpRes.data?.earnedXp) {
           earnedXp = xpRes.data.earnedXp;
@@ -95,13 +114,25 @@ const CoursePlayer = () => {
         console.error("XP Award API error:", xpErr.response?.data || xpErr.message);
       }
 
-      // 3. Dynamic XP Reward Modal Display
-      triggerXpReward({
-        xpAmount: earnedXp,
-        reason: "lesson_completed",
-        heading: "Lesson Completed! 🌟",
-      });
+      // Check if course completed completely on this action
+      const isAllDone = totalLessons > 0 && updatedCompleted.length === totalLessons;
 
+      if (isAllDone) {
+        // Extra Course Completion XP Reward Trigger
+        triggerXpReward({
+          xpAmount: 500,
+          reason: "course_completed",
+          heading: "🎉 Alhamdulillah! Course Completed",
+        });
+        setShowCompletionModal(true);
+      } else {
+        // Regular Lesson XP Reward
+        triggerXpReward({
+          xpAmount: earnedXp,
+          reason: "lesson_completed",
+          heading: "Lesson Completed! 🌟",
+        });
+      }
     } catch (err) {
       console.error("Failed to mark lesson as complete:", err.response?.data || err.message);
     } finally {
@@ -118,6 +149,15 @@ const CoursePlayer = () => {
 
   const currentLessonId = activeLesson?._id || activeLesson?.title;
   const isCurrentCompleted = completedLessons.includes(currentLessonId);
+
+  // Social Share Text Handler
+  const shareText = `🎉 Alhamdulillah! I completed "${course?.title}" on learning platform! 🌟 +500 XP Earned! 🏆`;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/course/${id}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   if (loading) {
     return (
@@ -223,10 +263,11 @@ const CoursePlayer = () => {
                 <button
                   disabled={updating || isCurrentCompleted}
                   onClick={() => handleMarkAsComplete(currentLessonId)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm ${isCurrentCompleted
-                    ? "bg-emerald-50 border border-emerald-300 text-emerald-700 opacity-80 cursor-not-allowed"
-                    : "bg-amber-500 hover:bg-amber-600 text-slate-950 cursor-pointer"
-                    }`}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm ${
+                    isCurrentCompleted
+                      ? "bg-emerald-50 border border-emerald-300 text-emerald-700 opacity-80 cursor-not-allowed"
+                      : "bg-amber-500 hover:bg-amber-600 text-slate-950 cursor-pointer"
+                  }`}
                 >
                   {isCurrentCompleted ? (
                     <>
@@ -296,21 +337,27 @@ const CoursePlayer = () => {
                   <div className="p-2 space-y-1.5 bg-white border-t border-slate-200">
                     {module.lessons?.map((lesson, lIndex) => {
                       const lessonId = lesson._id || lesson.title;
-                      const isActive = activeLesson?._id === lesson._id || activeLesson?.title === lesson.title;
+                      const isActive =
+                        activeLesson?._id === lesson._id || activeLesson?.title === lesson.title;
                       const isCompleted = completedLessons.includes(lessonId);
 
                       return (
                         <button
                           key={lIndex}
                           onClick={() => setActiveLesson(lesson)}
-                          className={`w-full p-3 rounded-xl text-left text-xs transition flex items-center justify-between gap-2 cursor-pointer ${isActive
-                            ? "bg-amber-500 text-slate-950 font-black shadow-md"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
+                          className={`w-full p-3 rounded-xl text-left text-xs transition flex items-center justify-between gap-2 cursor-pointer ${
+                            isActive
+                              ? "bg-amber-500 text-slate-950 font-black shadow-md"
+                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          }`}
                         >
                           <div className="flex items-center gap-2.5 overflow-hidden">
                             {isCompleted ? (
-                              <CheckCircle className={`w-4 h-4 shrink-0 ${isActive ? "text-slate-950" : "text-emerald-600"}`} />
+                              <CheckCircle
+                                className={`w-4 h-4 shrink-0 ${
+                                  isActive ? "text-slate-950" : "text-emerald-600"
+                                }`}
+                              />
                             ) : lesson.type === "quiz" ? (
                               <HelpCircle className="w-4 h-4 shrink-0" />
                             ) : lesson.type === "assignment" ? (
@@ -321,7 +368,11 @@ const CoursePlayer = () => {
                             <span className="truncate">{lesson.title}</span>
                           </div>
                           {lesson.duration && (
-                            <span className={`text-[10px] shrink-0 ${isActive ? "text-slate-950 font-bold" : "text-slate-400"}`}>
+                            <span
+                              className={`text-[10px] shrink-0 ${
+                                isActive ? "text-slate-950 font-bold" : "text-slate-400"
+                              }`}
+                            >
                               {lesson.duration}
                             </span>
                           )}
@@ -336,6 +387,98 @@ const CoursePlayer = () => {
         </div>
 
       </div>
+
+      {/* 📢 11. "I COMPLETED IT" SOCIAL CTA MODAL (INSTAGRAM STORY ORIENTED) */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-sm bg-slate-900 border border-amber-500/30 rounded-3xl p-6 shadow-2xl text-center space-y-5 overflow-hidden">
+            
+            {/* Top Glowing Ambient Accents */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-amber-500/20 blur-2xl rounded-full pointer-events-none" />
+
+            {/* Close Modal Button */}
+            <button
+              onClick={() => setShowCompletionModal(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white transition rounded-full bg-slate-800/50"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* INSTAGRAM STORY PREVIEW CARD */}
+            <div className="relative z-10 bg-gradient-to-b from-amber-500/10 via-slate-800/80 to-slate-900 border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-inner">
+              
+              <div className="flex justify-center">
+                <div className="w-16 h-16 bg-gradient-to-tr from-amber-500 to-amber-300 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30 animate-bounce">
+                  <Trophy className="w-8 h-8 text-slate-950" />
+                </div>
+              </div>
+
+              <div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold tracking-widest text-amber-400 uppercase bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                  <Sparkles className="w-3 h-3" /> Course Completed
+                </span>
+                <h3 className="text-xl font-extrabold text-white mt-2">
+                  🎉 Alhamdulillah!
+                </h3>
+                <p className="text-xs text-slate-300 mt-1">
+                  You've completed <span className="font-semibold text-amber-300">{course.title}</span>
+                </p>
+              </div>
+
+              {/* XP Rewards Badge */}
+              <div className="bg-amber-500/20 border border-amber-500/30 rounded-xl py-2 px-4 inline-flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" />
+                <span className="text-sm font-black text-amber-300">+500 XP Earned</span>
+              </div>
+
+              {/* Story Visual Badge Box */}
+              <div className="border border-dashed border-slate-700 bg-slate-900/60 rounded-xl p-3 flex items-center justify-between text-left">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">New Badge Unlocked</p>
+                    <p className="text-xs font-bold text-white">Mastery Scholar 🏆</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ACTION BUTTONS & SOCIAL SHARING */}
+            <div className="space-y-2 pt-1">
+              <p className="text-[11px] text-slate-400 font-medium">Share your achievement on Instagram Stories!</p>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyLink}
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-slate-950" /> Copied Text!
+                    </>
+                  ) : (
+                    <>
+                      <Instagram className="w-4 h-4 text-slate-950" /> Copy for Story
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleCopyLink}
+                  className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition cursor-pointer"
+                  title="Copy Share Link"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </main>
   );
 };

@@ -102,17 +102,34 @@ export const AuthProvider = ({ children }) => {
     error: "",
   });
 
-  // Refreshes Logged-in User Profile
-  const fetchProfile = useCallback(async () => {
-    try {
-      const { data } = await API.get("/auth/me");
-      const userData = data.user || data;
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      console.error("Failed to fetch fresh user profile:", error);
-    }
-  }, []);
+ // Updated fetchProfile in AuthContext
+const fetchProfile = useCallback(async (forceRefresh = false) => {
+  if (profileData.isLoaded && !forceRefresh) return profileData.data;
+
+  setProfileData((prev) => ({ ...prev, loading: true, error: "" }));
+
+  try {
+    const { data } = await API.get("/auth/me");
+    const userData = data.user || data;
+
+    setUser(userData);
+    setProfileData({
+      data: userData,
+      isLoaded: true,
+      loading: false,
+      error: "",
+    });
+
+    return userData;
+  } catch (error) {
+    console.error("Failed to fetch fresh user profile:", error);
+    setProfileData((prev) => ({
+      ...prev,
+      loading: false,
+      error: error.response?.data?.message || "Failed to load profile",
+    }));
+  }
+}, [profileData.isLoaded, profileData.data]);
 
   // Dynamic XP Reward Modal Trigger
   const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {

@@ -45,25 +45,18 @@ const Profile = () => {
     confirmPassword: "",
   });
 
+  // 1. Initial Load: Call fetchProfile ONCE on mount if data is not already loaded
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const data = await fetchProfile();
-        setFormData(data);
-      } catch (err) {
-        setStatusMessage({
-          type: "error",
-          text: err.message || "Failed to load profile.",
-        });
-      }
-    };
-
-    loadProfile();
+    fetchProfile();
   }, [fetchProfile]);
 
+  // 2. Sync state when profileData in AuthContext updates
   useEffect(() => {
-    if (profileData.data) {
-      setFormData(profileData.data);
+    if (profileData?.data) {
+      setFormData((prev) => ({
+        ...prev,
+        ...profileData.data,
+      }));
     }
   }, [profileData.data]);
 
@@ -346,7 +339,7 @@ const Profile = () => {
                       type="text"
                       name="name"
                       disabled={!isEditing}
-                      value={formData.name}
+                      value={formData.name || ""}
                       onChange={handleChange}
                       className={`w-full bg-slate-50 border text-xs text-slate-800 rounded-xl pl-10 pr-4 py-3 outline-none transition ${
                         isEditing
@@ -364,7 +357,7 @@ const Profile = () => {
                     <input
                       type="email"
                       disabled
-                      value={formData.email}
+                      value={formData.email || ""}
                       className="w-full bg-slate-100 border border-slate-200 opacity-80 text-xs text-slate-600 rounded-xl pl-10 pr-4 py-3 cursor-not-allowed"
                     />
                   </div>
@@ -378,7 +371,7 @@ const Profile = () => {
                       type="text"
                       name="phone"
                       disabled={!isEditing}
-                      value={formData.phone}
+                      value={formData.phone || ""}
                       onChange={handleChange}
                       placeholder="+92 300 0000000"
                       className={`w-full bg-slate-50 border text-xs text-slate-800 rounded-xl pl-10 pr-4 py-3 outline-none transition ${
@@ -398,7 +391,7 @@ const Profile = () => {
                       type="text"
                       name="location"
                       disabled={!isEditing}
-                      value={formData.location}
+                      value={formData.location || ""}
                       onChange={handleChange}
                       placeholder="Karachi, Pakistan"
                       className={`w-full bg-slate-50 border text-xs text-slate-800 rounded-xl pl-10 pr-4 py-3 outline-none transition ${
@@ -417,7 +410,7 @@ const Profile = () => {
                   name="bio"
                   rows={4}
                   disabled={!isEditing}
-                  value={formData.bio}
+                  value={formData.bio || ""}
                   onChange={handleChange}
                   placeholder="Tell us something about yourself..."
                   className={`w-full bg-slate-50 border text-xs text-slate-800 rounded-xl p-4 outline-none transition ${
