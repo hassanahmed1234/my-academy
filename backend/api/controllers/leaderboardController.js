@@ -84,72 +84,53 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
     return null;
   }
 };
+
+
 export const getLeaderboard = async (req, res) => {
     try {
         const { timeFrame } = req.query; // 'overall' | 'this_week' | 'this_month'
 
-        let matchQuery = {};
+        let matchQuery = { role: "student" }; // Fast filtering for active students
         const now = new Date();
 
+        // Timeframe filtering based on user activity / updates
         if (timeFrame === "this_week") {
             const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-            matchQuery = { updatedAt: { $gte: startOfWeek } };
+            matchQuery.lastActiveDate = { $gte: startOfWeek };
         } else if (timeFrame === "this_month") {
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            matchQuery = { updatedAt: { $gte: startOfMonth } };
+            matchQuery.lastActiveDate = { $gte: startOfMonth };
         }
 
-        // Common Pipeline Stage: Grouping User Progress per Student
-        const basePipeline = [
-            { $match: matchQuery },
-            {
-                $group: {
-                    _id: "$userId",
-                    xp: { $sum: "$xp" },
-                    streak: { $max: "$streak" },
-                    coursesCompleted: {
-                        $sum: { $cond: [{ $eq: ["$isCourseCompleted", true] }, 1, 0] },
-                    },
-                    quizzesPassed: { $sum: "$quizzesPassed" },
-                    assignmentsSubmitted: { $sum: "$assignmentsSubmitted" },
-                },
-            },
-            { $sort: { xp: -1 } },
-        ];
+        // Fetch Top 50 Leaderboard Entries directly from User collection
+        const leaderboard = await User.find(matchQuery)
+            .select("name email avatar xp streak coursesCompleted quizzesPassed assignmentsSubmitted")
+            .sort({ xp: -1 })
+            .limit(50)
+            .lean();
 
-        // Fetch Top 50 Leaderboard entries with populated User details
-        const leaderboard = await UserProgress.aggregate([
-            ...basePipeline,
-            { $limit: 50 },
-            {
-                $lookup: {
-                    from: "users", // MongoDB collection name for User model
-                    localField: "_id",
-                    foreignField: "_id",
-                    as: "student",
-                },
+        // Format leaderboard entries for frontend response
+        const formattedLeaderboard = leaderboard.map((item, index) => ({
+            _id: item._id,
+            rank: index + 1,
+            xp: item.xp || 0,
+            streak: item.streak || 0,
+            coursesCompleted: item.coursesCompleted || 0,
+            quizzesPassed: item.quizzesPassed || 0,
+            assignmentsSubmitted: item.assignmentsSubmitted || 0,
+            student: {
+                _id: item._id,
+                name: item.name,
+                email: item.email,
+                avatar: item.avatar || "",
             },
-            { $unwind: "$student" },
-            {
-                $project: {
-                    _id: 1,
-                    xp: 1,
-                    streak: 1,
-                    coursesCompleted: 1,
-                    quizzesPassed: 1,
-                    assignmentsSubmitted: 1,
-                    student: {
-                        _id: "$student._id",
-                        name: "$student.name",
-                        email: "$student.email",
-                        avatar: "$student.avatar",
-                    },
-                },
-            },
-        ]);
+        }));
 
-        // Calculate All Rankings to identify current user's position
-        const allRankings = await UserProgress.aggregate(basePipeline);
+        // Fetch All Users Sorted by XP to determine logged-in User's Exact Rank
+        const allRankings = await User.find(matchQuery)
+            .select("_id xp streak coursesCompleted quizzesPassed")
+            .sort({ xp: -1 })
+            .lean();
 
         const currentUserIdStr = req.user._id.toString();
         const userRankIndex = allRankings.findIndex(
@@ -157,23 +138,39 @@ export const getLeaderboard = async (req, res) => {
         );
 
         let currentUserStats = null;
+
         if (userRankIndex !== -1) {
             const userDoc = allRankings[userRankIndex];
-            const targetRankIndex = Math.max(0, userRankIndex - 2);
+            const targetRankIndex = Math.max(0, userRankIndex - 1); // Immediate next rank target
             const targetUser = allRankings[targetRankIndex];
 
             currentUserStats = {
                 rank: userRankIndex + 1,
-                xp: userDoc.xp,
-                courses: userDoc.coursesCompleted,
-                quizzes: userDoc.quizzesPassed,
-                streak: userDoc.streak,
-                xpToNextRank: targetUser ? Math.max(0, targetUser.xp - userDoc.xp + 10) : 0,
+                xp: userDoc.xp || 0,
+                courses: userDoc.coursesCompleted || 0,
+                quizzes: userDoc.quizzesPassed || 0,
+                streak: userDoc.streak || 0,
+                xpToNextRank: targetUser && targetRankIndex !== userRankIndex 
+                    ? Math.max(0, (targetUser.xp || 0) - (userDoc.xp || 0) + 10) 
+                    : 0,
             };
+        } else {
+            // Fallback in case logged-in user isn't in matchQuery timeframe filter
+            const loggedInUser = await User.findById(req.user._id).lean();
+            if (loggedInUser) {
+                currentUserStats = {
+                    rank: "Unranked",
+                    xp: loggedInUser.xp || 0,
+                    courses: loggedInUser.coursesCompleted || 0,
+                    quizzes: loggedInUser.quizzesPassed || 0,
+                    streak: loggedInUser.streak || 0,
+                    xpToNextRank: 0,
+                };
+            }
         }
 
         res.json({
-            leaderboard,
+            leaderboard: formattedLeaderboard,
             currentUserStats,
         });
     } catch (err) {
