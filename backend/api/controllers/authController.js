@@ -55,22 +55,24 @@ export const loginUser = async (req, res) => {
   }
 
   try {
-    // 1. Password field explicitly retrieve karein (+password)
+    // 1. Password retrieve karein check karne ke liye
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // 2. Schema method user.matchPassword() use karein clean code ke liye
+    // 2. Password verification
     const isMatch = await user.matchPassword(password);
 
     if (isMatch) {
+      // Password ko remove karein response se pehle
+      const userData = user.toObject();
+      delete userData.password;
+
+      // 3. Complete user object with token return karein
       res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        user: userData,
         token: generateToken(user._id),
       });
     } else {

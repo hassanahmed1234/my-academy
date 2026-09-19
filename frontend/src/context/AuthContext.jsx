@@ -77,36 +77,6 @@ export const AuthProvider = ({ children }) => {
     heading: "MashaAllah! 🎉",
   });
 
-  // Refreshes Logged-in User Profile directly from /auth/me
-  const fetchProfile = useCallback(async () => {
-    try {
-      const { data } = await API.get("/auth/me");
-      const userData = data.user || data;
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      console.error("Failed to fetch fresh user profile:", error);
-    }
-  }, [setUser]);
-
-  // Dynamic XP Reward Modal Trigger
-  const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
-    // 1. Modal open karo dynamic values ke sath
-    setRewardModal({
-      isOpen: true,
-      xpAmount,
-      reason,
-      heading: heading || "MashaAllah! 🎉",
-    });
-
-    // 2. Fresh User Profile sync karo navbar/header XP balance updates ke liye
-    await fetchProfile();
-  };
-
-  const closeXpReward = () => {
-    setRewardModal((prev) => ({ ...prev, isOpen: false }));
-  };
-
   // Central Assignments State
   const [assignmentData, setAssignmentData] = useState({
     assignments: [],
@@ -132,12 +102,41 @@ export const AuthProvider = ({ children }) => {
     error: "",
   });
 
+  // Refreshes Logged-in User Profile
+  const fetchProfile = useCallback(async () => {
+    try {
+      const { data } = await API.get("/auth/me");
+      const userData = data.user || data;
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error("Failed to fetch fresh user profile:", error);
+    }
+  }, []);
+
+  // Dynamic XP Reward Modal Trigger
+  const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
+    setRewardModal({
+      isOpen: true,
+      xpAmount,
+      reason,
+      heading: heading || "MashaAllah! 🎉",
+    });
+    await fetchProfile();
+  };
+
+  const closeXpReward = () => {
+    setRewardModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   // Check Auth Status on Mount
   useEffect(() => {
     const checkAuthStatus = async () => {
       const storedToken = localStorage.getItem('token');
 
       if (!storedToken) {
+        setIsAuthenticated(false);
+        setUser(null);
         setLoading(false);
         return;
       }
@@ -398,6 +397,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Submit Assignment with Award XP Integration
+  const submitAssignment = async (assignmentId, payload) => {
+    try {
+      const res = await API.post(`/assignment/student/submit/${assignmentId}`, payload);
+      
+      if (fetchAssignments) {
+        await fetchAssignments(true);
+      }
+
+      if (payload.isFinalSubmit) {
+        try {
+          await API.post('/xp/award', {
+            xpAmount: 15,
+            reason: 'assignment_submitted',
+            referenceId: assignmentId,
+          });
+          await fetchProfile();
+        } catch (xpErr) {
+          console.error("Failed to award XP:", xpErr);
+        }
+      }
+
+      return res.data;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Failed to submit assignment";
+      throw errorMessage;
+    }
+  };
+
   // Update Profile Details
   const updateProfile = async (updatedFields) => {
     try {
@@ -492,6 +520,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         isAuthenticated,
+        submitAssignment,
         loading,
         setUser,
         setIsAuthenticated,

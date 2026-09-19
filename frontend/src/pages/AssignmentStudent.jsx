@@ -81,7 +81,7 @@ const AssignmentStudent = () => {
     }
   };
 
-  // Save Draft or Submit via Context
+  // AssignmentStudent.jsx
   const handleSaveOrSubmit = async (isFinalSubmit = false) => {
     if (isFinalSubmit && !confirmModal) {
       setConfirmModal(true);
@@ -90,6 +90,7 @@ const AssignmentStudent = () => {
 
     try {
       setSaving(true);
+
       const data = await submitAssignment(selectedAssignment._id, {
         textResponse,
         fileUrl,
@@ -98,12 +99,17 @@ const AssignmentStudent = () => {
 
       setSubmission(data.submission);
       setConfirmModal(false);
-      
-      triggerXpReward({
-        xpAmount: 15,
-        reason: "assignment_submitted",
-        heading: "Excellent Score! 🌟",
-      });
+
+      // Final Submission Successful -> Trigger Award & Visual Toast/Modal
+      if (isFinalSubmit) {
+        if (triggerXpReward) {
+          triggerXpReward({
+            xpAmount: 15,
+            reason: "assignment_submitted",
+            heading: "Assignment Submitted! 🌟",
+          });
+        }
+      }
     } catch (err) {
       alert(typeof err === "string" ? err : "Error saving submission");
     } finally {
@@ -164,8 +170,8 @@ const AssignmentStudent = () => {
                   key={tab}
                   onClick={() => setFilter(tab)}
                   className={`px-3.5 py-1.5 rounded-lg capitalize font-medium transition ${filter === tab
-                      ? "bg-amber-500 text-white font-bold shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
+                    ? "bg-amber-500 text-white font-bold shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
                     }`}
                 >
                   {tab}
@@ -266,8 +272,8 @@ const AssignmentStudent = () => {
             {submission && (submission.status === "graded" || submission.status === "resubmit_required") && (
               <div
                 className={`p-4 rounded-xl border text-xs space-y-2 ${submission.isPassed
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-purple-50 border-purple-200 text-purple-800"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                  : "bg-purple-50 border-purple-200 text-purple-800"
                   }`}
               >
                 <div className="flex justify-between items-center font-bold">

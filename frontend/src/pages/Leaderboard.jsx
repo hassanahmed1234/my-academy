@@ -206,7 +206,7 @@ const Leaderboard = () => {
             )}
 
             {loading ? (
-                <div className="min-h-[300px] flex items-center justify-center">
+                <div className="min-h-300px flex items-center justify-center">
                     <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
                 </div>
             ) : (
