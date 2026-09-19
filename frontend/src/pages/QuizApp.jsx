@@ -148,27 +148,35 @@ const QuizApp = () => {
     }
   };
 
-  const handleFinalSubmit = async (isAuto = false) => {
+const handleFinalSubmit = async (isAuto = false) => {
     if (!isAuto && !window.confirm("Are you sure you want to submit your quiz?")) return;
+    
     try {
-      setActionLoading(true);
-      await API.post(`/student/quizzes/attempt/${attempt._id}/submit`);
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
+        setActionLoading(true);
+        const { data } = await API.post(`/student/quizzes/attempt/${attempt._id}/submit`);
+        
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
 
-      triggerXpReward({
-      xpAmount: 20,
-      reason: "perfect_quiz",
-      heading: "Excellent Score! 🌟",
-    });
-      handleFetchResults(attempt._id);
+        // Backend Response se dynamic XP & Feedback trigger karo
+        if (data?.earnedXp && data.earnedXp > 0) {
+            const isPerfect = data.result?.percentage === 100;
+            
+            triggerXpReward({
+                xpAmount: data.earnedXp,
+                reason: isPerfect ? "perfect_quiz" : "quiz_completed",
+                heading: isPerfect ? "Perfect Score! 🌟" : "MashaAllah! Quiz Passed 🎉",
+            });
+        }
+
+        handleFetchResults(attempt._id);
     } catch (err) {
-      console.error(err);
+        console.error("Quiz submission error:", err);
     } finally {
-      setActionLoading(false);
+        setActionLoading(false);
     }
-  };
+};
 
   const handleFetchResults = async (attemptId) => {
     try {

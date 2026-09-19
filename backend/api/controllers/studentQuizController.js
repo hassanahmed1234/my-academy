@@ -76,10 +76,10 @@ export const handleFinalSubmit = async (req, res) => {
         const totalQuestions = questions.length;
         const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
 
-        // QuizResult Document Creation with valid Mongo ObjectId
+        // QuizResult Document Creation
         const quizResult = await QuizResult.create({
             user: userId,
-            quiz: targetQuizId, // Valid Mongo ObjectId assigned
+            quiz: targetQuizId,
             score,
             totalQuestions,
             percentage,
@@ -92,10 +92,31 @@ export const handleFinalSubmit = async (req, res) => {
 
         activeAttempts.delete(attemptId);
 
-        
+        // ==========================================
+        // 🏆 CENTRALIZED XP AWARDING LOGIC INTEGRATION
+        // ==========================================
+        let updatedUser = null;
+        let earnedXp = 0;
+
+        // Pass condition check (50% or above)
+        if (percentage >= 50) {
+            if (percentage === 100) {
+                // Bonus XP for 100% Score (Passing XP + Bonus)
+                updatedUser = await awardXP(userId, "EXCELLENT_GRADE");
+                updatedUser = await awardXP(userId, "QUIZ_PASS");
+                earnedXp = 80; // 50 (QUIZ_PASS) + 30 (EXCELLENT_GRADE)
+            } else {
+                updatedUser = await awardXP(userId, "QUIZ_PASS");
+                earnedXp = 50; // Standard Pass XP
+            }
+        }
+
         res.status(201).json({
             message: "Quiz submitted successfully",
             result: quizResult,
+            earnedXp,
+            passed: percentage >= 50,
+            user: updatedUser,
         });
     } catch (error) {
         res.status(500).json({ message: "Failed to submit quiz", error: error.message });

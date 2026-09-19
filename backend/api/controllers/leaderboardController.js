@@ -85,7 +85,6 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
   }
 };
 
-
 export const getLeaderboard = async (req, res) => {
     try {
         const { timeFrame } = req.query; // 'overall' | 'this_week' | 'this_month'

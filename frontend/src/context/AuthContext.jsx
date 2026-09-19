@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     heading: "MashaAllah! 🎉",
   });
 
-  // Refreshes Logged-in User Profile directly from /auth/me or /users/profile
+  // Refreshes Logged-in User Profile directly from /auth/me
   const fetchProfile = useCallback(async () => {
     try {
       const { data } = await API.get("/auth/me");
@@ -87,11 +87,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to fetch fresh user profile:", error);
     }
-  }, []);
+  }, [setUser]);
 
-  // Simplified XP Reward Trigger (State clean & UI fast)
+  // Dynamic XP Reward Modal Trigger
   const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
-    // 1. Instantly open Modal for User Feedback
+    // 1. Modal open karo dynamic values ke sath
     setRewardModal({
       isOpen: true,
       xpAmount,
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }) => {
       heading: heading || "MashaAllah! 🎉",
     });
 
-    // 2. Fetch fresh user model to ensure auth/me XP balance is active
+    // 2. Fresh User Profile sync karo navbar/header XP balance updates ke liye
     await fetchProfile();
   };
 
