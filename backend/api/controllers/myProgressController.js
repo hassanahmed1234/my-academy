@@ -58,7 +58,7 @@ export const markLessonComplete = async (req, res) => {
     // Naye lesson completion par User Model me count +1 increment hoga
     if (isNewCompletion) {
       await User.findByIdAndUpdate(userId, {
-        $inc: { lessonsCompleted: 1 },
+        $inc: { coursesCompleted: 1 },
       });
     }
 
