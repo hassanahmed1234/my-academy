@@ -2,8 +2,7 @@ import express from "express";
 import { 
   getCourseProgress, 
   getAllUserProgress, 
-  markLessonComplete,
-  addGlobalXp
+  markLessonComplete
 } from "../controllers/myProgressController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
