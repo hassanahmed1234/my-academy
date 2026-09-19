@@ -7,26 +7,31 @@ export const getLeaderboard = async (req, res) => {
     const { timeFrame } = req.query; // 'overall' | 'this_week' | 'this_month'
 
     let matchQuery = { role: "student" }; // Fast filtering for active students
-    const now = new Date();
 
-    // Timeframe filtering based on user activity / updates
+    // Corrected Date calculations without mutating original Date object
     if (timeFrame === "this_week") {
-      const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
       matchQuery.lastActiveDate = { $gte: startOfWeek };
     } else if (timeFrame === "this_month") {
+      const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       matchQuery.lastActiveDate = { $gte: startOfMonth };
     }
 
-    // Fetch Top 50 Leaderboard Entries directly from User collection
+    // Common sorting criteria for consistent ranking
+    const sortCriteria = {
+      xp: -1,               // 1st Priority: XP Points
+      coursesCompleted: -1, // 2nd Priority: Completed Courses
+      quizzesPassed: -1,    // 3rd Priority: Quizzes Passed
+      streak: -1            // 4th Priority: Streak
+    };
+
+    // Fetch Top 50 Leaderboard Entries
     const leaderboard = await User.find(matchQuery)
       .select("name email avatar xp streak coursesCompleted quizzesPassed assignmentsSubmitted")
-      .sort({
-        xp: -1,               // 1st Priority: XP Points
-        coursesCompleted: -1, // 2nd Priority: Completed Courses
-        quizzesPassed: -1,    // 3rd Priority: Quizzes Passed
-        streak: -1            // 4th Priority: Streak
-      })
+      .sort(sortCriteria)
       .limit(50)
       .lean();
 
@@ -47,38 +52,70 @@ export const getLeaderboard = async (req, res) => {
       },
     }));
 
-    // Fetch All Users Sorted by XP to determine logged-in User's Exact Rank
-    const allRankings = await User.find(matchQuery)
-      .select("_id xp streak coursesCompleted quizzesPassed")
-      .sort({ xp: -1 })
+    // Fetch Logged-in User Data
+    const loggedInUser = await User.findById(req.user._id)
+      .select("role lastActiveDate xp streak coursesCompleted quizzesPassed")
       .lean();
-
-    const currentUserIdStr = req.user._id.toString();
-    const userRankIndex = allRankings.findIndex(
-      (item) => item._id.toString() === currentUserIdStr
-    );
 
     let currentUserStats = null;
 
-    if (userRankIndex !== -1) {
-      const userDoc = allRankings[userRankIndex];
-      const targetRankIndex = Math.max(0, userRankIndex - 1); // Immediate next rank target
-      const targetUser = allRankings[targetRankIndex];
+    if (loggedInUser) {
+      // Check if logged-in user matches current timeFrame query filter
+      let qualifiesForFilter = loggedInUser.role === "student";
+      if (qualifiesForFilter && matchQuery.lastActiveDate) {
+        qualifiesForFilter = loggedInUser.lastActiveDate >= matchQuery.lastActiveDate.$gte;
+      }
 
-      currentUserStats = {
-        rank: userRankIndex + 1,
-        xp: userDoc.xp || 0,
-        courses: userDoc.coursesCompleted || 0,
-        quizzes: userDoc.quizzesPassed || 0,
-        streak: userDoc.streak || 0,
-        xpToNextRank: targetUser && targetRankIndex !== userRankIndex
-          ? Math.max(0, (targetUser.xp || 0) - (userDoc.xp || 0) + 10)
-          : 0,
-      };
-    } else {
-      // Fallback in case logged-in user isn't in matchQuery timeframe filter
-      const loggedInUser = await User.findById(req.user._id).lean();
-      if (loggedInUser) {
+      if (qualifiesForFilter) {
+        // Fast & optimized DB level Rank Calculation (No heavy memory array loading)
+        const userXP = loggedInUser.xp || 0;
+        const userCourses = loggedInUser.coursesCompleted || 0;
+        const userQuizzes = loggedInUser.quizzesPassed || 0;
+        const userStreak = loggedInUser.streak || 0;
+
+        const usersAhead = await User.countDocuments({
+          ...matchQuery,
+          $or: [
+            { xp: { $gt: userXP } },
+            { xp: userXP, coursesCompleted: { $gt: userCourses } },
+            { xp: userXP, coursesCompleted: userCourses, quizzesPassed: { $gt: userQuizzes } },
+            { xp: userXP, coursesCompleted: userCourses, quizzesPassed: userQuizzes, streak: { $gt: userStreak } },
+          ],
+        });
+
+        const currentRank = usersAhead + 1;
+
+        // Fetch immediate next target user (person directly above current user)
+        let xpToNextRank = 0;
+        if (currentRank > 1) {
+          const personAbove = await User.findOne({
+            ...matchQuery,
+            $or: [
+              { xp: { $gt: userXP } },
+              { xp: userXP, coursesCompleted: { $gt: userCourses } },
+              { xp: userXP, coursesCompleted: userCourses, quizzesPassed: { $gt: userQuizzes } },
+              { xp: userXP, coursesCompleted: userCourses, quizzesPassed: userQuizzes, streak: { $gt: userStreak } },
+            ],
+          })
+            .sort(sortCriteria)
+            .select("xp")
+            .lean();
+
+          if (personAbove) {
+            xpToNextRank = Math.max(0, (personAbove.xp || 0) - userXP + 10);
+          }
+        }
+
+        currentUserStats = {
+          rank: currentRank,
+          xp: userXP,
+          courses: userCourses,
+          quizzes: userQuizzes,
+          streak: userStreak,
+          xpToNextRank,
+        };
+      } else {
+        // Fallback: If logged-in user didn't qualify for timeframe match filter
         currentUserStats = {
           rank: "Unranked",
           xp: loggedInUser.xp || 0,
@@ -90,7 +127,7 @@ export const getLeaderboard = async (req, res) => {
       }
     }
 
-    res.json({
+    res.status(200).json({
       leaderboard: formattedLeaderboard,
       currentUserStats,
     });
