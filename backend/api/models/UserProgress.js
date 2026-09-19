@@ -12,44 +12,24 @@ const userProgressSchema = new mongoose.Schema(
       ref: "Course",
       required: true,
     },
-    // Aapka existing logic
     completedLessons: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Lesson",
       },
     ],
-    
-    // --- GAMIFICATION & LEADERBOARD FIELDS (NEW) ---
-    xp: {
-      type: Number,
-      default: 0,
-    },
-    streak: {
-      type: Number,
-      default: 1,
-    },
-    lastActiveDate: {
-      type: Date,
-      default: Date.now,
-    },
-    quizzesPassed: {
-      type: Number,
-      default: 0,
-    },
-    assignmentsSubmitted: {
-      type: Number,
-      default: 0,
-    },
     isCourseCompleted: {
       type: Boolean,
       default: false,
+    },
+    completedAt: {
+      type: Date,
     },
   },
   { timestamps: true }
 );
 
-// Unique index: Ek user ke paas ek course ka ek hi progress record hoga
+// Har user ka har course ke liye ek hi progress document rahega
 userProgressSchema.index({ userId: 1, courseId: 1 }, { unique: true });
 
 export default mongoose.model("UserProgress", userProgressSchema);

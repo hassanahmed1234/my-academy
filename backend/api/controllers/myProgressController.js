@@ -42,7 +42,7 @@ export const markLessonComplete = async (req, res) => {
         completedLessons: [lessonId],
       });
       await progress.save();
-      await awardXP(userId, "COURSE_COMPLETE", courseId);
+      // await awardXP(userId, "COURSE_COMPLETE", courseId);
     } else {
       // Check if lesson is already marked complete
       const isAlreadyCompleted = progress.completedLessons.includes(lessonId);
@@ -52,7 +52,7 @@ export const markLessonComplete = async (req, res) => {
         await progress.save();
 
         // Award XP ONLY when marked complete for the first time
-        await awardXP(userId, "COURSE_COMPLETE", courseId);
+        // await awardXP(userId, "COURSE_COMPLETE", courseId);
       }
     }
 

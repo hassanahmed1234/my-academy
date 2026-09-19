@@ -17,7 +17,7 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
       return null;
     }
 
-    // 1. Daily Streak Logic
+    // 1. Daily Streak Calculation
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     
@@ -34,14 +34,14 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
       user.streak += 1;
       user.xp += XP_RULES.DAILY_STREAK;
     } else if (diffDays > 1) {
-      user.streak = 1; // Streak reset agar gap ho
+      user.streak = 1; // Streak reset agar din skip hua
     } else if (diffDays === 0 && user.streak === 0) {
-      user.streak = 1; // Initial streak
+      user.streak = 1; // Initial streak set
     }
 
     user.lastActiveDate = now;
 
-    // 2. Action Type Based XP & Counter Allocation
+    // 2. Action Based XP & Increments
     if (pointsOverride && typeof pointsOverride === "number") {
       user.xp += pointsOverride;
     }
@@ -81,88 +81,102 @@ export const awardXP = async (userId, actionType, pointsOverride = null) => {
     return user;
   } catch (err) {
     console.error("XP Award Error:", err.message);
+    return null;
   }
 };
-
 export const getLeaderboard = async (req, res) => {
-  try {
-    const { timeFrame } = req.query;
-    let matchQuery = { role: "student" };
-    const now = new Date();
+    try {
+        const { timeFrame } = req.query; // 'overall' | 'this_week' | 'this_month'
 
-    if (timeFrame === "this_week") {
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      startOfWeek.setHours(0, 0, 0, 0);
-      matchQuery.updatedAt = { $gte: startOfWeek };
-    } else if (timeFrame === "this_month") {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      matchQuery.updatedAt = { $gte: startOfMonth };
+        let matchQuery = {};
+        const now = new Date();
+
+        if (timeFrame === "this_week") {
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            matchQuery = { updatedAt: { $gte: startOfWeek } };
+        } else if (timeFrame === "this_month") {
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            matchQuery = { updatedAt: { $gte: startOfMonth } };
+        }
+
+        // Common Pipeline Stage: Grouping User Progress per Student
+        const basePipeline = [
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: "$userId",
+                    xp: { $sum: "$xp" },
+                    streak: { $max: "$streak" },
+                    coursesCompleted: {
+                        $sum: { $cond: [{ $eq: ["$isCourseCompleted", true] }, 1, 0] },
+                    },
+                    quizzesPassed: { $sum: "$quizzesPassed" },
+                    assignmentsSubmitted: { $sum: "$assignmentsSubmitted" },
+                },
+            },
+            { $sort: { xp: -1 } },
+        ];
+
+        // Fetch Top 50 Leaderboard entries with populated User details
+        const leaderboard = await UserProgress.aggregate([
+            ...basePipeline,
+            { $limit: 50 },
+            {
+                $lookup: {
+                    from: "users", // MongoDB collection name for User model
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "student",
+                },
+            },
+            { $unwind: "$student" },
+            {
+                $project: {
+                    _id: 1,
+                    xp: 1,
+                    streak: 1,
+                    coursesCompleted: 1,
+                    quizzesPassed: 1,
+                    assignmentsSubmitted: 1,
+                    student: {
+                        _id: "$student._id",
+                        name: "$student.name",
+                        email: "$student.email",
+                        avatar: "$student.avatar",
+                    },
+                },
+            },
+        ]);
+
+        // Calculate All Rankings to identify current user's position
+        const allRankings = await UserProgress.aggregate(basePipeline);
+
+        const currentUserIdStr = req.user._id.toString();
+        const userRankIndex = allRankings.findIndex(
+            (item) => item._id.toString() === currentUserIdStr
+        );
+
+        let currentUserStats = null;
+        if (userRankIndex !== -1) {
+            const userDoc = allRankings[userRankIndex];
+            const targetRankIndex = Math.max(0, userRankIndex - 2);
+            const targetUser = allRankings[targetRankIndex];
+
+            currentUserStats = {
+                rank: userRankIndex + 1,
+                xp: userDoc.xp,
+                courses: userDoc.coursesCompleted,
+                quizzes: userDoc.quizzesPassed,
+                streak: userDoc.streak,
+                xpToNextRank: targetUser ? Math.max(0, targetUser.xp - userDoc.xp + 10) : 0,
+            };
+        }
+
+        res.json({
+            leaderboard,
+            currentUserStats,
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching leaderboard", error: err.message });
     }
-
-    // Top 50 Students Query
-    const leaderboardDocs = await User.find(matchQuery)
-      .select("name email avatar xp streak coursesCompleted quizzesPassed assignmentsSubmitted role")
-      .sort({ xp: -1 })
-      .limit(50)
-      .lean();
-
-    const leaderboard = leaderboardDocs.map((user) => ({
-      _id: user._id,
-      xp: user.xp || 0,
-      streak: user.streak || 0,
-      coursesCompleted: user.coursesCompleted || 0,
-      quizzesPassed: user.quizzesPassed || 0,
-      assignmentsSubmitted: user.assignmentsSubmitted || 0,
-      student: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar || "",
-      },
-    }));
-
-    // Current User Data & Rank Calculation
-    const currentUser = await User.findById(req.user._id).select("xp streak coursesCompleted quizzesPassed").lean();
-    let currentUserStats = null;
-
-    if (currentUser) {
-      // Calculate rank using count Documents with higher XP
-      const higherXpCount = await User.countDocuments({
-        ...matchQuery,
-        xp: { $gt: currentUser.xp || 0 },
-      });
-
-      const userRank = higherXpCount + 1;
-
-      // Fetch immediate higher user to determine xpToNextRank
-      const nextRankUser = await User.findOne({
-        ...matchQuery,
-        xp: { $gt: currentUser.xp || 0 },
-      })
-        .select("xp")
-        .sort({ xp: 1 })
-        .lean();
-
-      currentUserStats = {
-        rank: userRank,
-        xp: currentUser.xp || 0,
-        courses: currentUser.coursesCompleted || 0,
-        quizzes: currentUser.quizzesPassed || 0,
-        streak: currentUser.streak || 0,
-        xpToNextRank: nextRankUser ? Math.max(0, nextRankUser.xp - currentUser.xp + 1) : 0,
-      };
-    }
-
-    return res.status(200).json({
-      leaderboard,
-      currentUserStats,
-    });
-  } catch (err) {
-    console.error("Leaderboard Error:", err);
-    return res.status(500).json({
-      message: "Error fetching leaderboard",
-      error: err.message,
-    });
-  }
 };

@@ -21,15 +21,12 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false,
     },
+    // --- GLOBAL GAMIFICATION & LEADERBOARD STATS ---
     xp: {
       type: Number,
       default: 0,
     },
     streak: {
-      type: Number,
-      default: 0,
-    },
-    coursesCompleted: {
       type: Number,
       default: 0,
     },
@@ -41,6 +38,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    coursesCompleted: {
+      type: Number,
+      default: 0,
+    },
+    lastActiveDate: {
+      type: Date,
+      default: Date.now,
+    },
     role: {
       type: String,
       enum: ["student", "instructor", "admin"],
@@ -48,10 +53,6 @@ const userSchema = new mongoose.Schema(
     },
     phone: { type: String, default: "" },
     location: { type: String, default: "" },
-    lastActiveDate: {
-      type: Date,
-      default: Date.now,
-    },
     bio: { type: String, default: "" },
     website: { type: String, default: "" },
     avatar: { type: String, default: "" },

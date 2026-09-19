@@ -3,114 +3,9 @@ import Question from "../models/Question.js";
 import Quiz from "../models/Quiz.js";
 import QuizAttempt from "../models/QuizAttempt.js";
 import QuizResult from "../models/QuizResult.js";
+import User from "../models/User.js";
 import { awardXP } from "./leaderboardController.js";
 
-// 4. Final Submit Quiz
-export const handleFinalSubmit = async (req, res) => {
-    try {
-        const { attemptId } = req.params;
-        const userId = req.user._id || req.user.id;
-
-        const liveAttempt = activeAttempts.get(attemptId);
-
-        // 1. Extract Target Quiz ID Safely
-        const rawQuizId = liveAttempt?.quizId || req.body?.quizId || attemptId.split("_")[1];
-
-        if (!rawQuizId || !mongoose.Types.ObjectId.isValid(rawQuizId)) {
-            return res.status(400).json({ message: "Invalid or missing Quiz ID in attempt scope" });
-        }
-
-        const targetQuizId = rawQuizId;
-
-        // 2. Fetch Quiz & Questions concurrently
-        const [quiz, questions] = await Promise.all([
-            Quiz.findById(targetQuizId),
-            Question.find({ quiz: targetQuizId }),
-        ]);
-
-        if (!quiz) {
-            return res.status(404).json({ message: "Quiz not found" });
-        }
-
-        const answers = liveAttempt?.answers || req.body?.answers || {};
-
-        // 3. Evaluate Questions
-        let score = 0;
-        const detailedResults = questions.map((q) => {
-            const selectedOption = answers[q._id.toString()];
-            const isCorrect = selectedOption === q.correctAnswer;
-            if (isCorrect) score += 1;
-
-            return {
-                questionId: q._id,
-                selectedOption: selectedOption || null,
-                correctAnswer: q.correctAnswer,
-                isCorrect,
-            };
-        });
-
-        const totalQuestions = questions.length;
-        const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
-        const passed = percentage >= (quiz.passingScore || 70);
-
-        // 4. Save to QuizResult Collection
-        const quizResult = await QuizResult.create({
-            user: userId,
-            quiz: targetQuizId,
-            score,
-            totalQuestions,
-            percentage,
-            answers: detailedResults,
-            proctoringLogs: {
-                tabSwitches: liveAttempt?.tabSwitches || 0,
-                fullScreenExits: liveAttempt?.fullScreenExits || 0,
-            },
-        });
-
-        // 5. Sync QuizAttempt status (if database attempt exists)
-        if (mongoose.Types.ObjectId.isValid(attemptId)) {
-            await QuizAttempt.findByIdAndUpdate(attemptId, {
-                status: "submitted",
-                submittedAt: new Date(),
-                score,
-                percentage,
-                passed,
-            });
-        }
-
-        // 6. Check Previous Passes (Prevent Duplicate XP Farming)
-        const previouslyPassed = await QuizResult.findOne({
-            user: userId,
-            quiz: targetQuizId,
-            percentage: { $gte: quiz.passingScore || 70 },
-            _id: { $ne: quizResult._id },
-        });
-
-        // let updatedUserData = null;
-        // let isFirstPass = false;
-
-        // 7. Award XP & Increment Counters ONLY on First Pass
-       let  isFirstPass = true;
-      let  updatedUserData = await awardXP('6aad2be525d722cad6a17947', "QUIZ_PASS");
-        // if (passed && !previouslyPassed) {
-        // }
-
-        // Cleanup in-memory active attempt tracking
-        activeAttempts.delete(attemptId);
-
-        res.status(201).json({
-            message: "Quiz submitted successfully",
-            passed,
-            isFirstPass,
-            score,
-            percentage,
-            userStats: updatedUserData,
-            result: quizResult,
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Failed to submit quiz", error: error.message });
-    }
-};
 // Temporary/In-Memory attempts map (or DB attempt model if used)
 // We will store user live selections here
 const activeAttempts = new Map();
@@ -149,7 +44,115 @@ export const handleStartQuiz = async (req, res) => {
     }
 };
 
+// 4. Final Submit Quiz
+export const handleFinalSubmit = async (req, res) => {
+    try {
+        const { attemptId } = req.params;
+        const userId = req.user._id || req.user.id;
 
+        const liveAttempt = activeAttempts.get(attemptId);
+
+        // 1. Target Quiz ID Safe Extract
+        const rawQuizId = liveAttempt?.quizId || req.body?.quizId || attemptId.split("_")[1];
+
+        if (!rawQuizId || !mongoose.Types.ObjectId.isValid(rawQuizId)) {
+            return res.status(400).json({ message: "Invalid or missing Quiz ID in attempt scope" });
+        }
+
+        const targetQuizId = rawQuizId;
+
+        // 2. Fetch Quiz & Questions
+        const [quiz, questions] = await Promise.all([
+            Quiz.findById(targetQuizId),
+            Question.find({ quiz: targetQuizId }),
+        ]);
+
+        if (!quiz) {
+            return res.status(404).json({ message: "Quiz not found" });
+        }
+
+        const answers = liveAttempt?.answers || req.body?.answers || {};
+
+        // 3. Score Evaluation
+        let score = 0;
+        const detailedResults = questions.map((q) => {
+            const selectedOption = answers[q._id.toString()];
+            const isCorrect = selectedOption === q.correctAnswer;
+            if (isCorrect) score += 1;
+
+            return {
+                questionId: q._id,
+                selectedOption: selectedOption || null,
+                correctAnswer: q.correctAnswer,
+                isCorrect,
+            };
+        });
+
+        const totalQuestions = questions.length;
+        const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
+        const passed = percentage >= (quiz.passingScore || 70);
+
+        // 4. Save Quiz Result
+        const quizResult = await QuizResult.create({
+            user: userId,
+            quiz: targetQuizId,
+            score,
+            totalQuestions,
+            percentage,
+            answers: detailedResults,
+            proctoringLogs: {
+                tabSwitches: liveAttempt?.tabSwitches || 0,
+                fullScreenExits: liveAttempt?.fullScreenExits || 0,
+            },
+        });
+
+        // 5. Update Database Attempt status (if exists)
+        if (mongoose.Types.ObjectId.isValid(attemptId)) {
+            await QuizAttempt.findByIdAndUpdate(attemptId, {
+                status: "submitted",
+                submittedAt: new Date(),
+                score,
+                percentage,
+                passed,
+            });
+        }
+
+        // 6. Check Duplicate Pass (XP Protection)
+        const previouslyPassed = await QuizResult.findOne({
+            user: userId,
+            quiz: targetQuizId,
+            percentage: { $gte: quiz.passingScore || 70 },
+            _id: { $ne: quizResult._id },
+        });
+
+        let updatedUserData = null;
+        let isFirstPass = false;
+
+        // 7. Award XP on FIRST Pass
+        if (passed) {
+            isFirstPass = true;
+            updatedUserData = await awardXP(userId, "QUIZ_PASS");
+        } else {
+            // Agar pass nahi hua ya re-attempt tha, tab bhi current user stats bhej do taaki null na jaye
+            updatedUserData = await User.findById(userId).select("xp streak quizzesPassed assignmentsSubmitted coursesCompleted");
+        }
+
+        // Memory cleanup
+        activeAttempts.delete(attemptId);
+
+        res.status(201).json({
+            message: "Quiz submitted successfully",
+            passed,
+            isFirstPass,
+            score,
+            percentage,
+            userStats: updatedUserData,
+            result: quizResult,
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to submit quiz", error: error.message });
+    }
+};
 
 // 2. Auto-save live answer
 export const handleSaveAnswer = async (req, res) => {
