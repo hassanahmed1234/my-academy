@@ -62,7 +62,7 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [showXpModal, setShowXpModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Share Modal & Image Generation States
   const [shareData, setShareData] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -199,11 +199,10 @@ const Leaderboard = () => {
             <button
               key={tab}
               onClick={() => setTimeFilter(tab)}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold capitalize transition ${
-                timeFilter === tab
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold capitalize transition ${timeFilter === tab
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               {tab.replace("_", " ")}
             </button>
@@ -260,9 +259,22 @@ const Leaderboard = () => {
                     <StudentAvatar student={top3[1].student} size="w-16 h-16" textSize="text-xl" />
                   </div>
                   <h3 className="font-bold text-slate-900 text-base mt-3">{top3[1].student?.name || "Student"}</h3>
+
+                  {/* XP BADGE */}
                   <div className="flex items-center justify-center gap-1 mt-1 text-slate-900 font-black text-lg">
                     <Zap className="w-4 h-4 text-amber-500 fill-amber-500" /> {top3[1].xp || 0} <span className="text-xs text-slate-400">XP</span>
                   </div>
+
+                  {/* COURSES & QUIZZES STATS */}
+                  <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-slate-100 text-[11px] font-semibold text-slate-600 w-full">
+                    <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                      📚 {top3[1].coursesCompleted || 0} Courses
+                    </span>
+                    <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                      🎯 {top3[1].quizzesPassed || 0} Quizzes
+                    </span>
+                  </div>
+
                   <button
                     onClick={() => setShareData({ ...top3[1], rank: 2 })}
                     className="mt-3 text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1 transition"
@@ -282,9 +294,22 @@ const Leaderboard = () => {
                     <StudentAvatar student={top3[0].student} size="w-20 h-20" textSize="text-2xl" />
                   </div>
                   <h3 className="font-extrabold text-slate-900 text-lg mt-3">{top3[0].student?.name || "Student"}</h3>
+
+                  {/* XP BADGE */}
                   <div className="flex items-center justify-center gap-1 mt-1 text-slate-900 font-black text-2xl">
                     <Zap className="w-5 h-5 text-amber-500 fill-amber-500" /> {top3[0].xp || 0} <span className="text-xs text-slate-400">XP</span>
                   </div>
+
+                  {/* COURSES & QUIZZES STATS */}
+                  <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-amber-100 text-[11px] font-semibold text-slate-600 w-full">
+                    <span className="flex items-center gap-1 bg-amber-50/80 px-2.5 py-0.5 rounded-lg border border-amber-200/60 text-amber-900">
+                      📚 {top3[0].coursesCompleted || 0} Courses
+                    </span>
+                    <span className="flex items-center gap-1 bg-amber-50/80 px-2.5 py-0.5 rounded-lg border border-amber-200/60 text-amber-900">
+                      🎯 {top3[0].quizzesPassed || 0} Quizzes
+                    </span>
+                  </div>
+
                   <button
                     onClick={() => setShareData({ ...top3[0], rank: 1 })}
                     className="mt-3 text-[11px] font-bold text-slate-900 bg-amber-400 hover:bg-amber-500 px-4 py-1.5 rounded-xl flex items-center gap-1 shadow-sm transition"
@@ -304,9 +329,22 @@ const Leaderboard = () => {
                     <StudentAvatar student={top3[2].student} size="w-16 h-16" textSize="text-xl" />
                   </div>
                   <h3 className="font-bold text-slate-900 text-base mt-3">{top3[2].student?.name || "Student"}</h3>
+
+                  {/* XP BADGE */}
                   <div className="flex items-center justify-center gap-1 mt-1 text-slate-900 font-black text-lg">
                     <Zap className="w-4 h-4 text-amber-500 fill-amber-500" /> {top3[2].xp || 0} <span className="text-xs text-slate-400">XP</span>
                   </div>
+
+                  {/* COURSES & QUIZZES STATS */}
+                  <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-slate-100 text-[11px] font-semibold text-slate-600 w-full">
+                    <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                      📚 {top3[2].coursesCompleted || 0} Courses
+                    </span>
+                    <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                      🎯 {top3[2].quizzesPassed || 0} Quizzes
+                    </span>
+                  </div>
+
                   <button
                     onClick={() => setShareData({ ...top3[2], rank: 3 })}
                     className="mt-3 text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1 transition"
@@ -443,7 +481,7 @@ const Leaderboard = () => {
               className="bg-gradient-to-br from-slate-900 via-amber-950 to-slate-950 text-white rounded-2xl p-6 shadow-xl flex flex-col items-center text-center space-y-4 border border-amber-500/30 relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-              
+
               <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs tracking-widest uppercase">
                 <Trophy className="w-4 h-4" /> E-Islam
               </div>

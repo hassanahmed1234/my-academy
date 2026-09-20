@@ -20,11 +20,13 @@ import QuizApp from "./pages/QuizApp";
 import AssignmentStudent from "./pages/AssignmentStudent";
 import AssignmentAdminView from "./pages/AssignmentAdminView";
 import Leaderboard from "./pages/Leaderboard";
+import AiAssistantPage from "./pages/AiAssistantPage";
+import AiAssistantButton from "./components/AiAssistantButton"; // Integrated Floating Button
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-islamic-bg text-islamic-text flex flex-col justify-between">
+      <div className="min-h-screen bg-islamic-bg text-islamic-text flex flex-col justify-between relative">
         <Routes>
           {/* Dashboard Pages with Nested Layout */}
           <Route element={<ProtectedRoute allowedRole="student" />}>
@@ -35,6 +37,7 @@ function App() {
               <Route path="/quizzes" element={<QuizApp />} />
               <Route path="/assignments" element={<AssignmentStudent />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/ai-assistant" element={<AiAssistantPage />} />
             </Route>
           </Route>
 
@@ -47,7 +50,6 @@ function App() {
                   <Navbar />
                   <main className="flex-1">
                     <AdminDashboard />
-                    
                   </main>
                   <Footer />
                 </div>
@@ -59,8 +61,7 @@ function App() {
                 <div className="flex flex-col min-h-screen justify-between">
                   <Navbar />
                   <main className="flex-1">
-                    <AssignmentAdminView/>
-                    
+                    <AssignmentAdminView />
                   </main>
                   <Footer />
                 </div>
@@ -91,16 +92,15 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                   </Route>
-
-
-
-
                 </Routes>
                 <Footer />
               </div>
             }
           />
         </Routes>
+
+        {/* GLOBAL FLOATING AI BUTTON */}
+        <AiAssistantButton />
       </div>
     </Router>
   );

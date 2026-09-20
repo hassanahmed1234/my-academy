@@ -21,6 +21,15 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false,
     },
+    // --- AI ASSISTANT DAILY POINTS SYSTEM ---
+    aiPoints: {
+      type: Number,
+      default: 10,
+    },
+    lastAiResetDate: {
+      type: Date,
+      default: Date.now,
+    },
     // --- GLOBAL GAMIFICATION & LEADERBOARD STATS ---
     xp: {
       type: Number,
@@ -68,7 +77,26 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// FIXED PRE-SAVE HOOK (Removed 'next' parameter for async/await)
+// --- HELPER METHOD: AUTO RESET AI POINTS DAILY ---
+userSchema.methods.checkAndResetAiPoints = async function () {
+  const today = new Date();
+  const lastReset = new Date(this.lastAiResetDate || this.createdAt);
+
+  // Check if today is a different day than last reset date
+  const isDifferentDay =
+    today.getFullYear() !== lastReset.getFullYear() ||
+    today.getMonth() !== lastReset.getMonth() ||
+    today.getDate() !== lastReset.getDate();
+
+  if (isDifferentDay) {
+    this.aiPoints = 10; // Reset back to 10 (Non-accumulative)
+    this.lastAiResetDate = today;
+    await this.save();
+  }
+  return this.aiPoints;
+};
+
+// FIXED PRE-SAVE HOOK
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   const salt = await bcrypt.genSalt(10);

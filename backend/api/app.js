@@ -19,6 +19,7 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import studentQuizRoutes from "./routes/studentQuizRoutes.js";
 import assignmentRoutes from "./routes/assignmentRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import connectDB from "./config/db.js";
 import xpRoutes from "./routes/xpRoutes.js";
@@ -99,6 +100,7 @@ app.use("/api/student/quizzes", studentQuizRoutes);
 app.use("/api/assignment", assignmentRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/xp", xpRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Base Route
 app.get("/", (req, res) => {

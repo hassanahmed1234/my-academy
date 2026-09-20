@@ -135,16 +135,25 @@ const Sidebar = () => {
             <span>Leaderboard</span>
           </NavLink>
 
-          {/* AI Assistant - Coming Soon */}
-          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-500 opacity-60 cursor-not-allowed transition-all">
+          {/* AI Study Assistant Link */}
+          <NavLink
+            to="/ai-assistant"
+            className={({ isActive }) =>
+              `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${isActive
+                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+              }`
+            }
+          >
             <div className="flex items-center gap-3">
-              <Bot className="w-4 h-4 shrink-0 text-amber-400/70" />
-              <span className="text-slate-400">AI Study Assistant</span>
+              <Bot className="w-4 h-4 shrink-0 text-amber-400" />
+              <span>AI Study Assistant</span>
             </div>
-            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1">
-              <Sparkles className="w-2.5 h-2.5" /> Soon
+
+            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+              <Sparkles className="w-2.5 h-2.5" /> Live
             </span>
-          </div>
+          </NavLink>
         </div>
 
         {/* ACCOUNT SECTION */}
