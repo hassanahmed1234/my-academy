@@ -75,10 +75,10 @@ const HeroSection = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* LEFT COLUMN */}
           <div className="lg:col-span-7 text-center lg:text-left" data-aos="fade-right" data-aos-duration="1000">
-            
+
             {/* Live Status Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-xs font-semibold mb-6 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
@@ -106,9 +106,8 @@ const HeroSection = () => {
                 <button
                   key={slide.id}
                   onClick={() => handleSlideChange(idx)}
-                  className={`h-2 rounded-full transition-all duration-500 cursor-pointer ${
-                    currentSlide === idx ? 'w-10 bg-emerald-600 shadow-md shadow-emerald-500/30' : 'w-2 bg-slate-200 hover:bg-slate-300'
-                  }`}
+                  className={`h-2 rounded-full transition-all duration-500 cursor-pointer ${currentSlide === idx ? 'w-10 bg-emerald-600 shadow-md shadow-emerald-500/30' : 'w-2 bg-slate-200 hover:bg-slate-300'
+                    }`}
                   aria-label={`Go to slide ${idx + 1}`}
                 />
               ))}
@@ -145,57 +144,79 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Mehrab Arch Visual */}
-          <div className="lg:col-span-5 flex justify-center" data-aos="zoom-in" data-aos-duration="1000" data-aos-delay="200">
-            <div className="relative w-full max-w-sm sm:max-w-md animate-[bounce_6s_ease-in-out_infinite]">
-              
-              {/* Outer Glowing Mehrab Frame */}
-              <div className="relative mx-auto bg-gradient-to-b from-emerald-100/60 via-white to-emerald-50 border border-emerald-300 rounded-t-[180px] p-6 pt-12 shadow-xl backdrop-blur-xl">
-                
-                {/* SVG Outline */}
-                <div className="absolute inset-2 border border-emerald-200/80 rounded-t-[170px] pointer-events-none" />
+          {/* RIGHT COLUMN: Premium Animated Islamic Illustration Frame */}
+          <div className="lg:col-span-5 flex justify-center items-center" data-aos="zoom-in" data-aos-duration="1000" data-aos-delay="200">
+            <div className="relative w-full max-w-sm sm:max-w-md">
 
-                {/* Calligraphy Emblem */}
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-white border border-emerald-300 flex items-center justify-center text-emerald-700 font-bold text-2xl shadow-sm mb-3 hover:scale-105 transition-transform duration-300">
-                    ﷽
+              {/* Ambient Glow behind image */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 via-amber-500/20 to-emerald-500/20 rounded-t-[190px] rounded-b-3xl blur-xl opacity-75 animate-pulse" />
+
+              {/* Outer Arch Frame */}
+              <div className="relative bg-slate-950/80 border border-emerald-800/50 rounded-t-[180px] rounded-b-3xl p-3 sm:p-4 backdrop-blur-xl shadow-2xl shadow-emerald-950/80">
+
+                {/* SVG Decorative Border Outline */}
+                <div className="absolute inset-2 border border-amber-500/30 rounded-t-[172px] rounded-b-2xl pointer-events-none z-20" />
+
+                {/* Main Image Container with Soft Floating Animation */}
+                <div className="relative overflow-hidden rounded-t-[168px] rounded-b-2xl h-[380px] sm:h-[420px] group">
+
+                  {/* Animated Islamic Picture (HQ Unsplash Mosque/Quran Art) */}
+                  <img
+                    src="https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    alt="Islamic Architecture & Quran Learning"
+                    className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700 ease-out filter brightness-90 contrast-105"
+                  />
+
+                  {/* Gradient Overlay for Text Visibility */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+
+                  {/* Bismillah Floating Emblem at Top */}
+                  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 text-center">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-slate-950/80 border border-amber-500/50 backdrop-blur-md flex items-center justify-center text-amber-400 font-bold text-xl shadow-lg shadow-amber-500/10 hover:scale-110 transition-transform">
+                      ﷽
+                    </div>
+                    <p className="text-[10px] text-amber-300 font-serif italic tracking-widest mt-1 bg-slate-950/60 px-2 py-0.5 rounded-full border border-emerald-800/30">
+                      "Read in the name of your Lord"
+                    </p>
                   </div>
-                  <p className="text-xs text-emerald-800 font-serif italic tracking-wide">
-                    "Read in the name of your Lord"
-                  </p>
+
+                  {/* Dynamic Glassmorphic Card Overlay at Bottom */}
+                  <div className="absolute bottom-4 inset-x-4 z-10 bg-slate-950/85 border border-emerald-800/60 rounded-2xl p-4 backdrop-blur-md shadow-xl">
+                    <div className="text-[10px] uppercase font-bold text-amber-400 tracking-wider mb-1">
+                      Current Track Highlight
+                    </div>
+
+                    <div className={`text-white font-semibold text-xs sm:text-sm transition-opacity duration-300 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+                      {activeSlide.highlight}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-emerald-900/50 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Student Progress</span>
+                        <span className="text-emerald-400 font-bold flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" /> Enabled
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Scholar Support</span>
+                        <span className="text-amber-400 font-bold">Live Q&A</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleStartLearning('/courses')}
+                      className="mt-3.5 w-full py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold text-xs transition-all shadow-md shadow-amber-500/20 active:scale-95 cursor-pointer"
+                    >
+                      {isAuthenticated ? 'Open Dashboard ➔' : 'Enroll Now ➔'}
+                    </button>
+                  </div>
+
                 </div>
 
-                {/* Mehrab Center Content Card */}
-                <div className="bg-white border border-emerald-100 rounded-2xl p-5 text-center shadow-md">
-                  <div className="text-xs text-slate-500 font-medium mb-1">Current Feature Highlight</div>
-                  <div className={`text-emerald-700 font-bold text-sm transition-opacity duration-300 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
-                    {activeSlide.highlight}
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-slate-100 text-left space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Student Progress Tracking</span>
-                      <span className="text-emerald-600 font-bold">Enabled</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Scholar Support</span>
-                      <span className="text-emerald-600 font-bold">Live Q&A</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleStartLearning('/courses')}
-                    className="mt-5 w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 font-bold text-xs transition-all cursor-pointer"
-                  >
-                    {isAuthenticated ? 'Open Dashboard ➔' : 'Enroll Now ➔'}
-                  </button>
-                </div>
-
+                {/* Floating Sparkle Elements */}
+                <span className="absolute -top-3 -left-3 text-amber-400 text-2xl animate-spin duration-[4000ms]">✦</span>
+                <span className="absolute -top-3 -right-3 text-amber-400 text-2xl animate-spin duration-[4000ms]">✦</span>
               </div>
-
-              {/* Corner Stars */}
-              <span className="absolute top-2 left-2 text-emerald-400 text-xl animate-spin duration-3000">✦</span>
-              <span className="absolute top-2 right-2 text-emerald-400 text-xl animate-spin duration-3000">✦</span>
             </div>
           </div>
 

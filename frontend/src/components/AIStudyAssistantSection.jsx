@@ -1,20 +1,21 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bot, Sparkles, MessageSquare, BookOpenCheck, Zap, HelpCircle } from "lucide-react";
+import { Bot, Sparkles, MessageSquare, BookOpenCheck, Zap, HelpCircle, ArrowRight } from "lucide-react";
 
 const AIStudyAssistantSection = () => {
   return (
-    <section className="py-20 bg-slate-900 text-white relative overflow-hidden my-12 rounded-3xl max-w-7xl mx-auto px-6 sm:px-10 shadow-2xl">
+    /* FIXED: Mobile ke liye `mx-4` aur `my-8` add kiya hai, sm breakpoint par `sm:mx-auto` aur `sm:my-12` handle hoga */
+    <section className="py-12 sm:py-20 bg-slate-900 text-white relative overflow-hidden my-8 sm:my-12 mx-4 sm:mx-auto rounded-3xl max-w-7xl px-4 sm:px-10 shadow-2xl">
       {/* Background Subtle Glows */}
       <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 grid lg:grid-cols-12 gap-12 items-center">
+      <div className="relative z-10 grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         {/* Left Column - Content */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-4 h-4" />
-            <span>AI Study Assistant • SOON</span>
+            <span>AI Study Assistant • LIVE NOW</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
@@ -66,10 +67,11 @@ const AIStudyAssistantSection = () => {
 
           <div className="pt-4 flex flex-wrap items-center gap-4">
             <Link
-              to="/register"
-              className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-xs tracking-wide shadow-lg shadow-amber-500/20 transition active:scale-[0.98]"
+              to="/ai-assistant"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-xs tracking-wide shadow-lg shadow-amber-500/20 transition active:scale-[0.98]"
             >
-              Get Early Access →
+              <span>Try AI Assistant Now</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
             <span className="text-xs text-slate-400 font-medium">Included free with student account</span>
           </div>
@@ -77,7 +79,7 @@ const AIStudyAssistantSection = () => {
 
         {/* Right Column - Mockup Preview */}
         <div className="lg:col-span-5">
-          <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-5 shadow-2xl relative">
+          <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-2xl relative">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-700/80 pb-3 mb-4">
               <div className="flex items-center gap-3">
@@ -89,7 +91,7 @@ const AIStudyAssistantSection = () => {
                   <div className="text-[10px] text-emerald-400 font-medium">● Online</div>
                 </div>
               </div>
-              <span className="text-[10px] bg-slate-700 text-slate-300 font-mono px-2 py-0.5 rounded">v1.0-beta</span>
+              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-mono px-2 py-0.5 rounded border border-emerald-500/20">Live</span>
             </div>
 
             {/* Simulated Chat Messages */}
