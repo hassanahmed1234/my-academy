@@ -10,8 +10,8 @@ const About = () => {
   return (
     <main className="bg-slate-50 min-h-screen text-slate-800 overflow-hidden pt-12 pb-24 relative font-sans">
       {/* Background Decorative Ambient Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-emerald-100/60 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-emerald-50 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-800px h-350px bg-emerald-100/60 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/3 right-0 w-400px h-400px bg-emerald-50 blur-[120px] rounded-full pointer-events-none" />
 
       {/* 1. HERO SECTION */}
       <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8 pb-16">

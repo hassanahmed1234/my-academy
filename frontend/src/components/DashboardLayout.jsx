@@ -48,7 +48,7 @@ const DashboardLayout = () => {
               <Menu className="w-5 h-5" />
             </button>
             <span className="font-extrabold text-slate-900 text-base tracking-tight">
-              Academy<span className="text-emerald-600">Pro</span>
+              E-<span className="text-emerald-600">Islam</span>
             </span>
           </div>
         </header>
