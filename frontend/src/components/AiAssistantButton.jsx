@@ -1,4 +1,4 @@
-import { useState, useEffect, } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import API from "../api/axiosInstance";
 import { motion } from 'framer-motion';
@@ -32,36 +32,46 @@ const AiAssistantButton = () => {
         }
     };
 
-   return (
-    <motion.div
-      drag
-      dragConstraints={{ left: -500, right: 50, top: -500, bottom: 50 }}
-      whileDrag={{ scale: 1.05, cursor: 'grabbing' }}
-      className="fixed bottom-5 right-5 z-50 cursor-grab touch-none"
-    >
-      <Link to="/ai-assistant" className="block group select-none">
-        {/* Outer Gradient Border Container - Image ki tarah gradient outline */}
-        <div className="p-[2px] rounded-full bg-gradient-to-r from-teal-400 via-cyan-400 to-yellow-400 shadow-lg hover:shadow-cyan-500/20 transition-all duration-300">
-          
-          {/* Inner Content pill container */}
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full">
-            
-            {/* Sparkles Icon - Image jaisa design */}
-            <div className="flex items-center justify-center text-slate-800">
-              <Sparkles className="w-5 h-5 fill-slate-800" />
+    const constraintsRef = useRef(null);
+
+    return (
+        <>
+            {/* Constraints boundary layer (Poori screen ko cover karega) */}
+            <div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+                <motion.div
+                    drag
+                    dragConstraints={constraintsRef} // Screen constraints pass kiye hain
+                    dragElastic={0.05} // Boundaries ke bahar stretch hone se rokega
+                    dragMomentum={false} // Boundary ke bahar drag ko drop kar dega
+                    whileDrag={{ scale: 1.05, cursor: 'grabbing' }}
+                    className="fixed bottom-5 right-5 pointer-events-auto cursor-grab touch-none"
+                >
+                    <Link to="/ai-assistant" className="block group select-none">
+                        {/* Outer Gradient Border Container */}
+                        <div className="p-[2px] rounded-full bg-gradient-to-r from-teal-400 via-cyan-400 to-yellow-400 shadow-lg hover:shadow-cyan-500/20 transition-all duration-300">
+
+                            {/* Inner Content pill container */}
+                            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full">
+
+                                {/* Sparkles Icon */}
+                                <div className="flex items-center justify-center text-slate-800">
+                                    <Sparkles className="w-5 h-5 fill-slate-800" />
+                                </div>
+
+                                {/* AI Text */}
+                                <span className="text-base font-bold text-slate-800 tracking-tight">
+                                    AI Study Assistant
+                                </span>
+
+                               
+
+                            </div>
+                        </div>
+                    </Link>
+                </motion.div>
             </div>
-
-            {/* AI Text */}
-            <span className="text-base font-bold text-slate-800 tracking-tight">
-              AI Study Assistant
-            </span>
-
-
-          </div>
-        </div>
-      </Link>
-    </motion.div>
-  );
+        </>
+    );
 };
 
 export default AiAssistantButton;
