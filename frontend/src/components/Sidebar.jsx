@@ -13,6 +13,8 @@ import {
   LogOut,
   Bot,
   Sparkles,
+  Trophy,
+  Video,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -121,6 +123,20 @@ const Sidebar = () => {
             <span>Assignments</span>
           </NavLink>
 
+          {/* Live Session */}
+          <NavLink
+            to="/live-session"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:bg-slate-900 hover:text-white"
+              }`
+            }
+          >
+            <Video className="w-4 h-4 shrink-0" />
+            <span>Live Session</span>
+          </NavLink>
+
           {/* Leaderboard */}
           <NavLink
             to="/leaderboard"
@@ -131,7 +147,7 @@ const Sidebar = () => {
               }`
             }
           >
-            <ClipboardList className="w-4 h-4 shrink-0" />
+            <Trophy className="w-4 h-4 shrink-0" />
             <span>Leaderboard</span>
           </NavLink>
 

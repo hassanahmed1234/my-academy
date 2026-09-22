@@ -525,12 +525,12 @@ const AdminDashboard = () => {
   });
 
   const [taskForm, setTaskForm] = useState({
-  title: "",
-  description: "",
-  type: "Assignment", // Mongoose Schema default
-  dueDate: "",
-  course: "",         // Backend payload schema ke mutabiq 'course'
-});;
+    title: "",
+    description: "",
+    type: "Assignment", // Mongoose Schema default
+    dueDate: "",
+    course: "",         // Backend payload schema ke mutabiq 'course'
+  });;
 
   const [announcementForm, setAnnouncementForm] = useState({
     title: "",
@@ -593,36 +593,36 @@ const AdminDashboard = () => {
     }
   };
 
- const handleCreateTask = async (e) => {
-  e.preventDefault();
-  try {
-    setSubmitting(true);
-    setMessage({ type: "", text: "" });
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      setMessage({ type: "", text: "" });
 
-    await API.post("/tasks", taskForm);
+      await API.post("/tasks", taskForm);
 
-    setMessage({ type: "success", text: "Task created successfully!" });
-    setShowTaskModal(false);
-    
-    // Reset state according to current scheme
-    setTaskForm({
-      title: "",
-      description: "",
-      type: "Assignment",
-      dueDate: "",
-      course: "",
-    });
+      setMessage({ type: "success", text: "Task created successfully!" });
+      setShowTaskModal(false);
 
-    if (fetchData) fetchData();
-  } catch (err) {
-    setMessage({
-      type: "error",
-      text: err.response?.data?.message || "Failed to create task.",
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
+      // Reset state according to current scheme
+      setTaskForm({
+        title: "",
+        description: "",
+        type: "Assignment",
+        dueDate: "",
+        course: "",
+      });
+
+      if (fetchData) fetchData();
+    } catch (err) {
+      setMessage({
+        type: "error",
+        text: err.response?.data?.message || "Failed to create task.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleCreateAnnouncement = async (e) => {
     e.preventDefault();
@@ -1323,22 +1323,87 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
       {/* CREATE LIVE CLASS MODAL */}
+      
       {showLiveModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-xl">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-lg text-slate-900">Schedule Live Class</h3>
-              <button onClick={() => setShowLiveModal(false)}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
+              <button onClick={() => setShowLiveModal(false)}>
+                <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+              </button>
             </div>
+
             <form onSubmit={handleCreateLiveSession} className="space-y-3 text-xs">
-              <input required type="text" placeholder="Session Title" value={liveForm.title} onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20" />
-              <input required type="text" placeholder="Scholar/Instructor Name" value={liveForm.scholarName} onChange={(e) => setLiveForm({ ...liveForm, scholarName: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20" />
-              <input required type="url" placeholder="Meeting URL (Zoom / Google Meet)" value={liveForm.meetingUrl} onChange={(e) => setLiveForm({ ...liveForm, meetingUrl: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20" />
-              <input required type="datetime-local" value={liveForm.scheduledAt} onChange={(e) => setLiveForm({ ...liveForm, scheduledAt: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20" />
+              {/* Title */}
+              <input
+                required
+                type="text"
+                placeholder="Session Title"
+                value={liveForm.title}
+                onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              />
+
+              {/* Course Dropdown Selection (CRITICAL FIXED) */}
+              <select
+                required
+                value={liveForm.course}
+                onChange={(e) => setLiveForm({ ...liveForm, course: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              >
+                <option value="">Select Associated Course...</option>
+                {coursesList.map((course) => (
+                  <option key={course._id} value={course._id}>
+                    {course.title} {course.arabicTitle ? `(${course.arabicTitle})` : ""}
+                  </option>
+                ))}
+              </select>
+
+              {/* Scholar Name */}
+              <input
+                required
+                type="text"
+                placeholder="Scholar/Instructor Name"
+                value={liveForm.scholarName}
+                onChange={(e) => setLiveForm({ ...liveForm, scholarName: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              />
+
+              {/* Meeting URL */}
+              <input
+                required
+                type="url"
+                placeholder="Meeting URL (Zoom / Google Meet / Teams)"
+                value={liveForm.meetingUrl}
+                onChange={(e) => setLiveForm({ ...liveForm, meetingUrl: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              />
+
+              {/* Scheduled At */}
+              <input
+                required
+                type="datetime-local"
+                value={liveForm.scheduledAt}
+                onChange={(e) => setLiveForm({ ...liveForm, scheduledAt: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              />
+
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setShowLiveModal(false)} className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700">Cancel</button>
-                <button type="submit" disabled={submitting} className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLiveModal(false)}
+                  className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center gap-2"
+                >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Schedule Broadcast
                 </button>
               </div>
@@ -1349,73 +1414,73 @@ const AdminDashboard = () => {
 
       {/* CREATE TASK MODAL */}
       {showTaskModal && (
-  <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div className="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-6 space-y-4 shadow-xl">
-      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 className="font-bold text-lg text-slate-900">Add Task</h3>
-        <button onClick={() => setShowTaskModal(false)}>
-          <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
-        </button>
-      </div>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-lg text-slate-900">Add Task</h3>
+              <button onClick={() => setShowTaskModal(false)}>
+                <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+              </button>
+            </div>
 
-      <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
-        <input
-          required
-          type="text"
-          placeholder="Task Title"
-          value={taskForm.title}
-          onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-        />
+            <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
+              <input
+                required
+                type="text"
+                placeholder="Task Title"
+                value={taskForm.title}
+                onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+              />
 
-        <textarea
-          placeholder="Description"
-          rows={2}
-          value={taskForm.description}
-          onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-        />
+              <textarea
+                placeholder="Description"
+                rows={2}
+                value={taskForm.description}
+                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+              />
 
-        {/* Added Task Type Dropdown */}
-        <select
-          value={taskForm.type}
-          onChange={(e) => setTaskForm({ ...taskForm, type: e.target.value })}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-        >
-          <option value="Assignment">Assignment</option>
-          <option value="Quiz">Quiz</option>
-          <option value="Project">Project</option>
-          <option value="Other">Other</option>
-        </select>
+              {/* Added Task Type Dropdown */}
+              <select
+                value={taskForm.type}
+                onChange={(e) => setTaskForm({ ...taskForm, type: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+              >
+                <option value="Assignment">Assignment</option>
+                <option value="Quiz">Quiz</option>
+                <option value="Project">Project</option>
+                <option value="Other">Other</option>
+              </select>
 
-        <input
-          required
-          type="date"
-          value={taskForm.dueDate}
-          onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-        />
+              <input
+                required
+                type="date"
+                value={taskForm.dueDate}
+                onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+              />
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={() => setShowTaskModal(false)}
-            className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl flex items-center gap-2"
-          >
-            {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Save Task
-          </button>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTaskModal(false)}
+                  className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl flex items-center gap-2"
+                >
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Save Task
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
 
       {/* CREATE ANNOUNCEMENT MODAL */}
       {showAnnouncementModal && (

@@ -9,7 +9,7 @@ export const createLiveSession = async (req, res) => {
 
     if (!title || !course || !scholarName || !meetingUrl || !scheduledAt) {
       return res.status(400).json({
-        message: "Please fill all required fields.",
+        message: "Please fill all required fields, including course selection.",
       });
     }
 
@@ -22,7 +22,10 @@ export const createLiveSession = async (req, res) => {
       createdBy: req.user?._id,
     });
 
-    const populatedSession = await newSession.populate("course", "title arabicTitle");
+    const populatedSession = await newSession.populate(
+      "course",
+      "title arabicTitle image"
+    );
 
     res.status(201).json({
       message: "Live session scheduled successfully",
@@ -36,11 +39,18 @@ export const createLiveSession = async (req, res) => {
   }
 };
 
-// @desc    Get all upcoming/active live sessions
+// @desc    Get all live sessions with auto status refresh
 // @route   GET /api/live-sessions
 // @access  Public / Authenticated
 export const getLiveSessions = async (req, res) => {
   try {
+    // Dynamic status auto-updater logic (Scheduled sessions whose time has passed)
+    const now = new Date();
+    await LiveSession.updateMany(
+      { scheduledAt: { $lte: now }, status: "Scheduled" },
+      { $set: { status: "Live" } }
+    );
+
     const sessions = await LiveSession.find()
       .populate("course", "title arabicTitle image")
       .sort({ scheduledAt: 1 });
@@ -51,6 +61,35 @@ export const getLiveSessions = async (req, res) => {
     res.status(500).json({
       message: "Failed to retrieve live sessions.",
     });
+  }
+};
+
+// @desc    Update session status (Admin manually change to Completed/Cancelled/Live)
+// @route   PATCH /api/live-sessions/:id/status
+// @access  Private/Admin
+export const updateSessionStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!["Scheduled", "Live", "Completed", "Cancelled"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value provided." });
+    }
+
+    const updatedSession = await LiveSession.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    ).populate("course", "title arabicTitle image");
+
+    if (!updatedSession) {
+      return res.status(404).json({ message: "Live session not found." });
+    }
+
+    res.status(200).json({
+      message: `Session status updated to ${status}`,
+      session: updatedSession,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update session status." });
   }
 };
 
