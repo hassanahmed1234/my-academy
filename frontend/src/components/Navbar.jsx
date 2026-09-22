@@ -42,16 +42,14 @@ const Navbar = () => {
 
   return (
     <header
-      className={`sticky z-50 transition-all duration-500 ${
-        scrolled ? "top-2 px-3 sm:px-6" : "top-0 px-0"
-      }`}
+      className={`sticky z-50 transition-all duration-500 ${scrolled ? "top-2 px-3 sm:px-6" : "top-0 px-0"
+        }`}
     >
       <nav
-        className={`max-w-7xl mx-auto transition-all duration-500 ${
-          scrolled
-            ? "rounded-2xl bg-emerald-950/85 backdrop-blur-2xl shadow-xl shadow-emerald-950/40 border border-emerald-800/50 py-2.5 px-5 sm:px-6"
-            : "rounded-none md:rounded-2xl bg-slate-950/80 backdrop-blur-md border-b md:border border-emerald-900/40 py-3.5 px-5 sm:px-8"
-        }`}
+        className={`max-w-7xl mx-auto transition-all duration-500 ${scrolled
+          ? "rounded-2xl bg-emerald-950/85 backdrop-blur-2xl shadow-xl shadow-emerald-950/40 border border-emerald-800/50 py-2.5 px-5 sm:px-6"
+          : "rounded-none md:rounded-2xl bg-slate-950/80 backdrop-blur-md border-b md:border border-emerald-900/40 py-3.5 px-5 sm:px-8"
+          }`}
       >
         <div className="flex justify-between items-center">
 
@@ -60,7 +58,7 @@ const Navbar = () => {
             <div className="relative">
               {/* Subtle Gold Aura Glow */}
               <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400 to-emerald-500 opacity-20 group-hover:opacity-60 blur transition duration-300"></div>
-              
+
               <div className="relative w-10 h-10 rounded-xl bg-emerald-950 border border-amber-500/40 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md">
                 <GraduationCap className="w-5 h-5 text-amber-400 group-hover:rotate-6 transition-transform" />
               </div>
@@ -87,9 +85,8 @@ const Navbar = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${
-                    active ? "text-slate-950 font-extrabold" : "text-emerald-100/70 hover:text-amber-300"
-                  }`}
+                  className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${active ? "text-slate-950 font-extrabold" : "text-emerald-100/70 hover:text-amber-300"
+                    }`}
                 >
                   {active && (
                     <span className="absolute inset-0 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 rounded-full shadow-lg shadow-amber-500/20 -z-10 transition-all duration-300"></span>
@@ -109,7 +106,9 @@ const Navbar = () => {
                   className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-amber-500/20 active:scale-95"
                 >
                   <LayoutDashboard className="w-4 h-4 text-slate-950" />
-                  <span>Student Portal</span>
+                  <span className="relative z-10 text-slate-950 group-hover:text-black transition-colors duration-300">
+                    {user?.role === "admin" ? "Admin Dashboard" : "Dashboard"}
+                  </span>
                 </Link>
 
                 <button
@@ -128,7 +127,7 @@ const Navbar = () => {
                 >
                   <User className="w-3.5 h-3.5 text-amber-400" /> Sign In
                 </Link>
-                
+
                 {/* Updated CTA Button */}
                 <Link
                   to="/register"
@@ -158,11 +157,10 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition ${
-                  isActive(link.path)
-                    ? "bg-amber-400/10 text-amber-400 border border-amber-400/30"
-                    : "text-emerald-100/80 hover:bg-emerald-900/40"
-                }`}
+                className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition ${isActive(link.path)
+                  ? "bg-amber-400/10 text-amber-400 border border-amber-400/30"
+                  : "text-emerald-100/80 hover:bg-emerald-900/40"
+                  }`}
               >
                 {link.name}
               </Link>
@@ -173,9 +171,21 @@ const Navbar = () => {
                 <Link
                   to={user?.role === "admin" ? "/admin/dashboard" : "/dashboard"}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs shadow-md shadow-amber-400/20"
+                  className="relative group overflow-hidden flex items-center justify-center gap-2.5 w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-slate-900 font-semibold text-xs tracking-wide rounded-xl shadow-sm shadow-amber-500/10 hover:shadow-xl hover:shadow-amber-400/25 border border-amber-300/60 hover:border-amber-200 transition-all duration-300 ease-out active:scale-[0.98]"
                 >
-                  <LayoutDashboard className="w-4 h-4" /> Student Portal
+                  {/* Ultra-Smooth Ambient Glow (Appears on Hover) */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out" />
+
+                  {/* Directional Shimmer Light Sweep */}
+                  <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000 ease-out" />
+
+                  {/* Icon with Subtle Lift */}
+                  <LayoutDashboard className="relative z-10 w-4 h-4 text-slate-900 opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 shrink-0" />
+
+                  {/* Text with Medium Weight & Clean Spacing */}
+                  <span className="relative z-10 text-slate-950 group-hover:text-black transition-colors duration-300">
+                    {user?.role === "admin" ? "Admin Portal" : "Student Portal"}
+                  </span>
                 </Link>
                 <button
                   onClick={() => {

@@ -5,7 +5,17 @@ import LiveSession from "../models/LiveSession.js";
 // @access  Private/Admin
 export const createLiveSession = async (req, res) => {
   try {
-    const { title, course, scholarName, meetingUrl, scheduledAt } = req.body;
+    const {
+      title,
+      description,
+      category,
+      thumbnail,
+      bannerImage,
+      course,
+      scholarName,
+      meetingUrl,
+      scheduledAt,
+    } = req.body;
 
     if (!title || !course || !scholarName || !meetingUrl || !scheduledAt) {
       return res.status(400).json({
@@ -15,6 +25,10 @@ export const createLiveSession = async (req, res) => {
 
     const newSession = await LiveSession.create({
       title,
+      description: description || "",
+      category: category || "General Talk",
+      thumbnail: thumbnail || "",
+      bannerImage: bannerImage || "",
       course,
       scholarName,
       meetingUrl,
@@ -64,20 +78,34 @@ export const getLiveSessions = async (req, res) => {
   }
 };
 
-// @desc    Update session status (Admin manually change to Completed/Cancelled/Live)
+// @desc    Update live session details / status
 // @route   PATCH /api/live-sessions/:id/status
 // @access  Private/Admin
 export const updateSessionStatus = async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!["Scheduled", "Live", "Completed", "Cancelled"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value provided." });
+    const { status, title, description, category, thumbnail, bannerImage, meetingUrl, scholarName, scheduledAt } = req.body;
+
+    const updateFields = {};
+    if (status) {
+      if (!["Scheduled", "Live", "Completed", "Cancelled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value provided." });
+      }
+      updateFields.status = status;
     }
+
+    if (title) updateFields.title = title;
+    if (description !== undefined) updateFields.description = description;
+    if (category) updateFields.category = category;
+    if (thumbnail !== undefined) updateFields.thumbnail = thumbnail;
+    if (bannerImage !== undefined) updateFields.bannerImage = bannerImage;
+    if (meetingUrl) updateFields.meetingUrl = meetingUrl;
+    if (scholarName) updateFields.scholarName = scholarName;
+    if (scheduledAt) updateFields.scheduledAt = scheduledAt;
 
     const updatedSession = await LiveSession.findByIdAndUpdate(
       req.params.id,
-      { status },
-      { new: true }
+      { $set: updateFields },
+      { new: true, runValidators: true }
     ).populate("course", "title arabicTitle image");
 
     if (!updatedSession) {
@@ -85,11 +113,12 @@ export const updateSessionStatus = async (req, res) => {
     }
 
     res.status(200).json({
-      message: `Session status updated to ${status}`,
+      message: "Live session updated successfully.",
       session: updatedSession,
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to update session status." });
+    console.error("Error updating session:", error);
+    res.status(500).json({ message: "Failed to update session." });
   }
 };
 

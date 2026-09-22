@@ -518,10 +518,12 @@ const AdminDashboard = () => {
 
   const [liveForm, setLiveForm] = useState({
     title: "",
-    course: "",
+    category: "General",
     scholarName: "",
     meetingUrl: "",
     scheduledAt: "",
+    thumbnail: "", // Image URL ke liye
+    description: "",
   });
 
   const [taskForm, setTaskForm] = useState({
@@ -1325,10 +1327,10 @@ const AdminDashboard = () => {
       )}
 
       {/* CREATE LIVE CLASS MODAL */}
-      
+
       {showLiveModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-lg text-slate-900">Schedule Live Class</h3>
               <button onClick={() => setShowLiveModal(false)}>
@@ -1337,61 +1339,126 @@ const AdminDashboard = () => {
             </div>
 
             <form onSubmit={handleCreateLiveSession} className="space-y-3 text-xs">
-              {/* Title */}
-              <input
-                required
-                type="text"
-                placeholder="Session Title"
-                value={liveForm.title}
-                onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-              />
+              {/* Session Title */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Session Title *
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., General Open Q&A Session"
+                  value={liveForm.title}
+                  onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
 
-              {/* Course Dropdown Selection (CRITICAL FIXED) */}
-              <select
-                required
-                value={liveForm.course}
-                onChange={(e) => setLiveForm({ ...liveForm, course: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-              >
-                <option value="">Select Associated Course...</option>
-                {coursesList.map((course) => (
-                  <option key={course._id} value={course._id}>
-                    {course.title} {course.arabicTitle ? `(${course.arabicTitle})` : ""}
-                  </option>
-                ))}
-              </select>
+              {/* Category Dropdown Selection */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Category / Type *
+                </label>
+                <select
+                  required
+                  value={liveForm.category}
+                  onChange={(e) => setLiveForm({ ...liveForm, category: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                >
+                  <option value="General">General Talk</option>
+                  <option value="QnA">Q&A Session</option>
+                  <option value="Webinar">Webinar</option>
+                  <option value="Special Lecture">Special Lecture</option>
+                  <option value="Workshop">Workshop</option>
+                </select>
+              </div>
 
-              {/* Scholar Name */}
-              <input
-                required
-                type="text"
-                placeholder="Scholar/Instructor Name"
-                value={liveForm.scholarName}
-                onChange={(e) => setLiveForm({ ...liveForm, scholarName: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-              />
+              {/* Thumbnail / Picture Field */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Thumbnail Image URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={liveForm.thumbnail}
+                  onChange={(e) => setLiveForm({ ...liveForm, thumbnail: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+                {liveForm.thumbnail && (
+                  <div className="mt-2 relative h-20 w-36 rounded-xl overflow-hidden border border-slate-200">
+                    <img
+                      src={liveForm.thumbnail}
+                      alt="Thumbnail Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Scholar / Instructor Name */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Scholar / Instructor Name *
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., Dr. Ahmad"
+                  value={liveForm.scholarName}
+                  onChange={(e) => setLiveForm({ ...liveForm, scholarName: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
 
               {/* Meeting URL */}
-              <input
-                required
-                type="url"
-                placeholder="Meeting URL (Zoom / Google Meet / Teams)"
-                value={liveForm.meetingUrl}
-                onChange={(e) => setLiveForm({ ...liveForm, meetingUrl: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-              />
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Meeting Link (Zoom / Google Meet / Youtube) *
+                </label>
+                <input
+                  required
+                  type="url"
+                  placeholder="https://zoom.us/j/..."
+                  value={liveForm.meetingUrl}
+                  onChange={(e) => setLiveForm({ ...liveForm, meetingUrl: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
 
               {/* Scheduled At */}
-              <input
-                required
-                type="datetime-local"
-                value={liveForm.scheduledAt}
-                onChange={(e) => setLiveForm({ ...liveForm, scheduledAt: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-              />
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Date & Time *
+                </label>
+                <input
+                  required
+                  type="datetime-local"
+                  value={liveForm.scheduledAt}
+                  onChange={(e) => setLiveForm({ ...liveForm, scheduledAt: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              {/* Description */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Description (Optional)
+                </label>
+                <textarea
+                  rows="2"
+                  placeholder="Brief details about what will be covered..."
+                  value={liveForm.description || ""}
+                  onChange={(e) => setLiveForm({ ...liveForm, description: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 resize-none"
+                />
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex justify-end gap-2 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowLiveModal(false)}
@@ -1402,7 +1469,7 @@ const AdminDashboard = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center gap-2"
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />} Schedule Broadcast
                 </button>

@@ -516,6 +516,7 @@ const fetchProfile = useCallback(async (forceRefresh = false) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userName');
     setUser(null);
     setIsAuthenticated(false);
     setDashboardData({

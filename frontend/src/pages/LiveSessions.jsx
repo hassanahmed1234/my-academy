@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from "react";
-import API from "../api/axiosInstance"; // Path update karein aapke axios instance setup ke mutabiq
+import API from "../api/axiosInstance";
 import {
   Video,
   Calendar,
   Clock,
   User,
-  BookOpen,
   Search,
   Bell,
   BellCheck,
   ExternalLink,
-  ChevronRight,
   Radio,
-  CheckCircle2,
-  CalendarDays,
-  CalendarPlus,
   Loader2,
   AlertCircle,
+  Tag,
+  Sparkles,
 } from "lucide-react";
 
 const LiveSessions = () => {
@@ -27,10 +24,9 @@ const LiveSessions = () => {
   // Filter States
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [courseFilter, setCourseFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [reminders, setReminders] = useState({});
-  const [selectedDate, setSelectedDate] = useState(new Date().getDate());
 
   // Fetch Live Sessions from Backend API
   const fetchLiveSessions = async () => {
@@ -67,34 +63,31 @@ const LiveSessions = () => {
   // Dynamic Filtering Logic
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch =
-      session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.scholarName.toLowerCase().includes(searchQuery.toLowerCase());
+      session.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      session.scholarName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      session.topic?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesCourse =
-      courseFilter === "all" || session.course?._id === courseFilter;
+    const matchesCategory =
+      categoryFilter === "all" ||
+      (session.category && session.category.toLowerCase() === categoryFilter.toLowerCase());
 
     const matchesStatus =
       statusFilter === "all" || session.status === statusFilter;
 
-    return matchesSearch && matchesCourse && matchesStatus;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  // Extract Unique Courses for Dropdown Filter
-  const uniqueCourses = Array.from(
-    new Set(
-      sessions
-        .map((s) => s.course)
-        .filter(Boolean)
-        .map((c) => JSON.stringify({ id: c._id, title: c.title }))
-    )
-  ).map((str) => JSON.parse(str));
+  // Unique Categories
+  const availableCategories = Array.from(
+    new Set(sessions.map((s) => s.category).filter(Boolean))
+  );
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="flex flex-col items-center gap-3 text-slate-600">
           <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
-          <p className="text-xs font-semibold">Loading Live Classrooms...</p>
+          <p className="text-xs font-semibold">Loading Live Broadcasts...</p>
         </div>
       </div>
     );
@@ -119,7 +112,7 @@ const LiveSessions = () => {
         <div className="text-center max-w-3xl mx-auto space-y-4 pt-6">
           <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-1.5 rounded-full text-emerald-800 text-xs font-semibold shadow-sm">
             <Radio className="w-4 h-4 text-emerald-600 animate-pulse" />
-            <span>Interactive Live Classroom</span>
+            <span>Interactive Live Sessions & Webinars</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
@@ -127,14 +120,14 @@ const LiveSessions = () => {
           </h1>
 
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-            Learn directly from qualified scholars through real-time interactive video classes, Q&A sessions, and guided study.
+            Join live discussions, open Q&A sessions, workshops, and lectures led by experts and scholars.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             {liveSession ? (
               <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 px-4 py-1.5 rounded-xl text-xs font-bold animate-pulse shadow-sm">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
-                <span>🔴 SESSION LIVE NOW</span>
+                <span>🔴 BROADCAST LIVE NOW</span>
               </div>
             ) : (
               <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-1.5 rounded-xl text-xs font-medium shadow-sm">
@@ -156,7 +149,27 @@ const LiveSessions = () => {
         {liveSession && (
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-50 via-white to-emerald-50 border-2 border-red-200 p-6 sm:p-8 shadow-xl">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-              <div className="md:col-span-8 space-y-4">
+              
+              {/* Thumbnail Container */}
+              <div className="md:col-span-4 h-48 w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                {liveSession.thumbnail || liveSession.bannerImage ? (
+                  <img
+                    src={liveSession.thumbnail || liveSession.bannerImage}
+                    alt={liveSession.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-red-100 via-amber-50 to-emerald-100 flex flex-col items-center justify-center p-4 text-center">
+                    <Sparkles className="w-8 h-8 text-red-600 mb-1 opacity-70" />
+                    <span className="text-slate-800 font-bold text-xs">
+                      {liveSession.category || "Live Stream"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Session Content */}
+              <div className="md:col-span-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="bg-red-600 text-white text-[10px] uppercase font-black px-3 py-1 rounded-full tracking-wider animate-pulse flex items-center gap-1.5 shadow-md">
                     <Radio className="w-3.5 h-3.5" /> LIVE NOW
@@ -170,34 +183,41 @@ const LiveSessions = () => {
                   <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                     {liveSession.title}
                   </h2>
+                  {liveSession.description && (
+                    <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                      {liveSession.description}
+                    </p>
+                  )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-700 pt-1">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-700 pt-1">
                   <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
                     <User className="w-3.5 h-3.5 text-amber-600" />
                     <span>{liveSession.scholarName}</span>
                   </div>
-                  {liveSession.course && (
-                    <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                      <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>{liveSession.course.title}</span>
+                  {liveSession.category && (
+                    <div className="flex items-center gap-1.5 bg-amber-50 text-amber-800 px-3 py-1.5 rounded-lg border border-amber-200 font-medium">
+                      <Tag className="w-3.5 h-3.5 text-amber-600" />
+                      <span>{liveSession.category}</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="md:col-span-4 flex flex-col justify-center items-stretch md:items-end gap-3">
+              {/* Join Action */}
+              <div className="md:col-span-3 flex flex-col justify-center items-stretch md:items-end gap-3">
                 <a
                   href={liveSession.meetingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 text-white font-extrabold px-6 py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-red-200 active:scale-95 transition-all text-center"
+                  className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 text-white font-extrabold px-6 py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-red-200 active:scale-95 transition-all text-center"
                 >
                   <Video className="w-4 h-4 animate-bounce" />
-                  <span>Join Live Classroom</span>
+                  <span>Join Live Stream</span>
                   <ExternalLink className="w-3.5 h-3.5 ml-1" />
                 </a>
               </div>
+
             </div>
           </div>
         )}
@@ -208,12 +228,32 @@ const LiveSessions = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-extrabold text-amber-700 uppercase tracking-widest bg-amber-100/80 border border-amber-300 px-3 py-1 rounded-md">
-                  ⭐ Next Scheduled Session
+                  ⭐ Featured Session
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                <div className="md:col-span-7 space-y-3">
+                
+                {/* Thumbnail Container */}
+                <div className="md:col-span-4 h-44 w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                  {nextSession.thumbnail || nextSession.bannerImage ? (
+                    <img
+                      src={nextSession.thumbnail || nextSession.bannerImage}
+                      alt={nextSession.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-emerald-100 via-amber-50 to-amber-100 flex flex-col items-center justify-center p-4 text-center">
+                      <Sparkles className="w-8 h-8 text-amber-600 mb-1 opacity-70" />
+                      <span className="text-slate-800 font-bold text-xs">
+                        {nextSession.category || "Upcoming Event"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Content Details */}
+                <div className="md:col-span-4 space-y-3">
                   <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900">
                     {nextSession.title}
                   </h3>
@@ -223,16 +263,17 @@ const LiveSessions = () => {
                       <User className="w-3.5 h-3.5 text-amber-600" />
                       {nextSession.scholarName}
                     </span>
-                    {nextSession.course && (
-                      <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
-                        <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-                        {nextSession.course.title}
+                    {nextSession.category && (
+                      <span className="flex items-center gap-1.5 bg-amber-50 text-amber-800 px-3 py-1.5 rounded-xl border border-amber-200 font-semibold shadow-sm">
+                        <Tag className="w-3.5 h-3.5 text-amber-600" />
+                        {nextSession.category}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="md:col-span-5 bg-white border border-emerald-200/80 rounded-2xl p-4 text-center space-y-3 shadow-sm">
+                {/* Time & Reminder Action */}
+                <div className="md:col-span-4 bg-white border border-emerald-200/80 rounded-2xl p-4 text-center space-y-3 shadow-sm">
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Scheduled At
                   </div>
@@ -269,6 +310,7 @@ const LiveSessions = () => {
                     </button>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -288,16 +330,6 @@ const LiveSessions = () => {
               >
                 All Sessions
               </button>
-              <button
-                onClick={() => setActiveTab("calendar")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === "calendar"
-                    ? "bg-amber-500 text-white shadow-md"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                📅 Calendar View
-              </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -305,26 +337,37 @@ const LiveSessions = () => {
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search sessions or scholars..."
+                  placeholder="Search topics, title, speaker..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-sm"
                 />
               </div>
 
+              {/* Category Dropdown Filter */}
               <select
-                value={courseFilter}
-                onChange={(e) => setCourseFilter(e.target.value)}
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
                 className="bg-white border border-slate-200 text-slate-700 text-xs rounded-xl px-3 py-2 outline-none focus:border-amber-500 shadow-sm"
               >
-                <option value="all">All Courses</option>
-                {uniqueCourses.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title}
-                  </option>
-                ))}
+                <option value="all">All Categories</option>
+                <option value="QnA">Q&A Session</option>
+                <option value="General Talk">General Talk</option>
+                <option value="Webinar">Webinar</option>
+                <option value="Special Lecture">Special Lecture</option>
+                {availableCategories
+                  .filter(
+                    (cat) =>
+                      !["QnA", "General Talk", "Webinar", "Special Lecture"].includes(cat)
+                  )
+                  .map((cat, idx) => (
+                    <option key={idx} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
               </select>
 
+              {/* Status Filter */}
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -344,101 +387,119 @@ const LiveSessions = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <span className="text-amber-600">•</span> Scheduled Classes
+              <span className="text-amber-600">•</span> Upcoming & Past Sessions
             </h2>
             <span className="text-xs text-slate-500">
               Showing {filteredSessions.length} total sessions
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSessions.map((session) => (
-              <div
-                key={session._id}
-                className="group bg-white border border-slate-200 hover:border-amber-400 rounded-3xl overflow-hidden transition-all duration-300 flex flex-col justify-between shadow-sm hover:shadow-md"
-              >
-                <div>
-                  <div className="relative h-36 bg-slate-100 overflow-hidden">
-                    {session.course?.image ? (
-                      <img
-                        src={session.course.image}
-                        alt={session.course.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">
-                        {session.course?.title || "Classroom"}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
+          {filteredSessions.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center text-slate-500 text-xs">
+              No live sessions found matching your criteria.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredSessions.map((session) => (
+                <div
+                  key={session._id}
+                  className="group bg-white border border-slate-200 hover:border-amber-400 rounded-3xl overflow-hidden transition-all duration-300 flex flex-col justify-between shadow-sm hover:shadow-md"
+                >
+                  <div>
+                    <div className="relative h-36 bg-slate-100 overflow-hidden">
+                      {session.thumbnail || session.bannerImage ? (
+                        <img
+                          src={session.thumbnail || session.bannerImage}
+                          alt={session.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-emerald-100 via-amber-50 to-amber-100 flex flex-col items-center justify-center p-4 text-center">
+                          <Sparkles className="w-6 h-6 text-amber-600 mb-1 opacity-70" />
+                          <span className="text-slate-800 font-bold text-xs line-clamp-1">
+                            {session.category || "Live Event"}
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
 
-                    <span className="absolute top-3 right-3 bg-white/90 border border-slate-200 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
-                      {session.status}
-                    </span>
-                  </div>
+                      <span
+                        className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm border ${
+                          session.status === "Live"
+                            ? "bg-red-500 text-white border-red-400 animate-pulse"
+                            : session.status === "Completed"
+                            ? "bg-slate-100 text-slate-600 border-slate-200"
+                            : "bg-white/90 text-slate-700 border-slate-200"
+                        }`}
+                      >
+                        {session.status}
+                      </span>
+                    </div>
 
-                  <div className="p-5 space-y-3">
-                    {session.course && (
-                      <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
-                        {session.course.title}
-                      </div>
-                    )}
+                    <div className="p-5 space-y-3">
+                      {session.category && (
+                        <div className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                          <Tag className="w-3 h-3 text-amber-600" />
+                          {session.category}
+                        </div>
+                      )}
 
-                    <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-600 transition-colors line-clamp-2">
-                      {session.title}
-                    </h3>
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-600 transition-colors line-clamp-2">
+                        {session.title}
+                      </h3>
 
-                    <div className="space-y-2 pt-1 text-xs text-slate-600 border-t border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span className="truncate">{session.scholarName}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>
-                          {new Date(session.scheduledAt).toLocaleDateString("en-US", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span>
-                          {new Date(session.scheduledAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                      <div className="space-y-2 pt-1 text-xs text-slate-600 border-t border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <User className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span className="truncate">{session.scholarName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>
+                            {new Date(session.scheduledAt).toLocaleDateString("en-US", {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span>
+                            {new Date(session.scheduledAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="p-5 pt-0 flex items-center gap-2">
-                  {session.status === "Live" || session.status === "Scheduled" ? (
-                    <a
-                      href={session.meetingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-white font-extrabold rounded-xl text-xs transition-all text-center flex items-center justify-center gap-1"
-                    >
-                      <span>Join Class</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  ) : (
-                    <button
-                      disabled
-                      className="w-full py-2 bg-slate-100 text-slate-400 font-bold rounded-xl text-xs text-center cursor-not-allowed"
-                    >
-                      {session.status}
-                    </button>
-                  )}
+                  <div className="p-5 pt-0 flex items-center gap-2">
+                    {session.status === "Live" || session.status === "Scheduled" ? (
+                      <a
+                        href={session.meetingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-white font-extrabold rounded-xl text-xs transition-all text-center flex items-center justify-center gap-1"
+                      >
+                        <span>Join Session</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full py-2 bg-slate-100 text-slate-400 font-bold rounded-xl text-xs text-center cursor-not-allowed"
+                      >
+                        {session.status}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

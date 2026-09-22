@@ -7,6 +7,26 @@ const liveSessionSchema = new mongoose.Schema(
       required: [true, "Session title is required"],
       trim: true,
     },
+    description: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    category: {
+      type: String,
+      trim: true,
+      default: "General Talk", // e.g. QnA, General Talk, Webinar, Special Lecture
+    },
+    thumbnail: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    bannerImage: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     course: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
