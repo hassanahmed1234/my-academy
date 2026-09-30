@@ -63,7 +63,7 @@ const AiAssistantButton = () => {
                                     AI Study Assistant
                                 </span>
 
-                               
+
 
                             </div>
                         </div>

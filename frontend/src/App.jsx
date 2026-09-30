@@ -23,6 +23,7 @@ import Leaderboard from "./pages/Leaderboard";
 import AiAssistantPage from "./pages/AiAssistantPage";
 import AiAssistantButton from "./components/AiAssistantButton"; // Integrated Floating Button
 import LiveSessions from "./pages/LiveSessions";
+import ManasikAcademy from "./pages/ManasikAcademy";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/ai-assistant" element={<AiAssistantPage />} />
               <Route path="/live-session" element={<LiveSessions />} />
+              <Route path="/manasik" element={<ManasikAcademy />} />
             </Route>
           </Route>
 

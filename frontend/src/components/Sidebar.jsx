@@ -5,6 +5,7 @@ import {
   Search,
   FileText,
   ClipboardList,
+  Compass,
   Calendar,
   Award,
   Bell,
@@ -121,6 +122,20 @@ const Sidebar = () => {
           >
             <ClipboardList className="w-4 h-4 shrink-0" />
             <span>Assignments</span>
+          </NavLink>
+
+          {/* Manasik Academy (Hajj & Umrah) */}
+          <NavLink
+            to="/manasik" // Ya jo route aapne App.jsx me set kiya ho
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:bg-slate-900 hover:text-white"
+              }`
+            }
+          >
+            <Compass className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>Manasik Academy</span>
           </NavLink>
 
           {/* Live Session */}

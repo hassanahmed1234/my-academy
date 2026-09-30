@@ -53,8 +53,25 @@ const AiAssistantPage = () => {
   // Fetch Daily AI Points on Load
   useEffect(() => {
     fetchPoints();
+    fetchChatHistory();
   }, []);
 
+  const fetchChatHistory = async () => {
+    try {
+      const { data } = await API.get("/ai/history");
+      if (data.success && data.chats.length > 0) {
+        const formattedChats = data.chats.map((c) => ({
+          id: c.chatId,
+          title: c.title,
+          messages: c.messages,
+        }));
+        setChats(formattedChats);
+        setActiveChatId(formattedChats[0].id);
+      }
+    } catch (err) {
+      console.error("Failed to fetch chat history:", err);
+    }
+  };
   const fetchPoints = async () => {
     try {
       setFetchingPoints(true);
@@ -132,19 +149,21 @@ const AiAssistantPage = () => {
 
     try {
       // 2. Call Backend API
-      const { data } = await API.post("/ai/ask", { prompt: userMessage });
-
+      const { data } = await API.post("/ai/ask", {
+        prompt: userMessage,
+        chatId: activeChatId
+      });
       if (data.success) {
         setChats((prev) =>
           prev.map((c) =>
             c.id === activeChatId
               ? {
-                  ...c,
-                  messages: [
-                    ...c.messages,
-                    { sender: "ai", text: data.answer },
-                  ],
-                }
+                ...c,
+                messages: [
+                  ...c.messages,
+                  { sender: "ai", text: data.answer },
+                ],
+              }
               : c
           )
         );
@@ -159,12 +178,12 @@ const AiAssistantPage = () => {
         prev.map((c) =>
           c.id === activeChatId
             ? {
-                ...c,
-                messages: [
-                  ...c.messages,
-                  { sender: "ai", text: `⚠️ ${errorMsg}`, isError: true },
-                ],
-              }
+              ...c,
+              messages: [
+                ...c.messages,
+                { sender: "ai", text: `⚠️ ${errorMsg}`, isError: true },
+              ],
+            }
             : c
         )
       );
@@ -174,7 +193,7 @@ const AiAssistantPage = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-100 overflow-hidden font-sans relative">
+    <div className="flex h-full w-full bg-slate-950 text-slate-100 overflow-hidden font-sans relative">
       {/* MOBILE BACKDROP OVERLAY */}
       {sidebarOpen && (
         <div
@@ -185,11 +204,10 @@ const AiAssistantPage = () => {
 
       {/* LEFT SIDEBAR (CHAT HISTORY) */}
       <aside
-        className={`fixed lg:relative top-0 bottom-0 left-0 z-40 flex flex-col justify-between bg-slate-900 border-r border-slate-800/80 transition-all duration-300 shrink-0 h-full ${
-          sidebarOpen
-            ? "w-72 translate-x-0"
-            : "-translate-x-full lg:translate-x-0 lg:w-16"
-        }`}
+        className={`fixed lg:relative top-0 bottom-0 left-0 z-40 flex flex-col justify-between bg-slate-900 border-r border-slate-800/80 transition-all duration-300 shrink-0 h-full ${sidebarOpen
+          ? "w-72 translate-x-0"
+          : "-translate-x-full lg:translate-x-0 lg:w-16"
+          }`}
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* SIDEBAR HEADER */}
@@ -211,9 +229,8 @@ const AiAssistantPage = () => {
           <div className="p-3 shrink-0">
             <button
               onClick={handleNewChat}
-              className={`w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/10 transition cursor-pointer ${
-                !sidebarOpen && "px-0"
-              }`}
+              className={`w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/10 transition cursor-pointer ${!sidebarOpen && "px-0"
+                }`}
             >
               <Plus className="w-4 h-4 stroke-[3] shrink-0" />
               {sidebarOpen && <span>New Chat</span>}
@@ -234,11 +251,10 @@ const AiAssistantPage = () => {
                     setActiveChatId(chat.id);
                     if (window.innerWidth < 1024) setSidebarOpen(false);
                   }}
-                  className={`group w-full p-2.5 rounded-xl text-xs font-medium flex items-center justify-between gap-2 cursor-pointer transition ${
-                    activeChatId === chat.id
-                      ? "bg-slate-800 text-amber-400 border border-amber-500/20"
-                      : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-                  }`}
+                  className={`group w-full p-2.5 rounded-xl text-xs font-medium flex items-center justify-between gap-2 cursor-pointer transition ${activeChatId === chat.id
+                    ? "bg-slate-800 text-amber-400 border border-amber-500/20"
+                    : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                    }`}
                 >
                   <div className="flex items-center gap-2 truncate min-w-0">
                     <MessageSquare className="w-4 h-4 shrink-0" />
@@ -315,11 +331,10 @@ const AiAssistantPage = () => {
 
           {/* POINTS BADGE */}
           <div
-            className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border flex items-center gap-1 sm:gap-1.5 shrink-0 transition ${
-              aiPoints > 0
-                ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                : "bg-rose-500/10 border-rose-500/30 text-rose-400"
-            }`}
+            className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border flex items-center gap-1 sm:gap-1.5 shrink-0 transition ${aiPoints > 0
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+              }`}
           >
             <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
             <span className="text-[11px] sm:text-xs font-black">
@@ -333,9 +348,8 @@ const AiAssistantPage = () => {
           {activeChat?.messages?.map((msg, index) => (
             <div
               key={index}
-              className={`flex gap-2.5 sm:gap-4 ${
-                msg.sender === "user" ? "justify-end" : "justify-start"
-              }`}
+              className={`flex gap-2.5 sm:gap-4 ${msg.sender === "user" ? "justify-end" : "justify-start"
+                }`}
             >
               {msg.sender === "ai" && (
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0 mt-0.5">
@@ -344,13 +358,12 @@ const AiAssistantPage = () => {
               )}
 
               <div
-                className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 sm:p-5 text-xs sm:text-sm leading-relaxed break-words ${
-                  msg.sender === "user"
-                    ? "bg-amber-500 text-slate-950 font-medium rounded-tr-none shadow-md shadow-amber-500/10"
-                    : msg.isError
+                className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 sm:p-5 text-xs sm:text-sm leading-relaxed break-words ${msg.sender === "user"
+                  ? "bg-amber-500 text-slate-950 font-medium rounded-tr-none shadow-md shadow-amber-500/10"
+                  : msg.isError
                     ? "bg-rose-950/40 border border-rose-500/30 text-rose-200 rounded-tl-none"
                     : "bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-sm"
-                }`}
+                  }`}
               >
                 {msg.sender === "user" ? (
                   <p className="whitespace-pre-wrap">{msg.text}</p>

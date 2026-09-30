@@ -416,7 +416,7 @@ const StudentDashboard = () => {
           {/* UPCOMING DEADLINES / TASKS */}
           <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-4 shadow-sm">
             <h3 className="text-xs font-extrabold tracking-widest uppercase text-slate-700 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-emerald-600" /> Pending Tasks
+              <FileText className="w-4 h-4 text-emerald-600" />Tasks
             </h3>
 
             <div className="space-y-3">
@@ -452,22 +452,7 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {/* QUICK RESOURCES */}
-          <div className="bg-gradient-to-br from-emerald-50 via-white to-slate-50 border border-emerald-100 rounded-3xl p-5 space-y-3 shadow-sm">
-            <h3 className="text-xs font-extrabold tracking-widest uppercase text-emerald-700 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-600" /> Quick
-              Resources
-            </h3>
-            <p className="text-xs text-slate-500">
-              Access course materials, notes, and community discussions.
-            </p>
-            <Link
-              to="/courses"
-              className="inline-flex items-center gap-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline pt-1"
-            >
-              Browse All Courses →
-            </Link>
-          </div>
+        
         </div>
       </div>
     </div>
