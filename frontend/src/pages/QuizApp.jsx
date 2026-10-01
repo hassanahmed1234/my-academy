@@ -218,8 +218,8 @@ const handleFinalSubmit = async (isAuto = false) => {
         <div className="space-y-6">
           <div className="border-b border-slate-200 pb-4">
             <span className="font-serif text-xl text-amber-600">الاختبارات</span>
-            <h1 className="text-2xl font-extrabold text-slate-900">Course Assessments & Quizzes</h1>
-            <p className="text-xs text-slate-500">Select an assessment to test your knowledge.</p>
+            <h1 className="text-2xl font-extrabold text-slate-900">Quizzes</h1>
+            <p className="text-xs text-slate-500">Select an Quiz to test your knowledge.</p>
           </div>
 
           {quizError && (
@@ -229,7 +229,8 @@ const handleFinalSubmit = async (isAuto = false) => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {quizzes.map((quiz) => (
+            {quizzes.map((quiz) => ( 
+              
               <div
                 key={quiz._id}
                 className="bg-white border border-slate-200 p-5 rounded-2xl flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition"

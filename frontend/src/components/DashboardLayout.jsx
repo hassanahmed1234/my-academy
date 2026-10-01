@@ -23,7 +23,7 @@ const DashboardLayout = () => {
             onClick={() => setIsMobileMenuOpen(false)}
           />
           {/* Sidebar Drawer Container */}
-          <div className="relative z-10 w-64 h-full bg-white flex flex-col shadow-2xl animate-in slide-in-from-left duration-200">
+          <div className="relative z-10 w-64 h-full  flex flex-col shadow-2xl animate-in slide-in-from-left duration-200">
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 transition"

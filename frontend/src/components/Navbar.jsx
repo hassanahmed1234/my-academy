@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { GraduationCap, LogOut, Menu, X, Sparkles, LayoutDashboard, User, Compass } from "lucide-react";
+import { GraduationCap, LogOut, Menu, X, LayoutDashboard, User, Compass } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
@@ -42,34 +42,45 @@ const Navbar = () => {
 
   return (
     <header
-      className={`sticky z-50 transition-all duration-500 ${scrolled ? "top-2 px-3 sm:px-6" : "top-0 px-0"
-        }`}
+      data-aos="fade-down"
+      data-aos-duration="600"
+      data-aos-once="true"
+      className={`sticky z-50 transition-all duration-500 ease-out ${
+        scrolled ? "top-2 px-3 sm:px-6" : "top-0 px-0"
+      }`}
     >
       <nav
-        className={`max-w-7xl mx-auto transition-all duration-500 ${scrolled
-          ? "rounded-2xl bg-emerald-950/85 backdrop-blur-2xl shadow-xl shadow-emerald-950/40 border border-emerald-800/50 py-2.5 px-5 sm:px-6"
-          : "rounded-none md:rounded-2xl bg-slate-950/80 backdrop-blur-md border-b md:border border-emerald-900/40 py-3.5 px-5 sm:px-8"
-          }`}
+        className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${
+          scrolled
+            ? "rounded-2xl bg-emerald-950/85 backdrop-blur-2xl shadow-2xl shadow-emerald-950/50 border border-emerald-800/60 py-2.5 px-5 sm:px-6"
+            : "rounded-none md:rounded-2xl bg-slate-950/80 backdrop-blur-md border-b md:border border-emerald-900/40 py-3.5 px-5 sm:px-8"
+        }`}
       >
         <div className="flex justify-between items-center">
-
           {/* Islamic Brand Logo & Crest */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link
+            to="/"
+            data-aos="fade-right"
+            data-aos-delay="150"
+            className="flex items-center gap-3 group"
+          >
             <div className="relative">
               {/* Subtle Gold Aura Glow */}
-              <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400 to-emerald-500 opacity-20 group-hover:opacity-60 blur transition duration-300"></div>
+              <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-500 opacity-30 group-hover:opacity-80 blur transition duration-500 group-hover:scale-110"></div>
 
-              <div className="relative w-10 h-10 rounded-xl bg-emerald-950 border border-amber-500/40 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md">
-                <GraduationCap className="w-5 h-5 text-amber-400 group-hover:rotate-6 transition-transform" />
+              <div className="relative w-10 h-10 rounded-xl bg-emerald-950 border border-amber-500/40 flex items-center justify-center group-hover:scale-105 group-hover:border-amber-400/80 transition-all duration-300 shadow-md">
+                <GraduationCap className="w-5 h-5 text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
               </div>
             </div>
 
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xl font-black tracking-tight text-white group-hover:text-amber-400 transition">
+                <span className="text-xl font-black tracking-tight text-white group-hover:text-amber-400 transition-colors duration-300">
                   E-Islam
                 </span>
-                <span className="text-amber-400 text-xs tracking-wider font-serif">◈</span>
+                <span className="text-amber-400 text-xs tracking-wider font-serif group-hover:rotate-45 transition-transform duration-500 inline-block">
+                  ◈
+                </span>
               </div>
               <span className="block text-[9px] text-amber-400/90 tracking-widest uppercase font-semibold">
                 Islamic Academy
@@ -77,19 +88,28 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* Center Navigation - Deep Islamic Pill Styling */}
-          <div className="hidden md:flex items-center bg-emerald-950/60 p-1.5 rounded-full border border-emerald-800/40 backdrop-blur-md shadow-inner">
-            {navLinks.map((link) => {
+          {/* Center Navigation - Staggered Pill Links */}
+          <div
+            data-aos="zoom-in"
+            data-aos-delay="250"
+            className="hidden md:flex items-center bg-emerald-950/60 p-1.5 rounded-full border border-emerald-800/40 backdrop-blur-md shadow-inner"
+          >
+            {navLinks.map((link, idx) => {
               const active = isActive(link.path);
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${active ? "text-slate-950 font-extrabold" : "text-emerald-100/70 hover:text-amber-300"
-                    }`}
+                  data-aos="fade-down"
+                  data-aos-delay={300 + idx * 80}
+                  className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${
+                    active
+                      ? "text-slate-950 font-extrabold shadow-sm"
+                      : "text-emerald-100/70 hover:text-amber-300 hover:scale-105 active:scale-95"
+                  }`}
                 >
                   {active && (
-                    <span className="absolute inset-0 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 rounded-full shadow-lg shadow-amber-500/20 -z-10 transition-all duration-300"></span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 rounded-full shadow-lg shadow-amber-500/25 -z-10 transition-all duration-300"></span>
                   )}
                   {link.name}
                 </Link>
@@ -98,22 +118,27 @@ const Navbar = () => {
           </div>
 
           {/* Auth Actions */}
-          <div className="hidden md:flex items-center gap-3">
+          <div
+            data-aos="fade-left"
+            data-aos-delay="350"
+            className="hidden md:flex items-center gap-3"
+          >
             {token ? (
               <div className="flex items-center gap-3 pl-2">
                 <Link
                   to={user?.role === "admin" ? "/admin/dashboard" : "/dashboard"}
-                  className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-amber-500/20 active:scale-95"
+                  className="group relative overflow-hidden inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all duration-300 shadow-md shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 active:scale-95"
                 >
-                  <LayoutDashboard className="w-4 h-4 text-slate-950" />
-                  <span className="relative z-10 text-slate-950 group-hover:text-black transition-colors duration-300">
+                  <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-700 ease-out" />
+                  <LayoutDashboard className="w-4 h-4 text-slate-950 group-hover:rotate-6 transition-transform duration-300" />
+                  <span className="relative z-10 text-slate-950">
                     {user?.role === "admin" ? "Admin Dashboard" : "Dashboard"}
                   </span>
                 </Link>
 
                 <button
                   onClick={handleLogout}
-                  className="p-2.5 text-emerald-200/60 hover:text-red-400 hover:bg-red-500/10 border border-emerald-900/60 hover:border-red-500/30 rounded-xl transition-all duration-200 active:scale-95"
+                  className="p-2.5 text-emerald-200/60 hover:text-red-400 hover:bg-red-500/10 border border-emerald-900/60 hover:border-red-500/30 rounded-xl transition-all duration-300 active:scale-90 hover:rotate-12"
                   title="Logout"
                 >
                   <LogOut className="w-4 h-4" />
@@ -123,17 +148,17 @@ const Navbar = () => {
               <div className="flex items-center gap-3">
                 <Link
                   to="/login"
-                  className="text-xs font-medium text-emerald-100/80 hover:text-amber-300 transition px-3 py-2 flex items-center gap-1.5"
+                  className="text-xs font-medium text-emerald-100/80 hover:text-amber-300 transition-all duration-300 px-3 py-2 flex items-center gap-1.5 hover:scale-105"
                 >
                   <User className="w-3.5 h-3.5 text-amber-400" /> Sign In
                 </Link>
 
-                {/* Updated CTA Button */}
                 <Link
                   to="/register"
-                  className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-1.5"
+                  className="group relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all duration-300 shadow-md shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-400/30 active:scale-95 flex items-center gap-1.5"
                 >
-                  <Compass className="w-3.5 h-3.5" />
+                  <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-700 ease-out" />
+                  <Compass className="w-3.5 h-3.5 group-hover:rotate-45 transition-transform duration-300" />
                   <span>Enroll Now</span>
                 </Link>
               </div>
@@ -143,24 +168,35 @@ const Navbar = () => {
           {/* Mobile Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-emerald-200 p-2 bg-emerald-950/80 rounded-xl border border-emerald-800/60 transition active:scale-95"
+            className="md:hidden text-emerald-200 p-2 bg-emerald-950/80 rounded-xl border border-emerald-800/60 transition-transform duration-200 active:scale-90 hover:border-amber-400/50"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6 text-amber-400" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6 text-amber-400 rotate-90 transition-transform duration-300" />
+            ) : (
+              <Menu className="w-6 h-6 transition-transform duration-300" />
+            )}
           </button>
         </div>
 
         {/* Mobile Dropdown Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t border-emerald-800/50 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-            {navLinks.map((link) => (
+          <div
+            data-aos="fade-down"
+            data-aos-duration="300"
+            className="md:hidden mt-4 pt-4 border-t border-emerald-800/50 space-y-2"
+          >
+            {navLinks.map((link, idx) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition ${isActive(link.path)
-                  ? "bg-amber-400/10 text-amber-400 border border-amber-400/30"
-                  : "text-emerald-100/80 hover:bg-emerald-900/40"
-                  }`}
+                data-aos="fade-up"
+                data-aos-delay={idx * 50}
+                className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  isActive(link.path)
+                    ? "bg-amber-400/10 text-amber-400 border border-amber-400/30 shadow-inner"
+                    : "text-emerald-100/80 hover:bg-emerald-900/40 hover:pl-6"
+                }`}
               >
                 {link.name}
               </Link>
@@ -173,17 +209,8 @@ const Navbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="relative group overflow-hidden flex items-center justify-center gap-2.5 w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-slate-900 font-semibold text-xs tracking-wide rounded-xl shadow-sm shadow-amber-500/10 hover:shadow-xl hover:shadow-amber-400/25 border border-amber-300/60 hover:border-amber-200 transition-all duration-300 ease-out active:scale-[0.98]"
                 >
-                  {/* Ultra-Smooth Ambient Glow (Appears on Hover) */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out" />
-
-                  {/* Directional Shimmer Light Sweep */}
-                  <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000 ease-out" />
-
-                  {/* Icon with Subtle Lift */}
-                  <LayoutDashboard className="relative z-10 w-4 h-4 text-slate-900 opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 shrink-0" />
-
-                  {/* Text with Medium Weight & Clean Spacing */}
-                  <span className="relative z-10 text-slate-950 group-hover:text-black transition-colors duration-300">
+                  <LayoutDashboard className="relative z-10 w-4 h-4 text-slate-900 shrink-0" />
+                  <span className="relative z-10 text-slate-950 font-bold">
                     {user?.role === "admin" ? "Admin Portal" : "Student Portal"}
                   </span>
                 </Link>
@@ -192,7 +219,7 @@ const Navbar = () => {
                     handleLogout();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs font-semibold transition"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-95"
                 >
                   <LogOut className="w-4 h-4" /> Logout
                 </button>
@@ -202,14 +229,14 @@ const Navbar = () => {
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-center py-2.5 text-xs font-medium text-emerald-100 bg-emerald-950 rounded-xl border border-emerald-800/60"
+                  className="text-center py-2.5 text-xs font-medium text-emerald-100 bg-emerald-950 rounded-xl border border-emerald-800/60 active:scale-95 transition-all duration-200"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-center py-2.5 text-xs font-extrabold text-slate-950 bg-amber-400 rounded-xl shadow-md"
+                  className="text-center py-2.5 text-xs font-extrabold text-slate-950 bg-amber-400 rounded-xl shadow-md active:scale-95 transition-all duration-200"
                 >
                   Enroll Now
                 </Link>

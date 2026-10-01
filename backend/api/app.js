@@ -4,7 +4,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-
+import redisRoutes from "../routes/redisRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import liveSessionRoutes from "./routes/liveSessionRoutes.js";
@@ -101,6 +101,7 @@ app.use("/api/assignment", assignmentRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/xp", xpRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/redis", redisRoutes);
 
 // Base Route
 app.get("/", (req, res) => {

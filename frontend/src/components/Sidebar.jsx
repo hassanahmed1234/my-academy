@@ -1,4 +1,7 @@
+import { useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import AOS from "aos";
+import "aos/dist/aos.css";
 import {
   LayoutDashboard,
   BookOpen,
@@ -6,16 +9,12 @@ import {
   FileText,
   ClipboardList,
   Compass,
-  Calendar,
-  Award,
-  Bell,
-  User,
-  Settings,
-  LogOut,
+  Video,
+  Trophy,
   Bot,
   Sparkles,
-  Trophy,
-  Video,
+  User,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -23,202 +22,173 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
+  // Initialize AOS
+  useEffect(() => {
+    AOS.init({
+      duration: 700,
+      easing: "ease-out-cubic",
+      once: true,
+    });
+    AOS.refresh();
+  }, []);
 
   const handleLogout = async () => {
-    await logout()
+    await logout();
     navigate("/login");
   };
 
+  // Structured Navigation Config
+  const navSections = [
+    {
+      title: "Overview",
+      items: [
+        { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+        { label: "Browse Courses", path: "/courses", icon: Search },
+      ],
+    },
+    {
+      title: "Learning Hub",
+      items: [
+        { label: "My Courses", path: "/my-courses", icon: BookOpen },
+        { label: "Quizzes", path: "/quizzes", icon: FileText },
+        { label: "Assignments", path: "/assignments", icon: ClipboardList },
+        { label: "Live Sessions", path: "/live-session", icon: Video },
+        { label: "Manasik Academy", path: "/manasik", icon: Compass },
+      ],
+    },
+    {
+      title: "Community & AI",
+      items: [
+        { label: "Leaderboard", path: "/leaderboard", icon: Trophy },
+        {
+          label: "AI Study Assistant",
+          path: "/ai-assistant",
+          icon: Bot,
+          badge: "Live",
+          isAi: true,
+        },
+      ],
+    },
+    {
+      title: "Account",
+      items: [{ label: "Profile Settings", path: "/profile", icon: User }],
+    },
+  ];
+
+  // Track global index across sections for staggered animation delay
+  let globalItemIndex = 0;
+
   return (
-    <aside className="w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col h-screen select-none">
-      {/* 1. LOGO HEADER */}
+    <aside 
+      data-aos="fade-right" 
+      data-aos-duration="600" 
+      className="w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col h-screen select-none"
+    >
+      {/* 1. BRAND HEADER */}
       <NavLink
         to="/"
-        className="p-6 border-b border-slate-800/80 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-lg">
+        data-aos="fade-down"
+        data-aos-delay="100"
+        className="p-5 border-b border-slate-800/80 flex items-center gap-3.5 hover:bg-slate-900/60 transition duration-200"
+      >
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black text-lg shrink-0">
           🕌
         </div>
-        <div>
-          <h1 className="text-sm font-bold text-white tracking-wide">E-Islam</h1>
-          <p className="text-[10px] text-amber-400 font-medium tracking-widest uppercase">Learning Hub</p>
+        <div className="min-w-0">
+          <h1 className="text-sm font-extrabold text-slate-100 tracking-wide truncate">
+            E-Islam
+          </h1>
+          <p className="text-[10px] text-emerald-400 font-bold tracking-widest uppercase truncate">
+            Learning Hub
+          </p>
         </div>
       </NavLink>
 
-      {/* 2. NAVIGATION LINKS SCROLLABLE AREA */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scrollbar-none">
-
-        {/* MAIN SECTION */}
-        <div className="space-y-1.5">
-          <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">Main</p>
-
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
+      {/* 2. NAVIGATION SECTIONS */}
+      <div className="flex-1 overflow-y-auto px-3.5 py-5 space-y-6 scrollbar-thin scrollbar-thumb-slate-800">
+        {navSections.map((section, idx) => (
+          <div 
+            key={idx} 
+            className="space-y-1"
+            data-aos="fade-up"
+            data-aos-delay={150 + idx * 100}
           >
-            <LayoutDashboard className="w-4 h-4 shrink-0" />
-            <span>Dashboard</span>
-          </NavLink>
+            <p className="px-3 text-[10px] font-bold tracking-widest text-slate-500 uppercase">
+              {section.title}
+            </p>
 
-          <NavLink
-            to="/my-courses"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
-          >
-            <BookOpen className="w-4 h-4 shrink-0" />
-            <span>My Courses</span>
-          </NavLink>
+            <div className="space-y-1 pt-1">
+              {section.items.map((item) => {
+                const IconComponent = item.icon;
+                globalItemIndex += 1;
+                const itemDelay = 200 + globalItemIndex * 50;
 
-          <NavLink
-            to="/courses"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
-          >
-            <Search className="w-4 h-4 shrink-0" />
-            <span>Browse Courses</span>
-          </NavLink>
-        </div>
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `group relative flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold border transition-all duration-300 ease-out ${
+                        isActive
+                          ? item.isAi
+                            ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-950/50 font-bold"
+                            : "bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-extrabold border-emerald-400 shadow-md shadow-emerald-500/20"
+                          : item.isAi
+                          ? "bg-slate-900/80 text-emerald-400 border-emerald-500/20 hover:bg-emerald-950/40 hover:border-emerald-500/40 hover:text-emerald-300"
+                          : "text-slate-400 border-transparent hover:bg-slate-900 hover:text-emerald-300 hover:border-slate-800"
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <IconComponent
+                            className={`w-4 h-4 shrink-0 transition-colors duration-200 ${
+                              isActive && !item.isAi
+                                ? "text-slate-950"
+                                : isActive && item.isAi
+                                ? "text-emerald-400"
+                                : item.iconColor
+                                ? item.iconColor
+                                : "text-slate-400 group-hover:text-emerald-400"
+                            }`}
+                          />
+                          <span className="truncate">{item.label}</span>
+                        </div>
 
-        {/* LEARNING SECTION (DISABLED / COMING SOON) */}
-        <div className="space-y-1.5">
-          <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">Learning</p>
-
-          {/* Quizzes */}
-          <NavLink
-            to="/quizzes"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
-          >
-            <FileText className="w-4 h-4 shrink-0" />
-            <span>Quizzes</span>
-          </NavLink>
-
-
-          {/* Assignments */}
-          <NavLink
-            to="/assignments"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
-          >
-            <ClipboardList className="w-4 h-4 shrink-0" />
-            <span>Assignments</span>
-          </NavLink>
-
-          {/* Manasik Academy (Hajj & Umrah) */}
-          <NavLink
-            to="/manasik" // Ya jo route aapne App.jsx me set kiya ho
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
-          >
-            <Compass className="w-4 h-4 shrink-0 text-amber-400" />
-            <span>Manasik Academy</span>
-          </NavLink>
-
-          {/* Live Session */}
-          <NavLink
-            to="/live-session"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
-          >
-            <Video className="w-4 h-4 shrink-0" />
-            <span>Live Session</span>
-          </NavLink>
-
-          {/* Leaderboard */}
-          <NavLink
-            to="/leaderboard"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
-          >
-            <Trophy className="w-4 h-4 shrink-0" />
-            <span>Leaderboard</span>
-          </NavLink>
-
-          {/* AI Study Assistant Link */}
-          <NavLink
-            to="/ai-assistant"
-            className={({ isActive }) =>
-              `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${isActive
-                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-              }`
-            }
-          >
-            <div className="flex items-center gap-3">
-              <Bot className="w-4 h-4 shrink-0 text-amber-400" />
-              <span>AI Study Assistant</span>
+                        {item.badge && (
+                          <span
+                            className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 transition shadow-sm ${
+                              isActive
+                                ? "bg-emerald-900/60 text-emerald-200 border border-emerald-500/30"
+                                : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20"
+                            }`}
+                          >
+                            <Sparkles className="w-2.5 h-2.5" /> {item.badge}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                );
+              })}
             </div>
-
-            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
-              <Sparkles className="w-2.5 h-2.5" /> Live
-            </span>
-          </NavLink>
-        </div>
-
-        {/* ACCOUNT SECTION */}
-        <div className="space-y-1.5">
-          <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">Account</p>
-
-
-
-          <NavLink
-            to="/profile"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`
-            }
-          >
-            <User className="w-4 h-4 shrink-0" />
-            <span>Profile</span>
-          </NavLink>
-
-
-        </div>
-
+          </div>
+        ))}
       </div>
 
-      {/* 3. LOGOUT FOOTER BUTTON */}
-      <div className="p-4 border-t border-slate-800/80">
+      {/* 3. FOOTER LOGOUT */}
+      <div 
+        className="p-3.5 border-t border-slate-800/80 bg-slate-950"
+        data-aos="fade-up"
+        data-aos-delay="650"
+      >
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition cursor-pointer"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-400/90 hover:text-rose-300 bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/30 transition-all duration-200 cursor-pointer shadow-sm"
         >
-          <LogOut className="w-4 h-4 shrink-0" />
-          <span>Logout</span>
+          <LogOut className="w-4 h-4 shrink-0 text-rose-400 group-hover:text-rose-300" />
+          <span>Logout Account</span>
         </button>
       </div>
     </aside>
