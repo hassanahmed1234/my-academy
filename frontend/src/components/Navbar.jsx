@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { GraduationCap, LogOut, Menu, X, LayoutDashboard, User, Compass } from "lucide-react";
+import AOS from "aos";
 import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
@@ -12,7 +13,7 @@ const Navbar = () => {
   const token = localStorage.getItem("token");
   const { user, logout } = useAuth();
 
-  // Scroll Detection Logic
+  // Handle Scroll & AOS Refresh
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -22,9 +23,14 @@ const Navbar = () => {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Refresh AOS on Route Change to prevent layout flickering
+  useEffect(() => {
+    AOS.refresh();
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -42,17 +48,14 @@ const Navbar = () => {
 
   return (
     <header
-      data-aos="fade-down"
-      data-aos-duration="600"
-      data-aos-once="true"
-      className={`sticky z-50 transition-all duration-500 ease-out ${
-        scrolled ? "top-2 px-3 sm:px-6" : "top-0 px-0"
+      className={`sticky top-0 z-50 w-full transition-all duration-500 ease-in-out ${
+        scrolled ? "pt-2 px-3 sm:px-6" : "pt-0 px-0"
       }`}
     >
       <nav
         className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${
           scrolled
-            ? "rounded-2xl bg-emerald-950/85 backdrop-blur-2xl shadow-2xl shadow-emerald-950/50 border border-emerald-800/60 py-2.5 px-5 sm:px-6"
+            ? "rounded-2xl bg-emerald-950/90 backdrop-blur-xl shadow-2xl shadow-emerald-950/60 border border-emerald-800/60 py-2.5 px-5 sm:px-6"
             : "rounded-none md:rounded-2xl bg-slate-950/80 backdrop-blur-md border-b md:border border-emerald-900/40 py-3.5 px-5 sm:px-8"
         }`}
       >
@@ -61,11 +64,12 @@ const Navbar = () => {
           <Link
             to="/"
             data-aos="fade-right"
-            data-aos-delay="150"
+            data-aos-duration="600"
+            data-aos-once="true"
             className="flex items-center gap-3 group"
           >
             <div className="relative">
-              {/* Subtle Gold Aura Glow */}
+              {/* Gold Aura Glow */}
               <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-500 opacity-30 group-hover:opacity-80 blur transition duration-500 group-hover:scale-110"></div>
 
               <div className="relative w-10 h-10 rounded-xl bg-emerald-950 border border-amber-500/40 flex items-center justify-center group-hover:scale-105 group-hover:border-amber-400/80 transition-all duration-300 shadow-md">
@@ -90,18 +94,17 @@ const Navbar = () => {
 
           {/* Center Navigation - Staggered Pill Links */}
           <div
-            data-aos="zoom-in"
-            data-aos-delay="250"
+            data-aos="fade-down"
+            data-aos-duration="600"
+            data-aos-once="true"
             className="hidden md:flex items-center bg-emerald-950/60 p-1.5 rounded-full border border-emerald-800/40 backdrop-blur-md shadow-inner"
           >
-            {navLinks.map((link, idx) => {
+            {navLinks.map((link) => {
               const active = isActive(link.path);
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  data-aos="fade-down"
-                  data-aos-delay={300 + idx * 80}
                   className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${
                     active
                       ? "text-slate-950 font-extrabold shadow-sm"
@@ -120,7 +123,8 @@ const Navbar = () => {
           {/* Auth Actions */}
           <div
             data-aos="fade-left"
-            data-aos-delay="350"
+            data-aos-duration="600"
+            data-aos-once="true"
             className="hidden md:flex items-center gap-3"
           >
             {token ? (
@@ -179,19 +183,17 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Dropdown Drawer */}
-        {mobileMenuOpen && (
-          <div
-            data-aos="fade-down"
-            data-aos-duration="300"
-            className="md:hidden mt-4 pt-4 border-t border-emerald-800/50 space-y-2"
-          >
-            {navLinks.map((link, idx) => (
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+            mobileMenuOpen ? "max-h-96 opacity-100 mt-4 pt-4 border-t border-emerald-800/50" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="space-y-2">
+            {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                data-aos="fade-up"
-                data-aos-delay={idx * 50}
                 className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                   isActive(link.path)
                     ? "bg-amber-400/10 text-amber-400 border border-amber-400/30 shadow-inner"
@@ -243,7 +245,7 @@ const Navbar = () => {
               </div>
             )}
           </div>
-        )}
+        </div>
       </nav>
     </header>
   );
