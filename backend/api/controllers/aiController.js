@@ -33,115 +33,123 @@ export const getAiPoints = async (req, res) => {
 // @route   POST /api/ai/ask
 // @access  Private (Auth required)
 export const askAiAssistant = async (req, res) => {
-  try {
-    const { prompt, chatId } = req.body;
+    try {
+        const { prompt } = req.body;
 
-    if (!prompt || prompt.trim() === "") {
-      return res.status(400).json({ message: "Prompt is required" });
-    }
+        if (!prompt || prompt.trim() === "") {
+            return res.status(400).json({ message: "Prompt is required" });
+        }
 
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-    // Check & Reset Daily Points
-    await user.checkAndResetAiPoints();
+        // Check & Reset Daily Points
+        await user.checkAndResetAiPoints();
 
-    if (user.aiPoints <= 0) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Aapke aaj ke 10 AI Points khatam ho chuke hain! Kal dubara 10 points milenge.",
-        aiPoints: 0,
-      });
-    }
+        if (user.aiPoints <= 0) {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "Aapke aaj ke 10 AI Points khatam ho chuke hain! Kal dubara 10 points milenge.",
+                remainingPoints: 0,
+            });
+        }
 
-    // AI Call
-    const systemInstruction = `... (Aapka System Instruction) ...`;
+        // --- STRICT VISUAL LEARNING CANVAS SYSTEM INSTRUCTION ---
+        const systemInstruction = `
+    You are an expert Islamic & Educational Visual Learning Architect.
+    Your task is to ALWAYS convert any user prompt or educational topic into a strictly formatted JSON object for an interactive Visual Learning Canvas UI.
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
-      contents: prompt,
-      config: {
-        systemInstruction,
-        temperature: 0.7,
+    CRITICAL RULES:
+    1. Respond ONLY with valid, raw JSON. Do NOT include markdown code blocks like \`\`\`json or explanation text.
+    2. Structure must adhere STRICTLY to this schema:
+    {
+      "badge": "AI Visual Learning Studio",
+      "title_ur": "Urdu/Arabic Title of Topic",
+      "subtitle": "English Title or Subtitle",
+      "header_banner": {
+        "title_ar": "Main Arabic/Primary Concept Title",
+        "subtitle": "English Explanation Banner Title"
       },
-    });
-
-    const aiAnswer = response.text;
-
-    // AI Point Deduct
-    user.aiPoints -= 1;
-    await user.save();
-
-    // --- DB ME CHAT SAVE / UPDATE LOGIC ---
-    const activeChatId = chatId || `chat-${Date.now()}`;
-    const userMessage = prompt.trim();
-
-    let chatSession = await ChatHistory.findOne({
-      user: user._id,
-      chatId: activeChatId,
-    });
-
-    if (!chatSession) {
-      // Auto-generate Title
-      const generatedTitle =
-        userMessage.length > 25
-          ? userMessage.substring(0, 25) + "..."
-          : userMessage;
-
-      chatSession = new ChatHistory({
-        user: user._id,
-        chatId: activeChatId,
-        title: generatedTitle,
-        messages: [
-          { sender: "user", text: userMessage },
-          { sender: "ai", text: aiAnswer },
-        ],
-      });
-    } else {
-      chatSession.messages.push(
-        { sender: "user", text: userMessage },
-        { sender: "ai", text: aiAnswer }
-      );
-      // TTL reset karne ke liye createdAt update kar sakte hain
-      chatSession.createdAt = new Date();
+      "nodes": [
+        {
+          "id": "node-1",
+          "number": "01",
+          "title_ar": "Arabic/Main Concept Name",
+          "title_en": "English Translation Name",
+          "short_desc": "Short overview of this node (1-2 lines)",
+          "definition": "Detailed definition and primary meaning",
+          "explanation": "Detailed explanation of this point",
+          "example": "Practical real-world example or reference",
+          "activity": {
+            "question": "A multiple-choice quiz question related to this node?",
+            "options": ["Option A", "Option B", "Option C"],
+            "correctIndex": 1
+          }
+        }
+      ]
     }
+    3. Generate 3 to 4 nodes depending on the topic.
+    4. Keep language mix: Arabic for terms, English/Roman Urdu for definitions & questions.
+    `;
 
-    await chatSession.save();
+        // Gemini API Call with JSON Enforcement
+        const response = await ai.models.generateContent({
+            model: "gemini-3.6-flash",
+            contents: prompt,
+            config: {
+                systemInstruction,
+                temperature: 0.3,
+                responseMimeType: "application/json", // Enforces strict JSON response
+            },
+        });
 
-    return res.status(200).json({
-      success: true,
-      answer: aiAnswer,
-      chatId: activeChatId,
-      remainingPoints: user.aiPoints,
-    });
-  } catch (error) {
-    console.error("Gemini AI API Error:", error);
-    return res.status(500).json({
-      message: "AI Assistant responds error. Please try again later.",
-      error: error.message,
-    });
-  }
+        const aiAnswerRaw = response.text;
+
+        // Parse JSON to verify
+        let parsedData;
+        try {
+            parsedData = JSON.parse(aiAnswerRaw);
+        } catch (parseErr) {
+            parsedData = aiAnswerRaw; // Fallback
+        }
+
+        // Deduct AI Point
+        user.aiPoints -= 1;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            answer: parsedData,
+            remainingPoints: user.aiPoints,
+        });
+    } catch (error) {
+        console.error("Gemini AI API Error:", error);
+        return res.status(500).json({
+            message: "AI Assistant responds error. Please try again later.",
+            error: error.message,
+        });
+    }
 };
 
 // 2. Fetch Daily Recent Chats (Page Reload hone par fetch karne ke liye)
 export const getRecentChats = async (req, res) => {
-  try {
-    const chats = await ChatHistory.find({ user: req.user._id })
-      .sort({ updatedAt: -1 })
-      .select("chatId title messages createdAt");
+    try {
+        const chats = await ChatHistory.find({ user: req.user._id })
+            .sort({ updatedAt: -1 })
+            .select("chatId title messages createdAt");
 
-    return res.status(200).json({
-      success: true,
-      chats,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch chat history",
-      error: error.message,
-    });
-  }
+        return res.status(200).json({
+            success: true,
+            chats,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch chat history",
+            error: error.message,
+        });
+    }
 };
