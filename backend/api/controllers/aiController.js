@@ -33,32 +33,32 @@ export const getAiPoints = async (req, res) => {
 // @route   POST /api/ai/ask
 // @access  Private (Auth required)
 export const askAiAssistant = async (req, res) => {
-    try {
-        const { prompt } = req.body;
+  try {
+    const { prompt } = req.body;
 
-        if (!prompt || prompt.trim() === "") {
-            return res.status(400).json({ message: "Prompt is required" });
-        }
+    if (!prompt || prompt.trim() === "") {
+      return res.status(400).json({ message: "Prompt is required" });
+    }
 
-        const user = await User.findById(req.user._id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-        // Check & Reset Daily Points
-        await user.checkAndResetAiPoints();
+    // Check & Reset Daily Points
+    await user.checkAndResetAiPoints();
 
-        if (user.aiPoints <= 0) {
-            return res.status(403).json({
-                success: false,
-                message:
-                    "Aapke aaj ke 10 AI Points khatam ho chuke hain! Kal dubara 10 points milenge.",
-                remainingPoints: 0,
-            });
-        }
+    if (user.aiPoints <= 0) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Aapke aaj ke 10 AI Points khatam ho chuke hain! Kal dubara 10 points milenge.",
+        remainingPoints: 0,
+      });
+    }
 
-        // --- STRICT VISUAL LEARNING CANVAS SYSTEM INSTRUCTION ---
-        const systemInstruction = `
+    // --- STRICT VISUAL LEARNING CANVAS SYSTEM INSTRUCTION ---
+    const systemInstruction = `
     You are an expert Islamic & Educational Visual Learning Architect.
     Your task is to ALWAYS convert any user prompt or educational topic into a strictly formatted JSON object for an interactive Visual Learning Canvas UI.
 
@@ -95,61 +95,61 @@ export const askAiAssistant = async (req, res) => {
     4. Keep language mix: Arabic for terms, English/Roman Urdu for definitions & questions.
     `;
 
-        // Gemini API Call with JSON Enforcement
-        const response = await ai.models.generateContent({
-            model: "gemini-3.6-flash",
-            contents: prompt,
-            config: {
-                systemInstruction,
-                temperature: 0.3,
-                responseMimeType: "application/json", // Enforces strict JSON response
-            },
-        });
+    // Gemini API Call with JSON Enforcement
+    const response = await ai.models.generateContent({
+      model: "gemini-3.6-flash",
+      contents: prompt,
+      config: {
+        systemInstruction,
+        temperature: 0.3,
+        responseMimeType: "application/json", // Enforces strict JSON response
+      },
+    });
 
-        const aiAnswerRaw = response.text;
+    const aiAnswerRaw = response.text;
 
-        // Parse JSON to verify
-        let parsedData;
-        try {
-            parsedData = JSON.parse(aiAnswerRaw);
-        } catch (parseErr) {
-            parsedData = aiAnswerRaw; // Fallback
-        }
-
-        // Deduct AI Point
-        user.aiPoints -= 1;
-        await user.save();
-
-        return res.status(200).json({
-            success: true,
-            answer: parsedData,
-            remainingPoints: user.aiPoints,
-        });
-    } catch (error) {
-        console.error("Gemini AI API Error:", error);
-        return res.status(500).json({
-            message: "AI Assistant responds error. Please try again later.",
-            error: error.message,
-        });
+    // Parse JSON to verify
+    let parsedData;
+    try {
+      parsedData = JSON.parse(aiAnswerRaw);
+    } catch (parseErr) {
+      parsedData = aiAnswerRaw; // Fallback
     }
+
+    // Deduct AI Point
+    user.aiPoints -= 1;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      answer: parsedData,
+      remainingPoints: user.aiPoints,
+    });
+  } catch (error) {
+    console.error("Gemini AI API Error:", error);
+    return res.status(500).json({
+      message: "AI Assistant responds error. Please try again later.",
+      error: error.message,
+    });
+  }
 };
 
 // 2. Fetch Daily Recent Chats (Page Reload hone par fetch karne ke liye)
 export const getRecentChats = async (req, res) => {
-    try {
-        const chats = await ChatHistory.find({ user: req.user._id })
-            .sort({ updatedAt: -1 })
-            .select("chatId title messages createdAt");
+  try {
+    const chats = await ChatHistory.find({ user: req.user._id })
+      .sort({ updatedAt: -1 })
+      .select("chatId title messages createdAt");
 
-        return res.status(200).json({
-            success: true,
-            chats,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch chat history",
-            error: error.message,
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      chats,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch chat history",
+      error: error.message,
+    });
+  }
 };
