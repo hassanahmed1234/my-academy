@@ -22,36 +22,60 @@ const DEFAULT_CANVAS_DATA = {
   subtitle: "Sources of Islamic Law",
   header_banner: {
     title_ar: "الأدلة الشرعية",
-    subtitle: "Primary Legal Sources",
+    subtitle: "Primary Legal Sources — Bunyadi Sharia Masadir",
   },
   nodes: [
     {
       id: "quran",
       number: "01",
-      title_ar: "القرآن",
-      title_en: "Quran",
-      short_desc: "The primary source of divine guidance and Islamic jurisprudence.",
-      definition: "The verbatim word of Allah revealed to Prophet Muhammad (PBUH) through Angel Jibril.",
-      explanation: "It serves as the foundational legal source from which all fundamental principles of Shariah originate.",
-      example: "Commands regarding Salah, Zakat, and ethical guidelines for financial transactions.",
+      title_ar: "القرآن الكريم",
+      title_ur: "قرآن مجید",
+      title_en: "Holy Quran",
+      short_desc_ur: "ہدایت اور اسلامی فقہ کا بنیادی اور سب سے پہلا ماخذ۔",
+      short_desc_en: "The primary source of divine guidance and Islamic jurisprudence.",
+      definition: {
+        ar: "كلام الله تعالى المنزل على نبيه محمد صلى الله عليه وسلم المتعبد بتلاوته.",
+        ur: "اللہ تعالیٰ کا وہ کلام جو حضرت محمد ﷺ پر حضرت جبرائیلؑ کے ذریعے نازل ہوا اور جس کی تلاوت عبادت ہے۔",
+        en: "The verbatim word of Allah revealed to Prophet Muhammad (PBUH) through Angel Jibril.",
+      },
+      explanation: {
+        ur: "یہ تمام شریعت اور اسلامی احکام کی بنیادی بنیاد فراہم کرتا ہے۔ تمام فقہی احکام اسی سے اخذ ہوتے ہیں۔",
+        en: "It serves as the foundational legal source from which all fundamental principles of Shariah originate.",
+      },
+      example: {
+        ur: "نماز، زکوۃ اور معاشی معاملات کے لیے دیے گئے بنیادی قرآنی احکامات۔",
+        en: "Explicit commands regarding Salah, Zakat, and ethical guidelines for financial transactions.",
+      },
       activity: {
-        question: "What is the primary status of the Quran among Shariah sources?",
-        options: ["Secondary Source", "Primary Source", "Optional Legal Reference"],
+        question: "قرآن مجید کا شریعت میں کیا مقام ہے؟",
+        options: ["ثانوی ماخذ (Secondary)", "بنیادی اور پہلا ماخذ (Primary Source)", "اختیاری حوالہ (Optional)"],
         correctIndex: 1,
       },
     },
     {
       id: "sunnah",
       number: "02",
-      title_ar: "السنة",
+      title_ar: "السنة النبوية",
+      title_ur: "سنتِ نبوی ﷺ",
       title_en: "Sunnah",
-      short_desc: "Sayings, practices, and approvals of Prophet Muhammad (PBUH).",
-      definition: "The practical implementation and detailed explanation of Quranic principles by the Prophet (PBUH).",
-      explanation: "Sunnah elaborates on general Quranic commandments and specifies how rulings are implemented.",
-      example: "Detailed procedure and rak'ahs of Salah which are mentioned broadly in the Quran.",
+      short_desc_ur: "نبی اکرم ﷺ کے اقوال، افعال اور تقاریر۔",
+      short_desc_en: "Sayings, practices, and approvals of Prophet Muhammad (PBUH).",
+      definition: {
+        ar: "ما أُثر عن النبي صلى الله عليه وسلم من قول أو فعل أو تقرير.",
+        ur: "نبی کریم ﷺ سے منقول قول، فعل یا تقریر (کسی کام کو دیکھ کر خاموش رہنا)۔",
+        en: "The practical implementation and detailed explanation of Quranic principles by the Prophet (PBUH).",
+      },
+      explanation: {
+        ur: "سنت قرآنی احکام کی تفصیل اور ان کی عملی شکل بیان کرتی ہے۔",
+        en: "Sunnah elaborates on general Quranic commandments and specifies how rulings are implemented.",
+      },
+      example: {
+        ur: "نماز کی رکعتوں کی تعداد اور ادا کرنے کا تفصیلی طریقہ جو قرآن میں مجمل تھا۔",
+        en: "Detailed procedure and rak'ahs of Salah which are mentioned broadly in the Quran.",
+      },
       activity: {
-        question: "How does the Sunnah complement the Holy Quran?",
-        options: ["It replaces Quranic laws", "It explains and details Quranic rulings", "It is unrelated"],
+        question: "سنت قرآن مجید کی کس طرح وضاحت کرتی ہے؟",
+        options: ["یہ قرآنی احکام کو بدل دیتی ہے", "یہ قرآنی احکام کی تشریح اور تفصیل کرتی ہے", "یہ غیر متعلقہ ہے"],
         correctIndex: 1,
       },
     },
@@ -59,14 +83,26 @@ const DEFAULT_CANVAS_DATA = {
       id: "ijma",
       number: "03",
       title_ar: "الإجماع",
+      title_ur: "اجماعِ امت",
       title_en: "Ijma",
-      short_desc: "Consensus of qualified Islamic scholars on a legal ruling.",
-      definition: "The unanimous agreement of Muslim jurists (Mujtahidun) of a particular era on a religious matter.",
-      explanation: "When a new situation arises that is not explicitly detailed in Quran/Sunnah, scholars reach consensus.",
-      example: "Compilation of the Quran into a single volume during the caliphate of Abu Bakr (RA).",
+      short_desc_ur: "کسی دور کے مجتہدین کا شرعی حکم پر متفق ہونا۔",
+      short_desc_en: "Consensus of qualified Islamic scholars on a legal ruling.",
+      definition: {
+        ar: "اتفاق مجتهدي الأمة الإسلامية في عصر من الأعصار على حكم شرعي.",
+        ur: "کسی بھی دور میں امتِ مسلمہ کے تمام اہل السنت مجتہدین کا کسی شرعی معاملے پر متفقہ فیصلہ۔",
+        en: "The unanimous agreement of Muslim jurists (Mujtahidun) of a particular era on a religious matter.",
+      },
+      explanation: {
+        ur: "جب کوئی نیا واقعہ یا مسئلہ سامنے آئے اور قرآن و سنت میں نصِ صریح نہ ہو تو علما اجماع کرتے ہیں۔",
+        en: "When a new situation arises that is not explicitly detailed in Quran/Sunnah, scholars reach consensus.",
+      },
+      example: {
+        ur: "حضرت ابو بکر صدیق رضی اللہ عنہ کے دور میں قرآن مجید کو ایک نسخے میں جمع کرنے پر صحابہ کا اجماع۔",
+        en: "Compilation of the Quran into a single volume during the caliphate of Abu Bakr (RA).",
+      },
       activity: {
-        question: "Who participates in reaching Ijma?",
-        options: ["General public", "Qualified Islamic Jurists (Mujtahidun)", "Any individual ruler"],
+        question: "اجماع میں کون شامل ہوتے ہیں؟",
+        options: ["عام عوام", "اہلِ علم مجتہدین (Qualified Jurists)", "صرف حاکمِ وقت"],
         correctIndex: 1,
       },
     },
@@ -74,20 +110,31 @@ const DEFAULT_CANVAS_DATA = {
       id: "qiyas",
       number: "04",
       title_ar: "القياس",
+      title_ur: "قیاس شرعی",
       title_en: "Qiyas",
-      short_desc: "Analogical reasoning based on existing divine sources.",
-      definition: "Applying an established ruling from Quran or Sunnah to a new case due to a shared cause ('Illah).",
-      explanation: "It allows Islamic jurisprudence to address modern issues while staying rooted in Quran and Sunnah.",
-      example: "Prohibiting modern drugs based on the prohibition of wine ('Illah: intoxication).",
+      short_desc_ur: "مشترکہ علت کی بنیاد پر نئے مسئلے کو اصل مسئلے پر قیاس کرنا۔",
+      short_desc_en: "Analogical reasoning based on existing divine sources.",
+      definition: {
+        ar: "إلحاق فرع بأصل في حكم لعلة جامعة بينهما.",
+        ur: "علت (مشترک وجہ) کی بنیاد پر کسی نئے معاملے کو قرآن و سنت کے ثابت شدہ مسئلے پر قیاس کرنا۔",
+        en: "Applying an established ruling from Quran or Sunnah to a new case due to a shared cause ('Illah).",
+      },
+      explanation: {
+        ur: "یہ اسلامی فقہ کو جدید دور کے پیدا شدہ مسائل کا حل تلاش کرنے کا طریقہ فراہم کرتا ہے۔",
+        en: "It allows Islamic jurisprudence to address modern issues while staying rooted in Quran and Sunnah.",
+      },
+      example: {
+        ur: "شراب کی حرمت پر قیاس کرتے ہوئے جدید منشیات کو حرام قرار دینا (مشترک علت: نشہ/عقل کو متاثر کرنا)۔",
+        en: "Prohibiting modern intoxicants/drugs based on the prohibition of wine due to the shared cause ('Illah: intoxication).",
+      },
       activity: {
-        question: "What is the key component required for Qiyas?",
-        options: ["Shared underlying cause ('Illah)", "Popular vote", "Literal translation"],
+        question: "قیاس کے لیے سب سے بنیادی عنصر کیا ہے؟",
+        options: ["مشترکہ علت ('Illah)", "عوامی رائے", "لفظی ترجمہ"],
         correctIndex: 0,
       },
     },
   ],
 };
-
 const AiAssistantPage = () => {
   const [prompt, setPrompt] = useState("");
   const [aiPoints, setAiPoints] = useState(10);
@@ -174,7 +221,7 @@ const AiAssistantPage = () => {
     }
   };
 
- return (
+  return (
     <div className="min-h-screen w-full bg-slate-50 text-slate-800 font-sans p-3 sm:p-6 lg:p-8 flex flex-col justify-between">
       <div className="max-w-5xl mx-auto w-full space-y-6">
         {/* TOP HEADER BAR */}
@@ -347,26 +394,31 @@ const AiAssistantPage = () => {
               </p>
             </div>
 
-            {/* Definition & Explanation */}
-            <div className="space-y-3">
-              <div className="bg-emerald-50/80 border-l-4 border-emerald-600 p-4 rounded-r-2xl space-y-1">
-                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-emerald-600" /> Definition & Explanation
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                  {selectedNode.definition || selectedNode.explanation}
-                </p>
-              </div>
+            {/* Definition Section in Modal */}
+            <div className="bg-emerald-50/80 border-l-4 border-emerald-600 p-4 rounded-r-2xl space-y-2">
+              <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-emerald-600" /> Definition & Meaning
+              </h4>
 
-              {selectedNode.example && (
-                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-1">
-                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Example / Misal:
-                  </h4>
-                  <p className="text-xs sm:text-sm text-slate-700 italic">
-                    "{selectedNode.example}"
-                  </p>
-                </div>
+              {/* Arabic Text */}
+              {selectedNode.definition?.ar && (
+                <p className="text-base sm:text-lg font-serif font-bold text-slate-900 text-right dir-rtl leading-relaxed">
+                  {selectedNode.definition.ar}
+                </p>
+              )}
+
+              {/* Urdu Text */}
+              {selectedNode.definition?.ur && (
+                <p className="text-xs sm:text-sm text-slate-800 font-serif leading-relaxed text-right dir-rtl">
+                  {selectedNode.definition.ur}
+                </p>
+              )}
+
+              {/* English Text */}
+              {selectedNode.definition?.en && (
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-emerald-100 pt-2">
+                  {selectedNode.definition.en}
+                </p>
               )}
             </div>
 
@@ -392,13 +444,12 @@ const AiAssistantPage = () => {
                           selectedNode.activity.correctIndex
                         )
                       }
-                      className={`w-full p-3 rounded-xl text-xs sm:text-sm text-left font-medium transition flex items-center justify-between border ${
-                        selectedAnswer === idx
-                          ? idx === selectedNode.activity.correctIndex
-                            ? "bg-emerald-600 text-white border-emerald-600"
-                            : "bg-rose-600 text-white border-rose-600"
-                          : "bg-white text-slate-700 border-slate-200 hover:border-amber-400"
-                      }`}
+                      className={`w-full p-3 rounded-xl text-xs sm:text-sm text-left font-medium transition flex items-center justify-between border ${selectedAnswer === idx
+                        ? idx === selectedNode.activity.correctIndex
+                          ? "bg-emerald-600 text-white border-emerald-600"
+                          : "bg-rose-600 text-white border-rose-600"
+                        : "bg-white text-slate-700 border-slate-200 hover:border-amber-400"
+                        }`}
                     >
                       <span>{option}</span>
                       {selectedAnswer === idx && (
@@ -410,11 +461,10 @@ const AiAssistantPage = () => {
 
                 {activityFeedback && (
                   <p
-                    className={`text-xs font-bold text-center mt-2 p-2.5 rounded-xl ${
-                      activityFeedback.correct
-                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                        : "bg-rose-100 text-rose-800 border border-rose-300"
-                    }`}
+                    className={`text-xs font-bold text-center mt-2 p-2.5 rounded-xl ${activityFeedback.correct
+                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                      : "bg-rose-100 text-rose-800 border border-rose-300"
+                      }`}
                   >
                     {activityFeedback.msg}
                   </p>
