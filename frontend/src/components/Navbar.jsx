@@ -48,16 +48,14 @@ const Navbar = () => {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-500 ease-in-out ${
-        scrolled ? "pt-2 px-3 sm:px-6" : "pt-0 px-0"
-      }`}
+      className={`sticky top-0 z-50 w-full transition-all duration-500 ease-in-out ${scrolled ? "pt-2 px-3 sm:px-6" : "pt-0 px-0"
+        }`}
     >
       <nav
-        className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${
-          scrolled
+        className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${scrolled
             ? "rounded-2xl bg-emerald-950/90 backdrop-blur-xl shadow-2xl shadow-emerald-950/60 border border-emerald-800/60 py-2.5 px-5 sm:px-6"
             : "rounded-none md:rounded-2xl bg-slate-950/80 backdrop-blur-md border-b md:border border-emerald-900/40 py-3.5 px-5 sm:px-8"
-        }`}
+          }`}
       >
         <div className="flex justify-between items-center">
           {/* Islamic Brand Logo & Crest */}
@@ -105,11 +103,10 @@ const Navbar = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${
-                    active
+                  className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${active
                       ? "text-slate-950 font-extrabold shadow-sm"
                       : "text-emerald-100/70 hover:text-amber-300 hover:scale-105 active:scale-95"
-                  }`}
+                    }`}
                 >
                   {active && (
                     <span className="absolute inset-0 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 rounded-full shadow-lg shadow-amber-500/25 -z-10 transition-all duration-300"></span>
@@ -184,9 +181,8 @@ const Navbar = () => {
 
         {/* Mobile Dropdown Drawer */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            mobileMenuOpen ? "max-h-96 opacity-100 mt-4 pt-4 border-t border-emerald-800/50" : "max-h-0 opacity-0"
-          }`}
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-96 opacity-100 mt-4 pt-4 border-t border-emerald-800/50" : "max-h-0 opacity-0"
+            }`}
         >
           <div className="space-y-2">
             {navLinks.map((link) => (
@@ -194,11 +190,10 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                  isActive(link.path)
+                className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${isActive(link.path)
                     ? "bg-amber-400/10 text-amber-400 border border-amber-400/30 shadow-inner"
                     : "text-emerald-100/80 hover:bg-emerald-900/40 hover:pl-6"
-                }`}
+                  }`}
               >
                 {link.name}
               </Link>
@@ -213,7 +208,7 @@ const Navbar = () => {
                 >
                   <LayoutDashboard className="relative z-10 w-4 h-4 text-slate-900 shrink-0" />
                   <span className="relative z-10 text-slate-950 font-bold">
-                    {user?.role === "admin" ? "Admin Portal" : "Student Portal"}
+                    {user?.role === "admin" ? "Admin Dashboard" : "Dashboard"}
                   </span>
                 </Link>
                 <button

@@ -372,7 +372,7 @@ const AiAssistantPage = () => {
       {/* EXPANDED NODE MODAL DRAWER */}
       {selectedNode && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-5 sm:p-7 relative space-y-5 text-slate-800">
+          <div className="bg-white border border-slate-200 rounded max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-5 sm:p-7 relative space-y-5 text-slate-800">
             {/* Close Button */}
             <button
               onClick={() => setSelectedNode(null)}
