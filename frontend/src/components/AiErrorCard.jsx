@@ -1,41 +1,34 @@
-import React from 'react';
+import React from "react";
+import { Network, RefreshCw, AlertTriangle } from "lucide-react";
 
 const AiErrorCard = ({ onRetry }) => {
   return (
-    <div className="w-full max-w-md mx-auto my-6 p-6 rounded-2xl bg-zinc-900/90 border border-amber-500/30 backdrop-blur-md shadow-2xl text-center space-y-4">
-      {/* Icon Header */}
-      <div className="w-14 h-14 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className="w-7 h-7"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-          />
-        </svg>
+    <div className="w-full max-w-lg mx-auto my-12 p-8 rounded-3xl bg-slate-950/95 border border-amber-500/30 backdrop-blur-xl shadow-[0_0_50px_rgba(245,158,11,0.08)] text-center space-y-6">
+      {/* Icon Header with Glow */}
+      <div className="relative w-16 h-16 mx-auto">
+        <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full" />
+        <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-emerald-500/10 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-inner">
+          <AlertTriangle className="w-8 h-8 animate-pulse" />
+        </div>
       </div>
 
       {/* Header Info */}
-      <div className="space-y-1">
-        <span className="text-xs uppercase tracking-widest text-amber-400/80 font-medium">
-          AI Study Assistant
+      <div className="space-y-2">
+        <span className="text-[10px] uppercase tracking-[0.25em] text-amber-400 font-extrabold bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 inline-block">
+          Canvas Generation Notice
         </span>
-        <h3 className="text-xl font-bold text-amber-100">Temporarily Busy</h3>
+        <h3 className="text-2xl font-black text-slate-100 font-serif">
+          Oops! Canvas Generation Failed
+        </h3>
       </div>
 
-      {/* Message Body */}
-      <div className="space-y-2 text-zinc-300 text-sm leading-relaxed border-y border-zinc-800/80 py-3">
-        <p className="font-semibold text-amber-200/90">
-          Ustad AI is taking a short break!
+      {/* Message Body - Clear & Friendly */}
+      <div className="space-y-2 text-slate-300 text-xs sm:text-sm leading-relaxed bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl">
+        <p className="font-bold text-amber-300">
+          We couldn't generate your visual nodes right now.
         </p>
-        <p className="text-zinc-400 text-xs">
-          E-Islam service is currently busy. Please try your question again in a few moments.
+        <p className="text-slate-400 text-xs leading-relaxed">
+          This usually happens due to a temporary AI server timeout or high traffic. Don't worry, your AI points are safe. Please tap below to try loading your canvas again.
         </p>
       </div>
 
@@ -43,9 +36,10 @@ const AiErrorCard = ({ onRetry }) => {
       {onRetry && (
         <button
           onClick={onRetry}
-          className="w-full py-2.5 px-4 rounded-xl font-medium text-sm text-zinc-950 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 transition-all duration-200 shadow-lg shadow-amber-500/10 active:scale-[0.98]"
+          className="w-full py-3.5 px-6 rounded-2xl font-extrabold text-xs sm:text-sm tracking-wide text-slate-950 bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-400 hover:opacity-95 transition-all duration-200 shadow-lg shadow-amber-500/20 active:scale-[0.98] flex items-center justify-center gap-2.5 cursor-pointer"
         >
-          Try Again
+          <RefreshCw className="w-4 h-4 animate-spin-slow" />
+          <span>Reload Visual Learning Canvas</span>
         </button>
       )}
     </div>

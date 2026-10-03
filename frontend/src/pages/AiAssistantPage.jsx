@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import API from "../api/axiosInstance";
+import AiErrorCard from "../components/AiErrorCard"; // Error card component import kiya gaya hai
 import {
   Sparkles,
   Zap,
@@ -12,7 +13,6 @@ import {
   Search,
   ExternalLink,
   Layers,
-  AlertCircle,
 } from "lucide-react";
 
 // Default / Initial Demo Visual Canvas Data (Islamic Law Sources Example)
@@ -135,11 +135,13 @@ const DEFAULT_CANVAS_DATA = {
     },
   ],
 };
+
 const AiAssistantPage = () => {
   const [prompt, setPrompt] = useState("");
   const [aiPoints, setAiPoints] = useState(10);
   const [fetchingPoints, setFetchingPoints] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false); // Error state add ki gayi hai
   const [canvasData, setCanvasData] = useState(DEFAULT_CANVAS_DATA);
 
   // Modal State for Card Details
@@ -166,11 +168,12 @@ const AiAssistantPage = () => {
   };
 
   const handleGenerateCanvas = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!prompt.trim() || loading || aiPoints <= 0) return;
 
     const userPrompt = prompt.trim();
     setLoading(true);
+    setError(false); // Nayi request par error clear kar dein
 
     try {
       const { data } = await API.post("/ai/ask", {
@@ -178,7 +181,6 @@ const AiAssistantPage = () => {
       });
 
       if (data.success) {
-        // Try parsing JSON if AI returned stringified JSON
         let parsed = null;
         if (typeof data.answer === "string") {
           try {
@@ -192,14 +194,20 @@ const AiAssistantPage = () => {
 
         if (parsed && parsed.nodes) {
           setCanvasData(parsed);
+          setError(false);
+        } else {
+          setError(true);
         }
 
         if (typeof data.remainingPoints === "number") {
           setAiPoints(data.remainingPoints);
         }
+      } else {
+        setError(true);
       }
     } catch (err) {
       console.error("Generation error:", err);
+      setError(true);
     } finally {
       setLoading(false);
       setPrompt("");
@@ -283,90 +291,99 @@ const AiAssistantPage = () => {
           </div>
         </form>
 
-        {/* MAIN VISUAL CANVAS CARD CONTAINER */}
-        <main className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-8 shadow-sm space-y-6 relative overflow-hidden">
-          {/* Canvas Header Badge */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1 bg-emerald-100 text-emerald-700 rounded-lg">
-                <Sparkles className="w-4 h-4" />
-              </span>
-              <span className="text-xs font-bold text-slate-600 tracking-wide">
-                {canvasData.badge || "AI Visual Learning Studio"}
+        {/* MAIN VISUAL CANVAS CARD CONTAINER OR ERROR CARD */}
+        {error ? (
+          <AiErrorCard
+            onRetry={() => {
+              setError(false);
+              fetchPoints();
+            }}
+          />
+        ) : (
+          <main className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-8 shadow-sm space-y-6 relative overflow-hidden">
+            {/* Canvas Header Badge */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="p-1 bg-emerald-100 text-emerald-700 rounded-lg">
+                  <Sparkles className="w-4 h-4" />
+                </span>
+                <span className="text-xs font-bold text-slate-600 tracking-wide">
+                  {canvasData.badge || "AI Visual Learning Studio"}
+                </span>
+              </div>
+              <span className="text-[11px] font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 rounded-full">
+                Interactive
               </span>
             </div>
-            <span className="text-[11px] font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 rounded-full">
-              Interactive
-            </span>
-          </div>
 
-          {/* Title Section */}
-          <div className="text-center space-y-1">
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 font-serif tracking-wide">
-              {canvasData.title_ur || canvasData.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              {canvasData.subtitle}
-            </p>
-          </div>
-
-          {/* Primary Central Banner */}
-          {canvasData.header_banner && (
-            <div className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-800 border border-emerald-600 rounded-2xl p-4 sm:p-5 text-center shadow-md space-y-0.5 text-white">
-              <h3 className="text-xl sm:text-2xl font-bold font-serif">
-                {canvasData.header_banner.title_ar}
-              </h3>
-              <p className="text-xs sm:text-sm text-emerald-100 font-medium">
-                {canvasData.header_banner.subtitle}
+            {/* Title Section */}
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 font-serif tracking-wide">
+                {canvasData.title_ur || canvasData.title}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                {canvasData.subtitle}
               </p>
             </div>
-          )}
 
-          {/* Down Arrow Indicator */}
-          <div className="flex justify-center">
-            <ArrowDown className="w-4 h-4 text-emerald-600 animate-bounce" />
-          </div>
-
-          {/* Grid of Interactive Canvas Nodes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {canvasData.nodes?.map((node, i) => (
-              <div
-                key={node.id || i}
-                onClick={() => handleSelectNode(node)}
-                className="group relative bg-slate-50/70 hover:bg-white border border-amber-300 hover:border-amber-500 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
-              >
-                {/* Node Number Badge */}
-                <div className="absolute top-0 right-0 bg-amber-100 text-amber-800 font-black text-xs px-3 py-1 rounded-bl-xl border-l border-b border-amber-300">
-                  {node.number || `0${i + 1}`}
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 font-serif group-hover:text-amber-700 transition">
-                    {node.title_ar}
-                  </h3>
-                  <p className="text-xs sm:text-sm font-bold text-amber-700">
-                    {node.title_en}
-                  </p>
-                  {node.short_desc && (
-                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
-                      {node.short_desc}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-emerald-700 font-semibold group-hover:translate-x-1 transition-transform">
-                  <span>Tap to explore</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </div>
+            {/* Primary Central Banner */}
+            {canvasData.header_banner && (
+              <div className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-800 border border-emerald-600 rounded-2xl p-4 sm:p-5 text-center shadow-md space-y-0.5 text-white">
+                <h3 className="text-xl sm:text-2xl font-bold font-serif">
+                  {canvasData.header_banner.title_ar}
+                </h3>
+                <p className="text-xs sm:text-sm text-emerald-100 font-medium">
+                  {canvasData.header_banner.subtitle}
+                </p>
               </div>
-            ))}
-          </div>
+            )}
 
-          {/* Footer Caption */}
-          <p className="text-center text-xs text-slate-400 italic pt-2">
-            Illustrative learning diagram — Tap any card to expand definition, examples & quiz
-          </p>
-        </main>
+            {/* Down Arrow Indicator */}
+            <div className="flex justify-center">
+              <ArrowDown className="w-4 h-4 text-emerald-600 animate-bounce" />
+            </div>
+
+            {/* Grid of Interactive Canvas Nodes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {canvasData.nodes?.map((node, i) => (
+                <div
+                  key={node.id || i}
+                  onClick={() => handleSelectNode(node)}
+                  className="group relative bg-slate-50/70 hover:bg-white border border-amber-300 hover:border-amber-500 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                >
+                  {/* Node Number Badge */}
+                  <div className="absolute top-0 right-0 bg-amber-100 text-amber-800 font-black text-xs px-3 py-1 rounded-bl-xl border-l border-b border-amber-300">
+                    {node.number || `0${i + 1}`}
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 font-serif group-hover:text-amber-700 transition">
+                      {node.title_ar}
+                    </h3>
+                    <p className="text-xs sm:text-sm font-bold text-amber-700">
+                      {node.title_en}
+                    </p>
+                    {node.short_desc && (
+                      <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                        {node.short_desc}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-emerald-700 font-semibold group-hover:translate-x-1 transition-transform">
+                    <span>Tap to explore</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer Caption */}
+            <p className="text-center text-xs text-slate-400 italic pt-2">
+              Illustrative learning diagram — Tap any card to expand definition, examples & quiz
+            </p>
+          </main>
+        )}
       </div>
 
       {/* EXPANDED NODE MODAL DRAWER */}
@@ -376,7 +393,7 @@ const AiAssistantPage = () => {
             {/* Close Button */}
             <button
               onClick={() => setSelectedNode(null)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -444,12 +461,13 @@ const AiAssistantPage = () => {
                           selectedNode.activity.correctIndex
                         )
                       }
-                      className={`w-full p-3 rounded-xl text-xs sm:text-sm text-left font-medium transition flex items-center justify-between border ${selectedAnswer === idx
-                        ? idx === selectedNode.activity.correctIndex
-                          ? "bg-emerald-600 text-white border-emerald-600"
-                          : "bg-rose-600 text-white border-rose-600"
-                        : "bg-white text-slate-700 border-slate-200 hover:border-amber-400"
-                        }`}
+                      className={`w-full p-3 rounded-xl text-xs sm:text-sm text-left font-medium transition flex items-center justify-between border cursor-pointer ${
+                        selectedAnswer === idx
+                          ? idx === selectedNode.activity.correctIndex
+                            ? "bg-emerald-600 text-white border-emerald-600"
+                            : "bg-rose-600 text-white border-rose-600"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-amber-400"
+                      }`}
                     >
                       <span>{option}</span>
                       {selectedAnswer === idx && (
@@ -461,10 +479,11 @@ const AiAssistantPage = () => {
 
                 {activityFeedback && (
                   <p
-                    className={`text-xs font-bold text-center mt-2 p-2.5 rounded-xl ${activityFeedback.correct
-                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                      : "bg-rose-100 text-rose-800 border border-rose-300"
-                      }`}
+                    className={`text-xs font-bold text-center mt-2 p-2.5 rounded-xl ${
+                      activityFeedback.correct
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                        : "bg-rose-100 text-rose-800 border border-rose-300"
+                    }`}
                   >
                     {activityFeedback.msg}
                   </p>
