@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import API from "../api/axiosInstance";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 const QuizApp = () => {
-  const { quizData, fetchQuizzes,triggerXpReward } = useAuth();
+  const { quizData, fetchQuizzes, triggerXpReward } = useAuth();
   const { quizzes, loading: contextQuizLoading, error: quizError } = quizData;
 
   const [view, setView] = useState("list"); // 'list' | 'instructions' | 'quiz' | 'result'
@@ -32,6 +32,63 @@ const QuizApp = () => {
     fetchQuizzes();
   }, [fetchQuizzes]);
 
+  // Handle Final Submit wrapped in useCallback to avoid stale closures
+  const handleFetchResults = useCallback(async (attemptId) => {
+    try {
+      setActionLoading(true);
+      const res = await API.get(`/student/quizzes/attempt/${attemptId}/result`);
+      setResult(res.data);
+      setView("result");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
+  }, []);
+
+  const handleFinalSubmit = useCallback(async (currentAttemptId, isAuto = false) => {
+    if (!isAuto && !window.confirm("Are you sure you want to submit your quiz?")) return;
+
+    try {
+      setActionLoading(top => true); // or setActionLoading(true)
+
+      // 1. Submit Quiz (Agar auto-submit nahi hua toh hi hit karein)
+      if (!isAuto) {
+        await API.post(`/student/quizzes/attempt/${currentAttemptId}/submit`);
+      }
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => { });
+      }
+
+      // 2. Pehle Result Fetch karein taake pata chale user pass hua ya nahi
+      const res = await API.get(`/student/quizzes/attempt/${currentAttemptId}/result`);
+      setResult(res.data);
+      setView("result");
+
+      // 3. XP SIRF TAB MILEGI JAB USER PASS HO AUR CHEATING NA KI HO!
+      if (res.data.passed) {
+        const xpRes = await API.post("/xp/award", {
+          actionType: "QUIZ_PASS",
+          xpAmount: 20,
+        });
+
+        const earnedXp = xpRes.data?.earnedXp || 20;
+
+        triggerXpReward({
+          xpAmount: earnedXp,
+          reason: "perfect_quiz",
+          heading: "Excellent Score! 🌟",
+        });
+      }
+
+    } catch (err) {
+      console.error("Quiz submission error:", err);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [triggerXpReward]);
+
   // Handle Timer & Auto-Submit
   useEffect(() => {
     if (view !== "quiz" || !attempt || !attempt.expiresAt) return;
@@ -45,28 +102,38 @@ const QuizApp = () => {
 
       if (remaining <= 0) {
         clearInterval(interval);
-        handleFinalSubmit(true);
+        handleFinalSubmit(attempt._id, true);
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [view, attempt]);
+  }, [view, attempt, handleFinalSubmit]);
 
   // Anti-Cheat: Tab Visibility & Fullscreen Exit Monitoring
   useEffect(() => {
     if (view !== "quiz" || !attempt) return;
 
     const handleVisibilityChange = async () => {
-      if (document.hidden) {
+      if (document.hidden && view === "quiz" && attempt) {
         try {
           const res = await API.post(`/student/quizzes/attempt/${attempt._id}/violation`, {
             type: "tab_switch",
           });
-          if (res.data.autoSubmitted) {
-            alert("Quiz auto-submitted due to excessive tab switching!");
-            handleFetchResults(attempt._id);
+
+          // Agar backend ne violation par auto-submit kar diya hai
+          if (res.data.autoSubmitted || res.data.failed) {
+            alert("⚠️ Quiz failed due to multiple screen/tab violations!");
+
+            if (document.fullscreenElement) {
+              document.exitFullscreen().catch(() => { });
+            }
+
+            // Result fetch karein
+            const resultRes = await API.get(`/student/quizzes/attempt/${attempt._id}/result`);
+            setResult(resultRes.data);
+            setView("result");
           } else {
-            setWarningMsg(`⚠️ Warning: Do not switch tabs! Warning count: ${res.data.tabSwitches || 1}/2`);
+            setWarningMsg(`⚠️ Warning: Tab switch detected! ({res.data.tabSwitches || 1}/3)`);
           }
         } catch (e) {
           console.error(e);
@@ -75,7 +142,7 @@ const QuizApp = () => {
     };
 
     const handleFullscreenChange = async () => {
-      if (!document.fullscreenElement) {
+      if (!document.fullscreenElement && view === "quiz") {
         try {
           await API.post(`/student/quizzes/attempt/${attempt._id}/violation`, {
             type: "fullscreen_exit",
@@ -94,18 +161,17 @@ const QuizApp = () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [view, attempt]);
+  }, [view, attempt, handleFinalSubmit]);
 
   // Actions
   const handleStartQuiz = async () => {
     try {
       setActionLoading(true);
       const res = await API.post(`/student/quizzes/${selectedQuiz._id}/start`);
-      
+
       const quizMeta = res.data.quiz || res.data;
       const questionsList = res.data.questions || [];
 
-      // Expiry timestamp setup based on timeLimit (Minutes)
       const timeLimitMs = (quizMeta.timeLimit || 10) * 60 * 1000;
       const expiresAt = res.data.expiresAt || new Date(Date.now() + timeLimitMs).toISOString();
 
@@ -117,9 +183,8 @@ const QuizApp = () => {
 
       setCurrentIndex(0);
 
-      // Request Fullscreen
       if (containerRef.current && containerRef.current.requestFullscreen) {
-        containerRef.current.requestFullscreen().catch(() => {});
+        containerRef.current.requestFullscreen().catch(() => { });
       }
 
       setView("quiz");
@@ -134,66 +199,21 @@ const QuizApp = () => {
     if (!attempt || !attempt.questions) return;
 
     const currentQ = attempt.questions[currentIndex];
-    const updatedQuestions = [...attempt.questions];
-    updatedQuestions[currentIndex].selectedAnswer = option;
+
+    // FIX: Immutably update questions state to avoid side effects
+    const updatedQuestions = attempt.questions.map((q, idx) =>
+      idx === currentIndex ? { ...q, selectedAnswer: option } : q
+    );
+
     setAttempt({ ...attempt, questions: updatedQuestions });
 
     try {
       await API.post(`/student/quizzes/attempt/${attempt._id}/answer`, {
-        questionId: currentQ._id, // Standard Mongo _id
+        questionId: currentQ._id,
         selectedAnswer: option,
       });
     } catch (e) {
       console.error("Autosave failed", e);
-    }
-  };
-
-const handleFinalSubmit = async (isAuto = false) => {
-    if (!isAuto && !window.confirm("Are you sure you want to submit your quiz?")) return;
-
-    try {
-        setActionLoading(true);
-
-        // 1. Submit Quiz
-        await API.post(`/student/quizzes/attempt/${attempt._id}/submit`);
-
-        if (document.fullscreenElement) {
-            document.exitFullscreen().catch(() => {});
-        }
-
-        // 2. Direct API call to Award XP
-        const xpRes = await API.post("/xp/award", {
-            actionType: "QUIZ_PASS",
-            xpAmount: 20, // Customize amount or omit to let BE decide default
-        });
-
-        const earnedXp = xpRes.data?.earnedXp || 20;
-
-        // 3. Trigger Modal with Response Data
-        triggerXpReward({
-            xpAmount: earnedXp,
-            reason: "perfect_quiz",
-            heading: "Excellent Score! 🌟",
-        });
-
-        handleFetchResults(attempt._id);
-    } catch (err) {
-        console.error("Quiz submission / XP award error:", err);
-    } finally {
-        setActionLoading(false);
-    }
-};
-
-  const handleFetchResults = async (attemptId) => {
-    try {
-      setActionLoading(true);
-      const res = await API.get(`/student/quizzes/attempt/${attemptId}/result`);
-      setResult(res.data);
-      setView("result");
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -219,7 +239,7 @@ const handleFinalSubmit = async (isAuto = false) => {
           <div className="border-b border-slate-200 pb-4">
             <span className="font-serif text-xl text-amber-600">الاختبارات</span>
             <h1 className="text-2xl font-extrabold text-slate-900">Quizzes</h1>
-            <p className="text-xs text-slate-500">Select an Quiz to test your knowledge.</p>
+            <p className="text-xs text-slate-500">Select a Quiz to test your knowledge.</p>
           </div>
 
           {quizError && (
@@ -229,8 +249,7 @@ const handleFinalSubmit = async (isAuto = false) => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {quizzes.map((quiz) => ( 
-              
+            {quizzes.map((quiz) => (
               <div
                 key={quiz._id}
                 className="bg-white border border-slate-200 p-5 rounded-2xl flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition"
@@ -282,9 +301,9 @@ const handleFinalSubmit = async (isAuto = false) => {
 
           <div className="space-y-3 text-xs">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-slate-700">
-              <p>• <strong>Questions:</strong> {selectedQuiz.questionCount}</p>
-              <p>• <strong>Time Limit:</strong> {selectedQuiz.timeLimit} Minutes</p>
-              <p>• <strong>Passing Score:</strong> {selectedQuiz.passingScore}%</p>
+              <p><strong>Questions:</strong> {selectedQuiz.questionCount}</p>
+              <p><strong>Time Limit:</strong> {selectedQuiz.timeLimit} Minutes</p>
+              <p><strong>Passing Score:</strong> {selectedQuiz.passingScore}%</p>
             </div>
 
             <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl space-y-1">
@@ -318,7 +337,6 @@ const handleFinalSubmit = async (isAuto = false) => {
       {/* 3. ACTIVE QUIZ ROOM */}
       {view === "quiz" && attempt && attempt.questions && (
         <div className="space-y-6">
-          {/* Top Bar */}
           <div className="flex justify-between items-center bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
             <div>
               <p className="text-xs text-slate-500">Question {currentIndex + 1} of {attempt.questions.length}</p>
@@ -338,7 +356,6 @@ const handleFinalSubmit = async (isAuto = false) => {
             </div>
           )}
 
-          {/* Question Box */}
           <div className="bg-white border border-slate-200 p-6 rounded-2xl space-y-6 shadow-sm">
             <h2 className="text-base font-bold text-slate-900">{attempt.questions[currentIndex]?.question}</h2>
 
@@ -349,11 +366,10 @@ const handleFinalSubmit = async (isAuto = false) => {
                   <button
                     key={idx}
                     onClick={() => handleSelectOption(opt)}
-                    className={`w-full text-left p-4 text-xs rounded-xl border transition flex items-center justify-between ${
-                      isSelected
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-bold"
-                        : "bg-slate-50 border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-slate-100/50"
-                    }`}
+                    className={`w-full text-left p-4 text-xs rounded-xl border transition flex items-center justify-between ${isSelected
+                      ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-bold"
+                      : "bg-slate-50 border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-slate-100/50"
+                      }`}
                   >
                     <span>{opt}</span>
                     {isSelected && <CheckSquare className="w-4 h-4 text-emerald-600" />}
@@ -363,7 +379,6 @@ const handleFinalSubmit = async (isAuto = false) => {
             </div>
           </div>
 
-          {/* Nav Controls */}
           <div className="flex justify-between items-center">
             <button
               disabled={currentIndex === 0}
@@ -376,7 +391,7 @@ const handleFinalSubmit = async (isAuto = false) => {
             {currentIndex === attempt.questions.length - 1 ? (
               <button
                 disabled={actionLoading}
-                onClick={() => handleFinalSubmit(false)}
+                onClick={() => handleFinalSubmit(attempt._id, false)}
                 className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition shadow-sm flex items-center gap-2"
               >
                 {actionLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -428,7 +443,7 @@ const handleFinalSubmit = async (isAuto = false) => {
 
             <button
               onClick={() => {
-                fetchQuizzes(true); // Force refresh updated attempt state
+                fetchQuizzes(); // FIX: Removed invalid boolean argument
                 setView("list");
               }}
               className="px-6 py-2.5 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition shadow-sm"
@@ -437,7 +452,6 @@ const handleFinalSubmit = async (isAuto = false) => {
             </button>
           </div>
 
-          {/* Detailed Question Review */}
           {result.review && result.review.length > 0 && (
             <div className="bg-white border border-slate-200 p-6 rounded-2xl space-y-4 shadow-sm">
               <h3 className="font-bold text-sm text-slate-900 border-b border-slate-200 pb-3">Detailed Answer Review</h3>

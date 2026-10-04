@@ -2,12 +2,10 @@ import Quiz from "../models/Quiz.js";
 import Question from "../models/Question.js";
 import QuizResult from "../models/QuizResult.js";
 
-// Temporary/In-Memory attempts map (or DB attempt model if used)
-// We will store user live selections here
+// In-Memory map to store live answers and proctoring data
 const activeAttempts = new Map();
 
-// 1. Start Quiz
-// 1. Start Quiz
+// 1. Start Quiz (Ab attempts limit aur previous pass status check hoga)
 export const handleStartQuiz = async (req, res) => {
     try {
         const { quizId } = req.params;
@@ -16,14 +14,26 @@ export const handleStartQuiz = async (req, res) => {
         const quiz = await Quiz.findById(quizId);
         if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
+        // Check if user already passed or exceeded attempts limit
+        const previousResults = await QuizResult.find({ user: userId, quiz: quizId });
+        const attemptsUsed = previousResults.length;
+        const alreadyPassed = previousResults.some(r => r.percentage >= quiz.passingScore);
+
+        if (alreadyPassed) {
+            return res.status(400).json({ message: "You have already passed this quiz!" });
+        }
+
+        if (attemptsUsed >= quiz.attemptsAllowed) {
+            return res.status(400).json({ message: "Maximum attempts allowed reached." });
+        }
+
         const questions = await Question.find({ quiz: quizId }).select("-correctAnswer");
+        const attemptId = `${userId}_${quizId}_${Date.now()}`; // Unique attempt session
 
-        const attemptId = `${userId}_${quizId}`;
-
-        // Real quiz Mongo ObjectId standard object key me preserve karein
         activeAttempts.set(attemptId, {
             userId,
-            quizId: quiz._id, // Real ObjectId reference
+            quizId: quiz._id,
+            passingScore: quiz.passingScore,
             answers: {},
             tabSwitches: 0,
             fullScreenExits: 0,
@@ -31,12 +41,87 @@ export const handleStartQuiz = async (req, res) => {
         });
 
         res.json({
+            attemptId, // Frontend ko attemptId bhejna zaroori hai
             quiz: { ...quiz.toObject(), _id: attemptId, originalQuizId: quiz._id },
             questions,
             expiresAt: new Date(Date.now() + (quiz.timeLimit || 10) * 60 * 1000),
         });
     } catch (error) {
         res.status(500).json({ message: "Failed to start quiz", error: error.message });
+    }
+};
+
+// 2. Save Live Answer
+export const handleSaveAnswer = async (req, res) => {
+    try {
+        const { attemptId } = req.params;
+        const { questionId, selectedAnswer } = req.body;
+
+        const attempt = activeAttempts.get(attemptId);
+        if (attempt) {
+            attempt.answers[questionId] = selectedAnswer;
+        }
+
+        res.json({ success: true, message: "Answer saved" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to save answer", error: error.message });
+    }
+};
+
+// 3. Track Anti-Cheat Violations (Violation par strict failure handling)
+export const handleLogViolation = async (req, res) => {
+    try {
+        const { attemptId } = req.params;
+        const { type } = req.body; // 'tab_switch' | 'fullscreen_exit'
+
+        let attempt = activeAttempts.get(attemptId);
+        if (!attempt) {
+            return res.status(404).json({ message: "Active attempt session not found" });
+        }
+
+        if (type === "tab_switch") {
+            attempt.tabSwitches = (attempt.tabSwitches || 0) + 1;
+        } else if (type === "fullscreen_exit") {
+            attempt.fullScreenExits = (attempt.fullScreenExits || 0) + 1;
+        }
+
+        activeAttempts.set(attemptId, attempt);
+
+        const autoSubmitted = attempt.tabSwitches >= 3;
+
+        // Agar violations limit cross ho jaye, toh foran automated fail result save karke session clear kar do
+        if (autoSubmitted) {
+            const questions = await Question.find({ quiz: attempt.quizId });
+            const detailedResults = questions.map((q) => ({
+                questionId: q._id,
+                selectedOption: attempt.answers[q._id.toString()] || null,
+                correctAnswer: q.correctAnswer,
+                isCorrect: false, // Cheating ki wajah se sab incorrect / fail
+            }));
+
+            await QuizResult.create({
+                user: attempt.userId,
+                quiz: attempt.quizId,
+                score: 0,
+                totalQuestions: questions.length,
+                percentage: 0,
+                answers: detailedResults,
+                proctoringLogs: {
+                    tabSwitches: attempt.tabSwitches,
+                    fullScreenExits: attempt.fullScreenExits,
+                },
+            });
+
+            activeAttempts.delete(attemptId);
+        }
+
+        res.json({
+            tabSwitches: attempt.tabSwitches,
+            fullScreenExits: attempt.fullScreenExits,
+            autoSubmitted,
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to log violation", error: error.message });
     }
 };
 
@@ -47,15 +132,12 @@ export const handleFinalSubmit = async (req, res) => {
         const userId = req.user._id;
 
         const liveAttempt = activeAttempts.get(attemptId);
-
-        // Extract real Quiz ID (Fallback check included)
-        const targetQuizId = liveAttempt?.quizId || req.body?.quizId || attemptId.split("_")[1];
-
-        if (!targetQuizId) {
-            return res.status(400).json({ message: "Quiz ID not found in attempt scope" });
+        if (!liveAttempt) {
+            return res.status(400).json({ message: "Quiz session expired or already submitted." });
         }
 
-        const answers = liveAttempt?.answers || req.body?.answers || {};
+        const targetQuizId = liveAttempt.quizId;
+        const answers = liveAttempt.answers || {};
         const questions = await Question.find({ quiz: targetQuizId });
 
         let score = 0;
@@ -75,24 +157,21 @@ export const handleFinalSubmit = async (req, res) => {
         const totalQuestions = questions.length;
         const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
 
-        // QuizResult Document Creation with valid Mongo ObjectId
         const quizResult = await QuizResult.create({
             user: userId,
-            quiz: targetQuizId, // Valid Mongo ObjectId assigned
+            quiz: targetQuizId,
             score,
             totalQuestions,
             percentage,
             answers: detailedResults,
             proctoringLogs: {
-                tabSwitches: liveAttempt?.tabSwitches || 0,
-                fullScreenExits: liveAttempt?.fullScreenExits || 0,
+                tabSwitches: liveAttempt.tabSwitches || 0,
+                fullScreenExits: liveAttempt.fullScreenExits || 0,
             },
         });
 
         activeAttempts.delete(attemptId);
 
-
-        
         res.status(201).json({
             message: "Quiz submitted successfully",
             result: quizResult,
@@ -102,67 +181,23 @@ export const handleFinalSubmit = async (req, res) => {
     }
 };
 
-// 2. Auto-save live answer
-export const handleSaveAnswer = async (req, res) => {
-    try {
-        const { attemptId } = req.params;
-        const { questionId, selectedAnswer } = req.body;
-
-        const attempt = activeAttempts.get(attemptId);
-        if (attempt) {
-            attempt.answers[questionId] = selectedAnswer;
-        }
-
-        res.json({ success: true, message: "Answer saved" });
-    } catch (error) {
-        res.status(500).json({ message: "Failed to save answer", error: error.message });
-    }
-};
-
-// 3. Track anti-cheat violations
-export const handleLogViolation = async (req, res) => {
-    try {
-        const { attemptId } = req.params;
-        const { type } = req.body; // 'tab_switch' | 'fullscreen_exit'
-
-        const attempt = activeAttempts.get(attemptId) || { tabSwitches: 0, fullScreenExits: 0 };
-
-        if (type === "tab_switch") {
-            attempt.tabSwitches = (attempt.tabSwitches || 0) + 1;
-        } else if (type === "fullscreen_exit") {
-            attempt.fullScreenExits = (attempt.fullScreenExits || 0) + 1;
-        }
-
-        activeAttempts.set(attemptId, attempt);
-
-        const autoSubmitted = attempt.tabSwitches >= 3;
-
-        res.json({
-            tabSwitches: attempt.tabSwitches,
-            fullScreenExits: attempt.fullScreenExits,
-            autoSubmitted,
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Failed to log violation", error: error.message });
-    }
-};
-
-
-
-// 5. Fetch Quiz Result
+// 5. Fetch Specific Quiz Result (Fixed query by quizId)
 export const handleFetchResults = async (req, res) => {
     try {
-        const { attemptId } = req.params;
+        const { attemptId } = req.params; // ya quizId query param
         const userId = req.user._id;
+        const { quizId } = req.query; // Specific quiz result fetch karne ke liye
 
-        const result = await QuizResult.findOne({ user: userId })
+        let query = { user: userId };
+        if (quizId) query.quiz = quizId;
+
+        const result = await QuizResult.findOne(query)
             .populate("quiz", "title passingScore")
             .populate("answers.questionId", "questionText explanation")
             .sort({ createdAt: -1 });
 
         if (!result) return res.status(404).json({ message: "Result not found" });
 
-        // Format for frontend response
         res.json({
             passed: result.percentage >= (result.quiz?.passingScore || 50),
             quizTitle: result.quiz?.title || "Assessment",
