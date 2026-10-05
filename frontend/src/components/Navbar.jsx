@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { GraduationCap, LogOut, Menu, X, LayoutDashboard, User, Compass } from "lucide-react";
+import { GraduationCap, LogOut, Menu, X, LayoutDashboard, User, Compass, Settings } from "lucide-react";
 import AOS from "aos";
 import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   const location = useLocation();
@@ -48,14 +49,16 @@ const Navbar = () => {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-500 ease-in-out ${scrolled ? "pt-2 px-3 sm:px-6" : "pt-0 px-0"
-        }`}
+      className={`sticky top-0 z-50 w-full transition-all duration-500 ease-in-out ${
+        scrolled ? "pt-2 px-3 sm:px-6" : "pt-0 px-0"
+      }`}
     >
       <nav
-        className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${scrolled
+        className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${
+          scrolled
             ? "rounded-2xl bg-emerald-950/90 backdrop-blur-xl shadow-2xl shadow-emerald-950/60 border border-emerald-800/60 py-2.5 px-5 sm:px-6"
             : "rounded-none md:rounded-2xl bg-slate-950/80 backdrop-blur-md border-b md:border border-emerald-900/40 py-3.5 px-5 sm:px-8"
-          }`}
+        }`}
       >
         <div className="flex justify-between items-center">
           {/* Islamic Brand Logo & Crest */}
@@ -103,10 +106,11 @@ const Navbar = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${active
+                  className={`relative px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 ${
+                    active
                       ? "text-slate-950 font-extrabold shadow-sm"
                       : "text-emerald-100/70 hover:text-amber-300 hover:scale-105 active:scale-95"
-                    }`}
+                  }`}
                 >
                   {active && (
                     <span className="absolute inset-0 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 rounded-full shadow-lg shadow-amber-500/25 -z-10 transition-all duration-300"></span>
@@ -117,7 +121,7 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* Auth Actions */}
+          {/* Auth Actions / Profile Dropdown */}
           <div
             data-aos="fade-left"
             data-aos-duration="600"
@@ -125,25 +129,72 @@ const Navbar = () => {
             className="hidden md:flex items-center gap-3"
           >
             {token ? (
-              <div className="flex items-center gap-3 pl-2">
-                <Link
-                  to={user?.role === "admin" ? "/admin/dashboard" : "/dashboard"}
-                  className="group relative overflow-hidden inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all duration-300 shadow-md shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 active:scale-95"
-                >
-                  <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-700 ease-out" />
-                  <LayoutDashboard className="w-4 h-4 text-slate-950 group-hover:rotate-6 transition-transform duration-300" />
-                  <span className="relative z-10 text-slate-950">
-                    {user?.role === "admin" ? "Admin Dashboard" : "Dashboard"}
-                  </span>
-                </Link>
+              <div className="relative flex items-center gap-3 pl-2">
+                {/* Profile Avatar Button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setProfileOpen(!profileOpen)}
+                    className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-amber-500/50 transition-all duration-300 focus:outline-none"
+                  >
+                    {user?.profileImage || user?.avatar ? (
+                      <img
+                        src={user.profileImage || user.avatar}
+                        alt={user?.name || "Profile"}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-amber-500/40 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-bold flex items-center justify-center text-xs shadow-sm border border-amber-400">
+                        {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                      </div>
+                    )}
+                  </button>
 
-                <button
-                  onClick={handleLogout}
-                  className="p-2.5 text-emerald-200/60 hover:text-red-400 hover:bg-red-500/10 border border-emerald-900/60 hover:border-red-500/30 rounded-xl transition-all duration-300 active:scale-90 hover:rotate-12"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                  {/* Dropdown Menu */}
+                  {profileOpen && (
+                    <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50 animate-fadeIn divide-y divide-slate-100">
+                      {/* User Info Header */}
+                      <div className="px-4 py-3">
+                        <p className="text-xs font-bold text-slate-900 truncate">{user?.name || "User Account"}</p>
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">{user?.email || "user@example.com"}</p>
+                      </div>
+
+                      {/* Navigation Links */}
+                      <div className="py-1">
+                        <Link
+                          to={user?.role === "admin" ? "/admin/dashboard" : "/dashboard"}
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-600 transition"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-amber-500" />
+                          {user?.role === "admin" ? "Admin Dashboard" : "Dashboard"}
+                        </Link>
+
+                        <Link
+                          to="/profile"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-600 transition"
+                        >
+                          <Settings className="w-4 h-4 text-slate-500" />
+                          Profile Settings
+                        </Link>
+                      </div>
+
+                      {/* Logout Action */}
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            setProfileOpen(false);
+                            handleLogout();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition text-left"
+                        >
+                          <LogOut className="w-4 h-4 text-red-500" />
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-3">
@@ -181,8 +232,9 @@ const Navbar = () => {
 
         {/* Mobile Dropdown Drawer */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-96 opacity-100 mt-4 pt-4 border-t border-emerald-800/50" : "max-h-0 opacity-0"
-            }`}
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+            mobileMenuOpen ? "max-h-[420px] opacity-100 mt-4 pt-4 border-t border-emerald-800/50" : "max-h-0 opacity-0"
+          }`}
         >
           <div className="space-y-2">
             {navLinks.map((link) => (
@@ -190,10 +242,11 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${isActive(link.path)
+                className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  isActive(link.path)
                     ? "bg-amber-400/10 text-amber-400 border border-amber-400/30 shadow-inner"
                     : "text-emerald-100/80 hover:bg-emerald-900/40 hover:pl-6"
-                  }`}
+                }`}
               >
                 {link.name}
               </Link>
@@ -201,16 +254,42 @@ const Navbar = () => {
 
             {token ? (
               <div className="pt-3 border-t border-emerald-800/50 space-y-2">
+                <div className="px-4 py-2 bg-emerald-900/30 rounded-xl border border-emerald-800/40 flex items-center gap-3">
+                  {user?.profileImage || user?.avatar ? (
+                    <img
+                      src={user.profileImage || user.avatar}
+                      alt={user?.name || "Profile"}
+                      className="w-8 h-8 rounded-full object-cover border border-amber-400"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-xs">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                  )}
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-bold text-white truncate">{user?.name || "User Account"}</p>
+                    <p className="text-[10px] text-emerald-300/80 truncate">{user?.email || ""}</p>
+                  </div>
+                </div>
+
                 <Link
                   to={user?.role === "admin" ? "/admin/dashboard" : "/dashboard"}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="relative group overflow-hidden flex items-center justify-center gap-2.5 w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-slate-900 font-semibold text-xs tracking-wide rounded-xl shadow-sm shadow-amber-500/10 hover:shadow-xl hover:shadow-amber-400/25 border border-amber-300/60 hover:border-amber-200 transition-all duration-300 ease-out active:scale-[0.98]"
+                  className="flex items-center gap-2.5 w-full py-2.5 px-4 bg-emerald-900/50 hover:bg-emerald-900 text-emerald-100 rounded-xl text-xs font-semibold transition"
                 >
-                  <LayoutDashboard className="relative z-10 w-4 h-4 text-slate-900 shrink-0" />
-                  <span className="relative z-10 text-slate-950 font-bold">
-                    {user?.role === "admin" ? "Admin Dashboard" : "Dashboard"}
-                  </span>
+                  <LayoutDashboard className="w-4 h-4 text-amber-400" />
+                  {user?.role === "admin" ? "Admin Dashboard" : "Dashboard"}
                 </Link>
+
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 w-full py-2.5 px-4 bg-emerald-900/50 hover:bg-emerald-900 text-emerald-100 rounded-xl text-xs font-semibold transition"
+                >
+                  <Settings className="w-4 h-4 text-slate-300" />
+                  Profile Settings
+                </Link>
+
                 <button
                   onClick={() => {
                     handleLogout();
