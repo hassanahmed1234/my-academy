@@ -93,11 +93,19 @@ export const loginUser = async (req, res) => {
 // LOGOUT USER (New Cookie Clear Endpoint)
 // ==========================================
 export const logoutUser = (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
+
   res.cookie("token", "", {
     httpOnly: true,
-    expires: new Date(0), // Turant expire kar dega
+    secure: isProduction,                   // Login wala hi rule
+    sameSite: isProduction ? "none" : "lax", // Login wala hi rule
+    expires: new Date(0),                    // Turant expire kar dega
   });
-  res.status(200).json({ message: "Logged out successfully" });
+
+  return res.status(200).json({ 
+    success: true,
+    message: "Logged out successfully" 
+  });
 };
 
 export const getMe = async (req, res) => {
@@ -111,3 +119,4 @@ export const getMe = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
