@@ -1,8 +1,22 @@
-import User from "../models/User.js"; // Aapka path
+import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+const generateToken = (res, userId) => {
+  const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
+
+  // Cookie options for Production vs Development
+  const isProduction = process.env.NODE_ENV === "production";
+
+  res.cookie("token", token, {
+    httpOnly: true, // XSS attacks se bachane ke liye (JS can't access it)
+    secure: isProduction, // Production (HTTPS) par true rahega
+    sameSite: isProduction ? "none" : "lax", // Cross-site requests ke liye 'none' (agar frontend/backend alag domains par hain)
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  });
+
+  return token;
 };
 
 // ==========================================
@@ -21,22 +35,22 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Direct plain password pass karein!
-    // Model ka pre('save') hook isko automatic hash kar dega.
     const user = await User.create({
       name,
       email,
-      password, // <--- Plain text password
+      password,
       role: role || "student",
     });
 
     if (user) {
+      // Set token inside HTTP-only cookie
+      generateToken(res, user._id);
+
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        token: generateToken(user._id),
       });
     }
   } catch (error) {
@@ -55,32 +69,35 @@ export const loginUser = async (req, res) => {
   }
 
   try {
-    // 1. Password retrieve karein check karne ke liye
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user) {
+    if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // 2. Password verification
-    const isMatch = await user.matchPassword(password);
+    // Set token inside HTTP-only cookie
+    generateToken(res, user._id);
 
-    if (isMatch) {
-      // Password ko remove karein response se pehle
-      const userData = user.toObject();
-      delete userData.password;
+    const userData = user.toObject();
+    delete userData.password;
 
-      // 3. Complete user object with token return karein
-      res.json({
-        user: userData,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
-    }
+    res.json({
+      user: userData,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+// ==========================================
+// LOGOUT USER (New Cookie Clear Endpoint)
+// ==========================================
+export const logoutUser = (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    expires: new Date(0), // Turant expire kar dega
+  });
+  res.status(200).json({ message: "Logged out successfully" });
 };
 
 export const getMe = async (req, res) => {

@@ -1,11 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Aapka Auth Context import karein
+import { useAuth } from "../context/AuthContext";
 
 const PublicRoute = () => {
-  const { user, token } = useAuth(); // Auth state se user/token fetch karein
+  // Auth Context se isAuthenticated aur user fetch kar rahe hain (token ki jagah)
+  const { isAuthenticated, user } = useAuth();
 
   // Agar user logged in hai, to usko dashboard par bhej do
-  if (user || token) {
+  if (isAuthenticated || user) {
     return <Navigate to="/dashboard" replace />;
   }
 

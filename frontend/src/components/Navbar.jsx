@@ -11,8 +11,9 @@ const Navbar = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-  const { user, logout } = useAuth();
+  
+  // Auth Context se user aur isAuthenticated fetch kar rahe hain (localStorage ki jagah)
+  const { user, isAuthenticated, logout } = useAuth();
 
   // Handle Scroll & AOS Refresh
   useEffect(() => {
@@ -33,8 +34,8 @@ const Navbar = () => {
     AOS.refresh();
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -128,7 +129,7 @@ const Navbar = () => {
             data-aos-once="true"
             className="hidden md:flex items-center gap-3"
           >
-            {token ? (
+            {isAuthenticated ? (
               <div className="relative flex items-center gap-3 pl-2">
                 {/* Profile Avatar Button */}
                 <div className="relative">
@@ -252,7 +253,7 @@ const Navbar = () => {
               </Link>
             ))}
 
-            {token ? (
+            {isAuthenticated ? (
               <div className="pt-3 border-t border-emerald-800/50 space-y-2">
                 <div className="px-4 py-2 bg-emerald-900/30 rounded-xl border border-emerald-800/40 flex items-center gap-3">
                   {user?.profileImage || user?.avatar ? (

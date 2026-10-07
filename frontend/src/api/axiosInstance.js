@@ -2,16 +2,9 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: "https://my-academy-umber.vercel.app/api",
-  withCredentials: true,
+  withCredentials: true, // Yeh browser ko cookie attach karne ke liye signal deta hai
 });
 
-// Automatic JWT Token Attachment
-API.interceptors.request.use((req) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    req.headers.Authorization = `Bearer ${token}`;
-  }
-  return req;
-});
+// Request interceptor ki ab zaroorat nahi hai, cookies automatically attach hongi!
 
 export default API;

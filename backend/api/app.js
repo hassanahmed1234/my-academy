@@ -3,6 +3,7 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser"; 
 import rateLimit from "express-rate-limit";
 import redisRoutes from "./routes/redisRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -67,6 +68,7 @@ app.use(
 
 // 3. Body Parser
 app.use(express.json({ limit: "10kb" }));
+app.use(cookieParser());
 
 
 

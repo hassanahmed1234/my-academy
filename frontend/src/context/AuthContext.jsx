@@ -102,34 +102,34 @@ export const AuthProvider = ({ children }) => {
     error: "",
   });
 
- // Updated fetchProfile in AuthContext
-const fetchProfile = useCallback(async (forceRefresh = false) => {
-  if (profileData.isLoaded && !forceRefresh) return profileData.data;
+  // Updated fetchProfile in AuthContext
+  const fetchProfile = useCallback(async (forceRefresh = false) => {
+    if (profileData.isLoaded && !forceRefresh) return profileData.data;
 
-  setProfileData((prev) => ({ ...prev, loading: true, error: "" }));
+    setProfileData((prev) => ({ ...prev, loading: true, error: "" }));
 
-  try {
-    const { data } = await API.get("/auth/me");
-    const userData = data.user || data;
+    try {
+      const { data } = await API.get("/auth/me");
+      const userData = data.user || data;
 
-    setUser(userData);
-    setProfileData({
-      data: userData,
-      isLoaded: true,
-      loading: false,
-      error: "",
-    });
+      setUser(userData);
+      setProfileData({
+        data: userData,
+        isLoaded: true,
+        loading: false,
+        error: "",
+      });
 
-    return userData;
-  } catch (error) {
-    console.error("Failed to fetch fresh user profile:", error);
-    setProfileData((prev) => ({
-      ...prev,
-      loading: false,
-      error: error.response?.data?.message || "Failed to load profile",
-    }));
-  }
-}, [profileData.isLoaded, profileData.data]);
+      return userData;
+    } catch (error) {
+      console.error("Failed to fetch fresh user profile:", error);
+      setProfileData((prev) => ({
+        ...prev,
+        loading: false,
+        error: error.response?.data?.message || "Failed to load profile",
+      }));
+    }
+  }, [profileData.isLoaded, profileData.data]);
 
   // Dynamic XP Reward Modal Trigger
   const triggerXpReward = async ({ xpAmount = 50, reason = "quiz_completed", heading }) => {
@@ -149,22 +149,13 @@ const fetchProfile = useCallback(async (forceRefresh = false) => {
   // Check Auth Status on Mount
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const storedToken = localStorage.getItem('token');
-
-      if (!storedToken) {
-        setIsAuthenticated(false);
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
       try {
+        // Browser automatic HttpOnly cookie sath bhej dega (withCredentials: true ki wajah se)
         const { data } = await API.get('/auth/me');
         const userData = data.user || data;
         setUser(userData);
         setIsAuthenticated(true);
       } catch (error) {
-        localStorage.removeItem('token');
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -418,7 +409,7 @@ const fetchProfile = useCallback(async (forceRefresh = false) => {
   const submitAssignment = async (assignmentId, payload) => {
     try {
       const res = await API.post(`/assignment/student/submit/${assignmentId}`, payload);
-      
+
       if (fetchAssignments) {
         await fetchAssignments(true);
       }
@@ -508,27 +499,32 @@ const fetchProfile = useCallback(async (forceRefresh = false) => {
     }
   };
 
-  const login = (userData, token) => {
-    localStorage.setItem('token', token);
+  const login = (userData) => {
+    // HttpOnly cookie backend se set ho chuki hai, frontend ko bas user state update karni hai
     setUser(userData);
     setIsAuthenticated(true);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    setUser(null);
-    setIsAuthenticated(false);
-    setDashboardData({
-      inProgressCourses: [],
-      completedCourses: [],
-      upcomingLiveClass: null,
-      announcements: [],
-      tasks: [],
-      isLoaded: false,
-      loading: false,
-      error: "",
-    });
+  const logout = async () => {
+    try {
+      // Backend par logout endpoint hit karein jo cookie ko clear (expire) kar dega
+      await API.post('/auth/logout');
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      setDashboardData({
+        inProgressCourses: [],
+        completedCourses: [],
+        upcomingLiveClass: null,
+        announcements: [],
+        tasks: [],
+        isLoaded: false,
+        loading: false,
+        error: "",
+      });
+    }
   };
 
   return (

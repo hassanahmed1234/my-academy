@@ -23,14 +23,11 @@ const Login = () => {
     try {
       const { data } = await API.post("/auth/login", formData);
 
-      // Extract User Profile and Token safely
+      // Extract User Profile safely (Cookie backend se automatically set ho chuki hai)
       const userData = data.user || data;
-      const token = data.token;
 
-      // React Context state global level par update karein
-      login(userData, token);
-
-
+      // React Context state global level par update karein (sirf userData pass hoga)
+      login(userData);
 
       // Role ke mutabiq redirection
       if (userData.role === "admin") {
@@ -44,7 +41,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-slate-50 relative font-sans">
       {/* Background Ambient Glow */}
@@ -52,7 +48,7 @@ const Login = () => {
 
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 space-y-6 shadow-xl shadow-slate-200/50">
-        
+
         {/* Header */}
         <div className="text-center space-y-2">
           <h2 className="text-3xl text-emerald-600 font-bold font-serif">

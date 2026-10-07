@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import API from "../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 import {
   BookOpen,
   User,
@@ -17,6 +18,9 @@ import {
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Auth Context se authentication state fetch kar rahe hain
+  const { isAuthenticated } = useAuth();
 
   const [course, setCourse] = useState(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
@@ -69,10 +73,8 @@ const CourseDetail = () => {
         // 2. Fetch User Progress and Check Enrollment Status
         try {
           const { data } = await API.get(`/my-progress/${id}`);
-          console.log(data);
 
           if (isMounted) {
-            // Aapki provided line:
             const enrolledList = data?.data?.inProgress || data?.enrollments || data || [];
 
             // Enrollment check logic
@@ -123,9 +125,7 @@ const CourseDetail = () => {
   };
 
   const handleEnrollOrPlay = async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-    if (!token) {
+    if (!isAuthenticated) {
       navigate("/login");
       return;
     }
