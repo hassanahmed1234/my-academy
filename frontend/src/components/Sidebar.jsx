@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { motion } from "framer-motion";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -59,7 +60,12 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col h-screen select-none font-sans">
+    <motion.aside 
+      initial={{ x: -80, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col h-screen select-none font-sans"
+    >
       
       {/* 1. BRAND HEADER (TOP) */}
       <NavLink
@@ -85,7 +91,7 @@ const Sidebar = () => {
         </span>
       </NavLink>
 
-      {/* 2. LARGE CLICKABLE PROFILE CARD (BRAND LOGO KE BELOW) */}
+      {/* 2. LARGE CLICKABLE PROFILE CARD */}
       <div className="p-4 border-b border-slate-800/80 bg-gradient-to-b from-slate-900/60 to-slate-950 shrink-0">
         <NavLink
           to="/profile"
@@ -195,7 +201,7 @@ const Sidebar = () => {
           <span>Logout Account</span>
         </button>
       </div>
-    </aside>
+    </motion.aside>
   );
 };
 
