@@ -95,11 +95,10 @@ export const loginUser = async (req, res) => {
 export const logoutUser = (req, res) => {
   const isProduction = process.env.NODE_ENV === "production";
 
-  res.cookie("token", "", {
+  res.clearCookie("token", {
     httpOnly: true,
-    secure: isProduction,                   // Login wala hi rule
-    sameSite: isProduction ? "none" : "lax", // Login wala hi rule
-    expires: new Date(0),                    // Turant expire kar dega
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
 
   return res.status(200).json({ 
