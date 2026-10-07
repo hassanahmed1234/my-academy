@@ -150,7 +150,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        // Browser automatic HttpOnly cookie sath bhej dega (withCredentials: true ki wajah se)
         const { data } = await API.get('/auth/me');
         const userData = data.user || data;
         setUser(userData);
@@ -440,10 +439,6 @@ export const AuthProvider = ({ children }) => {
       const { data } = await API.put("/users/profile", updatedFields);
       const updatedName = data.user?.name || data.name || updatedFields.name;
 
-      if (updatedName) {
-        localStorage.setItem("userName", updatedName);
-      }
-
       setProfileData((prev) => ({
         ...prev,
         data: {
@@ -500,14 +495,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = (userData) => {
-    // HttpOnly cookie backend se set ho chuki hai, frontend ko bas user state update karni hai
     setUser(userData);
     setIsAuthenticated(true);
   };
 
   const logout = async () => {
     try {
-      // Backend par logout endpoint hit karein jo cookie ko clear (expire) kar dega
       await API.post('/auth/logout');
     } catch (error) {
       console.error("Logout error:", error);
