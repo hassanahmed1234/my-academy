@@ -30,8 +30,7 @@ const Sidebar = () => {
     {
       title: "Overview",
       items: [
-        { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-        { label: "Browse Courses", path: "/courses", icon: Search },
+        { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard }
       ],
     },
     {
@@ -60,13 +59,13 @@ const Sidebar = () => {
   ];
 
   return (
-    <motion.aside 
+    <motion.aside
       initial={{ x: -80, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col h-screen select-none font-sans"
     >
-      
+
       {/* 1. BRAND HEADER (TOP) */}
       <NavLink
         to="/"
@@ -144,12 +143,11 @@ const Sidebar = () => {
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) =>
-                      `group relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200 ${
-                        isActive
-                          ? item.isAi
-                            ? "bg-emerald-950/80 text-emerald-200 border-emerald-500/50 shadow-md shadow-emerald-950/40 font-bold"
-                            : "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-slate-950 font-extrabold border-emerald-400 shadow-md shadow-emerald-500/20"
-                          : item.isAi
+                      `group relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200 ${isActive
+                        ? item.isAi
+                          ? "bg-emerald-950/80 text-emerald-200 border-emerald-500/50 shadow-md shadow-emerald-950/40 font-bold"
+                          : "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-slate-950 font-extrabold border-emerald-400 shadow-md shadow-emerald-500/20"
+                        : item.isAi
                           ? "bg-slate-900/60 text-emerald-400 border-emerald-500/20 hover:bg-emerald-950/40 hover:border-emerald-500/40 hover:text-emerald-300"
                           : "text-slate-400 border-transparent hover:bg-slate-900/80 hover:text-slate-200 hover:border-slate-800"
                       }`
@@ -159,24 +157,22 @@ const Sidebar = () => {
                       <>
                         <div className="flex items-center gap-3 min-w-0">
                           <IconComponent
-                            className={`w-4 h-4 shrink-0 transition-colors ${
-                              isActive && !item.isAi
+                            className={`w-4 h-4 shrink-0 transition-colors ${isActive && !item.isAi
                                 ? "text-slate-950"
                                 : isActive && item.isAi
-                                ? "text-emerald-400"
-                                : "text-slate-400 group-hover:text-emerald-400"
-                            }`}
+                                  ? "text-emerald-400"
+                                  : "text-slate-400 group-hover:text-emerald-400"
+                              }`}
                           />
                           <span className="truncate">{item.label}</span>
                         </div>
 
                         {item.badge && (
                           <span
-                            className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 shadow-sm ${
-                              isActive
+                            className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 shadow-sm ${isActive
                                 ? "bg-emerald-900/80 text-emerald-200 border border-emerald-500/40"
                                 : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20"
-                            }`}
+                              }`}
                           >
                             <Sparkles className="w-2.5 h-2.5" /> {item.badge}
                           </span>
