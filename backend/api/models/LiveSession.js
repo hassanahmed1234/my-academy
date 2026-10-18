@@ -63,4 +63,4 @@ const liveSessionSchema = new mongoose.Schema(
 
 const LiveSession = mongoose.model("LiveSession", liveSessionSchema);
 
-export dest default LiveSession; // Note: aapke code me export default LiveSession; hai
+export  default LiveSession; // Note: aapke code me export default LiveSession; hai
