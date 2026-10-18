@@ -17,9 +17,10 @@ export const createLiveSession = async (req, res) => {
       scheduledAt,
     } = req.body;
 
-    if (!title || !course || !scholarName || !meetingUrl || !scheduledAt) {
+    // Course ko required validation se nikal diya hai
+    if (!title || !scholarName || !meetingUrl || !scheduledAt) {
       return res.status(400).json({
-        message: "Please fill all required fields, including course selection.",
+        message: "Please fill all required fields (Title, Scholar, Meeting URL, Date).",
       });
     }
 
@@ -29,17 +30,21 @@ export const createLiveSession = async (req, res) => {
       category: category || "General Talk",
       thumbnail: thumbnail || "",
       bannerImage: bannerImage || "",
-      course,
+      course: course && course !== "" ? course : null, // Agar course ho toh save karein warna null
       scholarName,
       meetingUrl,
       scheduledAt,
       createdBy: req.user?._id,
     });
 
-    const populatedSession = await newSession.populate(
-      "course",
-      "title arabicTitle image"
-    );
+    // Safely populate agar course mojood ho
+    let populatedSession = newSession;
+    if (newSession.course) {
+      populatedSession = await newSession.populate(
+        "course",
+        "title arabicTitle image"
+      );
+    }
 
     res.status(201).json({
       message: "Live session scheduled successfully",
@@ -58,7 +63,6 @@ export const createLiveSession = async (req, res) => {
 // @access  Public / Authenticated
 export const getLiveSessions = async (req, res) => {
   try {
-    // Dynamic status auto-updater logic (Scheduled sessions whose time has passed)
     const now = new Date();
     await LiveSession.updateMany(
       { scheduledAt: { $lte: now }, status: "Scheduled" },
@@ -83,7 +87,7 @@ export const getLiveSessions = async (req, res) => {
 // @access  Private/Admin
 export const updateSessionStatus = async (req, res) => {
   try {
-    const { status, title, description, category, thumbnail, bannerImage, meetingUrl, scholarName, scheduledAt } = req.body;
+    const { status, title, description, category, thumbnail, bannerImage, meetingUrl, scholarName, scheduledAt, course } = req.body;
 
     const updateFields = {};
     if (status) {
@@ -101,6 +105,7 @@ export const updateSessionStatus = async (req, res) => {
     if (meetingUrl) updateFields.meetingUrl = meetingUrl;
     if (scholarName) updateFields.scholarName = scholarName;
     if (scheduledAt) updateFields.scheduledAt = scheduledAt;
+    if (course !== undefined) updateFields.course = course && course !== "" ? course : null;
 
     const updatedSession = await LiveSession.findByIdAndUpdate(
       req.params.id,

@@ -15,7 +15,7 @@ const liveSessionSchema = new mongoose.Schema(
     category: {
       type: String,
       trim: true,
-      default: "General Talk", // e.g. QnA, General Talk, Webinar, Special Lecture
+      default: "General Talk",
     },
     thumbnail: {
       type: String,
@@ -27,10 +27,12 @@ const liveSessionSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    // Ab course optional hai (required hata diya gaya hai)
     course: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
-      required: [true, "Associated course is required"],
+      required: false,
+      default: null,
     },
     scholarName: {
       type: String,
@@ -61,4 +63,4 @@ const liveSessionSchema = new mongoose.Schema(
 
 const LiveSession = mongoose.model("LiveSession", liveSessionSchema);
 
-export default LiveSession;
+export dest default LiveSession; // Note: aapke code me export default LiveSession; hai
